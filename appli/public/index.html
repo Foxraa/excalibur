@@ -1,6 +1,6 @@
 <title>Excalibur</title>
 <meta charset="utf-8">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏰</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -134,6 +134,10 @@ nav.tabs .wrap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8p
 :root[data-theme="dark"] .tab{--c:var(--sec-l)} :root[data-theme="dark"] .tab[aria-current="page"]{color:#150f2e}
 @media (max-width:640px){nav.tabs .wrap{gap:6px}.tab{font-size:.8rem;padding:6px 4px}.tab .ico{font-size:1.35rem}}
 main{padding-block:24px 110px}
+/* Les 3 règles des étoiles */
+.regles{display:grid;gap:10px}
+.regle{display:flex;align-items:center;gap:14px;padding:10px 14px;border-radius:var(--r-s);background:var(--tint);font-size:1.05rem}
+.regle b{flex:none;min-width:56px;text-align:center;font-family:var(--f-display);font-size:1.6rem;color:var(--star)}
 /* Sous-onglets d'une section (Apprendre : leçons / année ; Mon trésor : étoiles / notes / parents) */
 .sous{margin-bottom:-6px}
 /* Accueil : une seule mission, en grand */
@@ -925,18 +929,33 @@ Réponds uniquement en JSON : {"correct":true,"commentaire":"1 ou 2 phrases pour
 
 /* ============ Calculs : étoiles, séries, badges, révisions ============ */
 function quizPct(q){return q.total?q.score/q.total:0}
+/* Les 3 règles des étoiles, depuis le 22/10/2026 :
+   1. chaque bonne réponse (quiz, défi éclair) : +1 ;
+   2. chaque chose finie (quiz ou défi terminé, devoir coché, leçon rangée, note rentrée,
+      code du chevalier complet, tâche de vacances) : +5 ;
+   3. sans faute : les étoiles du quiz sont doublées.
+   Ce qui a été gagné avant garde l'ancien barème : le trésor ne baisse jamais. */
+const REGLES_3='2026-10-22';
+const neuf=date=>String(date||'')>=REGLES_3;
+const jourDe=x=>x.createdAt?isoDay(new Date(x.createdAt)):x.date;
+const ptsDevoir=d=>neuf(d.faitLe)?5:d.faitLe<=d.pour?5:2;
+const ptsRoutine=(date,n)=>neuf(date)?(n===ROUTINE.length?5:0):n+(n===ROUTINE.length?3:0);
+const ptsNote=n=>{const p=n.valeur/n.sur;return neuf(jourDe(n))?5:p>=.8?10:p>=.6?5:2};
+const ptsLecon=l=>neuf(jourDe(l))?5:3;
+const ptsVac=(k,date)=>neuf(date)?5:{lu:2,rentree:2,bonus:1}[k];
+const bonusMission=date=>neuf(date)?0:5;
 function bilan(){
   const g=[];
   all('quiz').filter(q=>q.termine&&!q.valide).forEach(q=>g.push({pts:q.etoiles||0,date:q.date,why:'Quiz : '+q.titre}));
-  all('devoirs').filter(d=>d.fait&&d.faitLe).forEach(d=>g.push({pts:d.faitLe<=d.pour?5:2,date:d.faitLe,why:(d.faitLe<=d.pour?'Devoir fait à temps : ':'Devoir rattrapé : ')+d.titre}));
-  all('routine').forEach(r=>{const n=ROUTINE.filter(it=>r.items&&r.items[it.id]).length;if(n)g.push({pts:n+(n===ROUTINE.length?3:0),date:r.id,why:n===ROUTINE.length?'Routine complète':'Routine du jour'})});
-  all('notes').forEach(n=>{const p=n.valeur/n.sur;g.push({pts:p>=.8?10:p>=.6?5:2,date:n.date,why:'Note : '+n.intitule})});
-  all('lecons').filter(l=>!l.importe&&!l.special).forEach(l=>g.push({pts:3,date:l.date,why:'Leçon ajoutée : '+l.titre}));
+  all('devoirs').filter(d=>d.fait&&d.faitLe).forEach(d=>g.push({pts:ptsDevoir(d),date:d.faitLe,why:'Devoir fait : '+d.titre}));
+  all('routine').forEach(r=>{const n=ROUTINE.filter(it=>r.items&&r.items[it.id]).length;const pts=ptsRoutine(r.id,n);if(pts)g.push({pts,date:r.id,why:n===ROUTINE.length?'Routine complète':'Routine du jour'})});
+  all('notes').forEach(n=>{g.push({pts:ptsNote(n),date:n.date,why:'Note : '+n.intitule})});
+  all('lecons').filter(l=>!l.importe&&!l.special).forEach(l=>g.push({pts:ptsLecon(l),date:l.date,why:'Leçon ajoutée : '+l.titre}));
   plansVac().forEach(p=>{
-    Object.keys(p.lu||{}).filter(d=>p.lu[d]).forEach(d=>g.push({pts:2,date:d,why:'Lecture de vacances'}));
-    Object.keys(p.rentree||{}).filter(d=>p.rentree[d]).forEach(d=>g.push({pts:2,date:d,why:'Rentrée préparée'}));
-    Object.keys(p.bonus||{}).filter(d=>p.bonus[d]).forEach(d=>g.push({pts:1,date:d,why:'Idée bonus des vacances'}));
-    p.jours.filter(j=>missionFaite(p,j)).forEach(j=>g.push({pts:5,date:j.date,why:'Mission de vacances complète'}));
+    Object.keys(p.lu||{}).filter(d=>p.lu[d]).forEach(d=>g.push({pts:ptsVac('lu',d),date:d,why:'Lecture de vacances'}));
+    Object.keys(p.rentree||{}).filter(d=>p.rentree[d]).forEach(d=>g.push({pts:ptsVac('rentree',d),date:d,why:'Rentrée préparée'}));
+    Object.keys(p.bonus||{}).filter(d=>p.bonus[d]).forEach(d=>g.push({pts:ptsVac('bonus',d),date:d,why:'Idée bonus des vacances'}));
+    p.jours.filter(j=>missionFaite(p,j)&&bonusMission(j.date)).forEach(j=>g.push({pts:bonusMission(j.date),date:j.date,why:'Mission de vacances complète'}));
   });
   g.sort((a,b)=>a.date<b.date?1:-1);
   const total=g.reduce((s,x)=>s+x.pts,0);
@@ -944,12 +963,7 @@ function bilan(){
   const lvl=Math.floor(total/100);
   return {gains:g,total,spent,solde:total-spent,niveau:Math.min(lvl,NIVEAUX.length-1),nomNiveau:NIVEAUX[Math.min(lvl,NIVEAUX.length-1)],dansNiveau:total%100};
 }
-/* Étoiles d'un quiz ou d'un défi éclair : chaque bonne réponse vaut selon sa difficulté, la nouveauté
-   et le niveau choisi rapportent un bonus, et refaire dans la semaine ce qu'il réussit déjà rapporte moins.
-   Calculé à la fin, avant l'enregistrement : les étoiles déjà gagnées ne changent pas. */
-const POIDS_DIFF={1:1,2:2,3:4},BONUS_NIVEAU={facile:2,normal:4,defi:8};
-const poidsTable=n=>[2,5,10].includes(n)?.5:[3,4].includes(n)?1:1.5;
-/* Leçon étoile du jour : une leçon à revoir, choisie une fois par jour (gardée dans config), étoiles ×2 une fois. */
+/* Leçon du jour : une leçon à revoir, choisie une fois par jour (gardée dans config). */
 function etoileDuJour(){
   const t=TODAY();
   if(all('quiz').some(q=>q.termine&&q.date===t&&q.bonusJour))return null;
@@ -963,27 +977,17 @@ function etoileDuJour(){
 const detailEtoiles=x=>(x.detailEtoiles||[]).length?`<p class="small muted">${x.detailEtoiles.map(esc).join(' · ')}</p>`:'';
 function carteEtoileDuJour(){
   const l=etoileDuJour();if(!l)return '';
-  return `<section class="card mission"><div class="sec-title"><h3>${STAR} Leçon étoile du jour</h3><span class="small muted">Étoiles ×2 aujourd'hui</span></div>
+  return `<section class="card mission"><div class="sec-title"><h3>${STAR} Leçon du jour</h3><span class="small muted">Choisie pour toi aujourd'hui</span></div>
     <div class="item"><div class="grow"><div class="t">${esc(l.titre)}</div><div class="small muted">${mchip(l.matiere)} ${esc(etatLecon(l).raison)}</div></div><button class="btn" data-act="lecon" data-id="${l.id}">Relire</button><button class="btn primary" data-act="quiz-lecon" data-id="${l.id}" data-niveau="normal">Quiz</button></div></section>`;
 }
+/* Étoiles d'un quiz ou d'un défi éclair (règles 1 à 3), calculées à la fin puis enregistrées avec le quiz.
+   bonusJour marque le quiz de la leçon du jour, pour en proposer une autre ensuite. */
 function calculEtoiles(q){
-  const cle=(q.leconIds||[]).join(','),d=[];
-  const avant=all('quiz').filter(x=>x.termine&&!x.valide&&(x.leconIds||[]).join(',')===cle);
-  const parfait=q.score===q.total;let pts,bonusJour=false;
-  if(q.defi){
-    pts=Math.ceil(q.score/2)+2+(parfait?5:0);d.push(`${q.score} bonne${q.score>1?'s':''} réponse${q.score>1?'s':''}${parfait?', défi parfait':''} : +${pts}`);
-    if(q.type==='tables'){const w=poidsTable(q.n);pts*=w;if(w<1)d.push(`Table de ${q.n}, facile : moitié des étoiles`);if(w>1)d.push(`Table de ${q.n}, difficile : ×1,5`)}
-  }else{
-    const n={1:0,2:0,3:0};q.questions.forEach((x,i)=>{if(q.rep[i].ok)n[x.difficulte>=3?3:x.difficulte===2?2:1]++});
-    pts=0;[[1,'facile','faciles'],[2,'de réflexion','de réflexion'],[3,'pointue','pointues']].forEach(([k,s1,s2])=>{if(n[k]){pts+=n[k]*POIDS_DIFF[k];d.push(`${n[k]} ${n[k]>1?s2:s1} : +${n[k]*POIDS_DIFF[k]}`)}});
-    const bn=BONUS_NIVEAU[q.niveau]||4;pts+=bn;d.push(`Niveau ${NIVEAU_QUIZ[q.niveau]?NIVEAU_QUIZ[q.niveau].label:'Normal'} : +${bn}`);
-    if(parfait){pts*=1.25;d.push('Sans faute : +25 %')}
-    if(!avant.length){pts+=5;d.push('Découverte : +5')}
-    const ej=etoileDuJour();if(ej&&q.leconIds.length===1&&q.leconIds[0]===ej.id){pts*=2;bonusJour=true;d.push('Leçon étoile du jour : ×2')}
-  }
-  const reussis=avant.filter(x=>x.createdAt>Date.now()-7*864e5&&quizPct(x)>=.8).length;
-  if(reussis){pts*=reussis>=2?.25:.5;d.push(reussis>=2?`Déjà réussi ${reussis} fois cette semaine : un quart des étoiles`:'Déjà réussi cette semaine : moitié des étoiles')}
-  return {pts:Math.max(1,Math.round(pts)),detail:d,bonusJour};
+  const parfait=q.total>0&&q.score===q.total,d=[];
+  let pts=q.score+5;d.push(`${q.score} bonne${q.score>1?'s':''} réponse${q.score>1?'s':''} : +${q.score}`,`${q.defi?'Défi':'Quiz'} terminé : +5`);
+  if(parfait){pts*=2;d.push('Sans faute : étoiles doublées')}
+  const ej=!q.defi&&etoileDuJour();
+  return {pts,detail:d,bonusJour:!!(ej&&q.leconIds.length===1&&q.leconIds[0]===ej.id)};
 }
 function joursActifs(){
   const s=new Set();
@@ -1102,7 +1106,7 @@ function tachesJour(p,j){
 const missionFaite=(p,j)=>tachesJour(p,j).every(x=>x.ok);
 const nbMissions=()=>plansVac().reduce((n,p)=>n+p.jours.filter(j=>missionFaite(p,j)).length,0);
 /* Après un quiz ou un défi : annonce le bonus si la mission d'un jour vient d'être bouclée. */
-function annonceMission(avant){if(nbMissions()>avant)setTimeout(()=>{toast('+5 étoiles ! Mission de vacances complète.');confettis()},900)}
+function annonceMission(avant){if(nbMissions()>avant)setTimeout(()=>{toast(bonusMission(TODAY())?'+5 étoiles ! Mission de vacances complète.':'Mission de vacances complète, bravo !');confettis()},900)}
 const IDEES_VAC=[
   "Aide à préparer une recette : c'est toi qui mesures les grammes et les centilitres.",
   "Joue à un jeu de société avec des dés et compte les points de tout le monde.",
@@ -1362,7 +1366,7 @@ function missionDuJour(){
   if(d)return {devoir:true,ico:'✏️',titre:d.titre,detail:`${M(d.matiere).nom} · ${d.type||'Devoir'} ${d.pour<t?'en retard':d.pour===t?"pour aujourd'hui":'pour demain'}${d.detail?' · '+d.detail:''}`,
     btn:`<button class="btn primary big" data-act="devoir-ok" data-id="${d.id}">C'est fait !</button><button class="btn" data-act="tab" data-v="devoirs">Tous mes devoirs</button>`};
   const ej=etoileDuJour(),l=ej||(aReviser()[0]||{}).l;
-  if(l)return {ico:'⚔️',titre:`Relis « ${l.titre} », puis fais le quiz`,detail:`${M(l.matiere).nom} · ${etatLecon(l).raison}${ej?" · étoiles ×2 aujourd'hui":''}`,
+  if(l)return {ico:'📖',titre:`Relis « ${l.titre} », puis fais le quiz`,detail:`${M(l.matiere).nom} · ${etatLecon(l).raison}${ej?" · leçon du jour":''}`,
     btn:`${sample?`<button class="btn primary big" data-act="quiz-lecon" data-id="${l.id}" data-niveau="normal">Faire le quiz</button>`:''}<button class="btn ${sample?'':'primary big'}" data-act="lecon" data-id="${l.id}">Relire d'abord</button>`};
   const p=sample&&planTravail().find(x=>x.e.etat==='fragile');
   if(p){const sp=speciale(p.c.id);return {ico:'🎯',titre:p.c.t,detail:`${M(p.c.m).nom} · un point à retravailler`,
@@ -1393,7 +1397,7 @@ function vJour(){
       <div class="row mj-btns">${m.btn}</div>`}
   </section>
   <section class="card"><details id="routine-d" ${ouvert('routine-d')}><summary>Mon code du chevalier · ${nbR}/${ROUTINE.length}</summary>
-    <p class="small muted" style="margin:4px 0 8px">+1 étoile chacune, +3 si tout est fait</p>
+    <p class="small muted" style="margin:4px 0 8px">+5 étoiles quand tout est coché</p>
     <div class="stack">${ROUTINE.map(it=>`<label class="item ${r.items&&r.items[it.id]?'done':''}"><input type="checkbox" class="chk" data-act="routine" data-v="${it.id}" ${r.items&&r.items[it.id]?'checked':''}><span class="grow t">${esc(it.t)}</span></label>`).join('')}</div></details></section>
   <section class="tip"><p class="eyebrow">Astuce d'organisation</p><p><strong>${esc(tip.t)}.</strong> ${esc(tip.d)}</p></section>`;
 }
@@ -1418,7 +1422,7 @@ function itemTache(p,j,x){
     return `<div class="item ${ok}"><span class="num" aria-hidden="true">${x.ok?'✅':'⚡'}</span><div class="grow"><div class="t">Défi éclair : ${tb?`table de ${j.defi.n}`:'orthographe'}</div><div class="small muted">${tb?'12 calculs de tête, le plus vite possible':'a/à, et/est, son/sont, on/ont, é/er… 10 phrases'}</div></div>
       ${x.ok?'':`<button class="btn primary" data-act="defi" data-v="${j.defi.type}" data-n="${j.defi.n||''}">Jouer</button>`}</div>`;
   }
-  const lib={lire:['📚',"Lire 15 minutes : un livre, une BD, un magazine…",'+2 étoiles'],rentree:['🎒','Préparer la rentrée : regarde les leçons de la semaine prochaine (plus bas), tes devoirs et ton cartable','+2 étoiles']}[x.k];
+  const lib={lire:['📚',"Lire 15 minutes : un livre, une BD, un magazine…",'+5 étoiles'],rentree:['🎒','Préparer la rentrée : regarde les leçons de la semaine prochaine (plus bas), tes devoirs et ton cartable','+5 étoiles']}[x.k];
   return `<label class="item ${ok}"><span class="num" aria-hidden="true">${x.ok?'✅':lib[0]}</span><span class="grow"><span class="t">${esc(lib[1])}</span><br><span class="small muted">${lib[2]}</span></span><input type="checkbox" class="chk" data-act="vac-coche" data-v="${x.k==='lire'?'lu':'rentree'}" data-id="${j.date}" ${x.ok?'checked':''}></label>`;
 }
 function vVacances(){
@@ -1455,10 +1459,10 @@ function vVacances(){
   const parMat=MATIERES.map(m=>{const ls=all('lecons').filter(l=>l.matiere===m.id);if(!ls.length)return '';const e=ls.map(etatLecon);
     return `<div class="item"><span class="num" aria-hidden="true">${MAT_ICO[m.id]||'📘'}</span><div class="grow"><div class="t">${esc(m.nom)}</div><div class="small muted">${ls.length} leçon${ls.length>1?'s':''} · ${e.filter(x=>x.best!==null&&!x.due).length} à jour · ${e.filter(x=>x.due).length} à revoir</div></div></div>`}).join('');
   return `${hero(nudge,stats)}
-  ${jours.length?`${sel?`<section class="card mission"><div class="sec-title"><h3>${sel.date===t?'Ma mission du jour':`Ma mission du ${esc(longDate(sel.date))}`}</h3><span class="small muted">${sel.fait?'Tout est fait, bravo !':'+5 étoiles bonus si tout est fait'}</span></div>
+  ${jours.length?`${sel?`<section class="card mission"><div class="sec-title"><h3>${sel.date===t?'Ma mission du jour':`Ma mission du ${esc(longDate(sel.date))}`}</h3><span class="small muted">${sel.fait?'Tout est fait, bravo !':'+5 étoiles par tâche finie'}</span></div>
     ${sel.date>t?'<p class="small muted" style="margin-bottom:8px">Ce jour n\'est pas encore arrivé, mais tu peux prendre de l\'avance.</p>':''}
     <div class="stack">${sel.taches.map(x=>itemTache(p,sel,x)).join('')}
-      <label class="item ${p.bonus&&p.bonus[sel.date]?'done':''}"><span class="num" aria-hidden="true">💡</span><span class="grow"><span class="t">Idée bonus : ${esc(idee)}</span><br><span class="small muted">Pas obligatoire · +1 étoile</span></span><input type="checkbox" class="chk" data-act="vac-coche" data-v="bonus" data-id="${sel.date}" ${p.bonus&&p.bonus[sel.date]?'checked':''}></label></div></section>`:''}
+      <label class="item ${p.bonus&&p.bonus[sel.date]?'done':''}"><span class="num" aria-hidden="true">💡</span><span class="grow"><span class="t">Idée bonus : ${esc(idee)}</span><br><span class="small muted">Pas obligatoire · +5 étoiles</span></span><input type="checkbox" class="chk" data-act="vac-coche" data-v="bonus" data-id="${sel.date}" ${p.bonus&&p.bonus[sel.date]?'checked':''}></label></div></section>`:''}
   <section class="card"><div class="sec-title"><h3>Mon calendrier de vacances</h3><span class="small muted">Une mission par jour de semaine, le week-end au repos</span></div>
     <div class="vac-bar" role="img" aria-label="${faites} missions faites sur ${jours.length}"><i style="width:${100*faites/Math.max(1,jours.length)}%"></i></div>
     <p class="small muted" style="margin:6px 0 12px">${faites?`${faites} mission${faites>1?'s':''} sur ${jours.length} : `:''}${faites===jours.length?'carnet complet, tu es prêt pour la rentrée !':faites?'continue comme ça !':'clique sur un jour pour voir sa mission.'}</p>
@@ -1815,7 +1819,7 @@ function vApercu(){
     ${rien?`<p class="muted">Il n'y a rien à ranger dans le cartable sur ${a.images.length>1?'ces photos':'cette photo'} : ni leçon, ni devoir, ni note.</p><div class="row"><button class="btn primary" data-act="reset-add">${r.infos.length?"C'est noté":'Recommencer'}</button></div>`:''}
   </section>
   ${rien?'':`<form class="stack" data-form="save-res">
-    ${l?`<section class="card stack"><label class="row" style="font-weight:700"><input type="checkbox" class="chk" name="kl" checked> ${r.genre==='lecon'?'Ranger la leçon':'Ranger la leçon de cette notion'} (+3 étoiles)</label>
+    ${l?`<section class="card stack"><label class="row" style="font-weight:700"><input type="checkbox" class="chk" name="kl" checked> ${r.genre==='lecon'?'Ranger la leçon':'Ranger la leçon de cette notion'} (+5 étoiles)</label>
       <div class="form-grid"><label class="f">Titre<input type="text" id="res-titre" name="titre" value="${esc(l.titre||'')}" required></label><label class="f">Matière<select id="res-mat" name="matiere">${matOptions(l.matiere)}</select></label><label class="f">Date<input type="date" id="res-date" name="date" value="${esc(a.date)}"></label></div>
       ${l.resume?`<p><strong>En bref :</strong> ${rich(l.resume)}</p>`:''}
       ${ex.length?`<div><h3>Tes exercices : ${nJ} juste${nJ>1?'s':''} sur ${ex.length}</h3>${lignesExercices(ex)}</div>`:''}
@@ -1852,7 +1856,7 @@ function enregistrerRes(fd){
   if(r.note&&fd.kn){const val=Number(fd.nVal),sur=Number(fd.nSur)||20;
     if(isNaN(val)||val<0||val>sur){toast(`La note doit être entre 0 et ${sur}.`);return}
     put('notes',uid(),{intitule:fd.nIntitule||r.note.intitule,matiere:fd.nMat||r.note.matiere,valeur:val,sur,date:fd.nDate||a.date,commentaire:r.note.commentaire||'',createdAt:Date.now(),leconId:lid||null,competences:(lid&&S.lecons.get(lid)&&S.lecons.get(lid).competences)||[]});note=true;
-    const p=val/sur;gagne(p>=.8?10:p>=.6?5:2,p>=.8?'Superbe note, bravo !':p>=.6?'Belle note !':"Merci de l'avoir rentrée. On va travailler ça ensemble.")}
+    const p=val/sur;gagne(ptsNote({valeur:val,sur,createdAt:Date.now()}),p>=.8?'Superbe note, bravo !':p>=.6?'Belle note !':"Merci de l'avoir rentrée. On va travailler ça ensemble.")}
   state.add={images:[],indice:'',date:TODAY(),busy:false,res:null,err:'',sujet:''};
   const fait=[lid&&'la leçon',nd&&`${nd} devoir${nd>1?'s':''}${nc?' (révisions planifiées)':''}`,note&&'la note'].filter(Boolean);
   if(fait.length>1||(!lid&&!note))toast(fait.length?`Rangé : ${fait.join(', ')}.`:'Rien de coché, rien de rangé.');
@@ -1874,7 +1878,7 @@ async function ajouterFichiers(files,a=state.add){const arr=[...files].filter(f=
 function nouvelleLecon(r,base){
   const id=uid();
   const l={matiere:base.matiere,titre:base.titre||r.titre||'Leçon',date:base.date||TODAY(),createdAt:Date.now(),notions:r.notions||[],resume:r.resume||'',transcription:r.transcription||'',cours:r.cours||{},corrections:r.corrections||[],lienProgramme:r.lienProgramme||'',competences:compValides(r.competences),pourAllerPlusLoin:r.pourAllerPlusLoin||'',exercices:r.exercices||[],pointsFaibles:r.pointsFaibles||[],genre:base.genre||'lecon',thumbs:base.thumbs||[],questions:[]};
-  put('lecons',id,l);gagne(3,'Leçon rangée dans ton cartable.');return id;
+  put('lecons',id,l);gagne(ptsLecon(l),'Leçon rangée dans ton cartable.');return id;
 }
 
 /* ---- Quiz ---- */
@@ -2041,7 +2045,7 @@ function vDevoirs(){
   <section class="card"><h3>Mes 7 prochains jours</h3><div class="week">${jours.map(j=>{const ds=dv.filter(d=>d.pour===j);return `<div class="day ${j===t?'today':''}"><h4>${esc(D(j).toLocaleDateString('fr-FR',{weekday:'short',day:'numeric'}))}</h4>${ds.map(d=>`<div class="mini ${d.fait?'done':''}" style="--m:${M(d.matiere).c}">${esc(d.titre)}</div>`).join('')}</div>`}).join('')}</div></section>
   <div class="cols"><section class="card stack"><h3>À faire</h3>${afaire.length?groups.filter(g=>g[1].length).map(([n,ds])=>`<p class="eyebrow">${n}</p>${ds.map(d=>itemDevoir(d)+(state.confirm===d.id?`<div class="row"><button class="btn danger" data-act="del-devoir" data-id="${d.id}">Supprimer ce devoir</button><button class="btn" data-act="cancel">Annuler</button></div>`:'')).join('')}`).join(''):`<div class="empty">Rien à faire. Profites-en pour relire une leçon !</div>`}
     ${afaire.length?`<p class="small muted">Pour supprimer un devoir noté par erreur : <button class="btn ghost small" data-act="mode-del">${state.delMode?'Terminer':'Choisir un devoir'}</button></p>${state.delMode?`<div class="stack">${afaire.map(d=>`<button class="btn danger small" data-act="ask-del" data-id="${d.id}">${esc(d.titre)}</button>`).join('')}</div>`:''}`:''}</section>
-  <section class="card stack"><h3>Déjà faits</h3>${faits.length?faits.map(itemDevoir).join(''):`<div class="empty">Quand tu coches un devoir, il arrive ici. +5 étoiles s'il est fait à temps.</div>`}</section></div>
+  <section class="card stack"><h3>Déjà faits</h3>${faits.length?faits.map(itemDevoir).join(''):`<div class="empty">Quand tu coches un devoir, il arrive ici. +5 étoiles à chaque fois.</div>`}</section></div>
   <section class="card"><h3>Apprendre à s'organiser</h3><div class="grid">${TIPS.map(x=>`<div class="tip"><strong>${esc(x.t)}</strong><p class="small" style="margin-top:4px">${esc(x.d)}</p></div>`).join('')}</div></section>`;
 }
 
@@ -2086,9 +2090,10 @@ function vRecompenses(){
     ${rec.length?rec.map(r=>`<div class="reward"><span class="t">${esc(r.titre)}</span><span class="row"><span class="cost">${STAR} ${r.cout}</span><button class="btn ${b.solde>=r.cout?'primary':''}" data-act="demander" data-id="${r.id}" ${b.solde>=r.cout?'':'disabled'}>${b.solde>=r.cout?'Je la demande':`Encore ${r.cout-b.solde}`}</button></span></div>`).join(''):`<div class="empty">Pas encore de récompense. Demande à tes parents d'en ajouter dans l'espace parents.</div>`}
     ${ach.length?`<p class="eyebrow" style="margin-top:6px">Mes demandes</p>${ach.slice(0,8).map(a=>`<div class="item small"><span class="grow">${esc(a.titre)} · ${esc(shortDate(a.date))}</span><span class="status ${a.statut==='validé'?'ok':a.statut==='refusé'?'no':'wait'}">${a.statut==='demandé'?'En attente des parents':a.statut==='validé'?'Accordée':'Refusée (étoiles rendues)'}</span></div>`).join('')}`:''}</section>
   <section class="card"><h3>Mes badges</h3><div class="badges">${BADGES.map(x=>{const on=x.test();return `<div class="badge ${on?'':'lock'}">${BADGE_SVG(on)}<b>${esc(x.nom)}</b><span>${esc(x.desc)}</span></div>`}).join('')}</div></section>
-  <section class="card"><h3>Comment gagner des étoiles</h3><div class="tablewrap"><table class="t">
-    <tr><td>Ajouter une leçon</td><td class="cost">+3</td></tr><tr><td>Bonne réponse facile / de réflexion / pointue</td><td class="cost">+1 / +2 / +4</td></tr><tr><td>Terminer un quiz Facile / Normal / Défi</td><td class="cost">+2 / +4 / +8</td></tr><tr><td>Quiz sans faute</td><td class="cost">+25 %</td></tr><tr><td>Premier quiz sur une leçon</td><td class="cost">+5</td></tr><tr><td>Leçon étoile du jour</td><td class="cost">×2</td></tr><tr><td>Défi éclair : tables de 6, 7, 8, 9 (tables de 2, 5 : moitié)</td><td class="cost">×1,5</td></tr><tr><td>Refaire dans la semaine ce que j'ai déjà réussi</td><td class="cost">÷2, puis ÷4</td></tr>
-    <tr><td>Devoir fait à temps (rattrapé : +2)</td><td class="cost">+5</td></tr><tr><td>Chaque étape de la routine du jour</td><td class="cost">+1</td></tr><tr><td>Routine complète</td><td class="cost">+3</td></tr><tr><td>Rentrer une note (selon le résultat)</td><td class="cost">+2 à +10</td></tr></table></div></section>
+  <section class="card"><h3>Comment gagner des étoiles</h3><div class="regles">
+    <div class="regle"><b>+1</b><span>pour chaque bonne réponse, dans un quiz ou un défi éclair</span></div>
+    <div class="regle"><b>+5</b><span>pour chaque chose finie : un quiz, un défi, un devoir coché, une leçon rangée, une note rentrée, ton code du chevalier complet, une tâche de vacances</span></div>
+    <div class="regle"><b>×2</b><span>sans faute : les étoiles du quiz sont doublées</span></div></div></section>
   <section class="card"><h3>Dernières étoiles gagnées</h3><div class="stack">${b.gains.slice(0,10).map(g=>`<div class="item small"><span class="grow">${esc(g.why)}</span><span class="muted">${esc(shortDate(g.date))}</span><span class="cost">+${g.pts}</span></div>`).join('')||'<div class="empty">Ton premier quiz te rapportera tes premières étoiles.</div>'}</div></section>
 `;
 }
@@ -2102,13 +2107,13 @@ function vParents(){
     <p class="eyebrow">Récompenses proposées</p>${rec.map(r=>`<div class="reward"><span>${esc(r.titre)}</span><span class="row"><span class="cost">${r.cout}</span><button class="btn ghost danger" data-act="del-rec" data-id="${r.id}">Retirer</button></span></div>`).join('')}
     <form class="form-grid" data-form="rec"><label class="f">Nouvelle récompense<input type="text" id="rec-t" name="titre" required></label><label class="f">Prix en étoiles<input type="number" id="rec-c" name="cout" min="1" value="50" required></label><div><button class="btn">Ajouter</button></div></form>
     ${!rec.length?`<div><button class="btn" data-act="suggestions">Ajouter des récompenses suggérées</button></div>`:''}
-    <p class="small muted">Repère : un quiz bien réussi rapporte environ 20 étoiles, une bonne journée complète 30 à 40.</p>
+    <p class="small muted">Repère : un quiz de 10 questions rapporte 13 étoiles avec 8 bonnes réponses, 30 sans faute. Une bonne journée complète rapporte 30 à 50 étoiles.</p>
     <form class="form-grid" data-form="prenom"><label class="f">Prénom affiché<input type="text" id="cfg-prenom" name="prenom" value="${esc(c.prenom||'l'enfant')}"></label><div><button class="btn">Enregistrer</button></div></form>
   </section>`;
 }
 
 /* ============ Événements ============ */
-function marquerDevoir(id,fait){const d=S.devoirs.get(id);if(!d)return;put('devoirs',d.id,{...d,fait,faitLe:fait?TODAY():null});if(fait){const n=TODAY()<=d.pour?5:2;gagne(n,n===5?'Fait à temps, bravo !':'Mieux vaut tard que jamais.')}}
+function marquerDevoir(id,fait){const d=S.devoirs.get(id);if(!d)return;const nd={...d,fait,faitLe:fait?TODAY():null};put('devoirs',d.id,nd);if(fait)gagne(ptsDevoir(nd),TODAY()<=d.pour?'Fait à temps, bravo !':'Mieux vaut tard que jamais.')}
 /* Les plis restent ouverts quand la page se redessine (après une case cochée, un défi…). */
 const PLIS={};const ouvert=id=>PLIS[id]?'open':'';
 document.addEventListener('toggle',e=>{if(e.target.id)PLIS[e.target.id]=e.target.open},true);
@@ -2190,8 +2195,8 @@ document.addEventListener('change',e=>{
   if(el.dataset.act==='vac-coche'){const v=vacEnCours(el.dataset.id)||vacEnCours();const p=planVac(v);if(!p)return;const k=el.dataset.v;
     const avant=p.jours.find(j=>j.date===el.dataset.id),complet=avant&&missionFaite(p,avant);
     const np={...p,[k]:{...(p[k]||{}),[el.dataset.id]:el.checked}};put('config',p.id,np);
-    if(el.checked){const fini=avant&&!complet&&missionFaite(np,avant);const n=(k==='bonus'?1:2)+(fini?5:0);gagne(n,fini?'Mission du jour complète !':k==='lu'?'Bonne lecture !':'')}return}
-  if(el.dataset.act==='routine'){const t=TODAY();const r=S.routine.get(t)||{items:{}};const items={...(r.items||{}),[el.dataset.v]:el.checked};put('routine',t,{items});if(el.checked){const tous=ROUTINE.every(it=>items[it.id]);gagne(tous?4:1,tous?'Routine complète !':'')}return}
+    if(el.checked){const fini=avant&&!complet&&missionFaite(np,avant);const n=ptsVac(k,el.dataset.id)+(fini?bonusMission(el.dataset.id):0);gagne(n,fini?'Mission du jour complète !':k==='lu'?'Bonne lecture !':'')}return}
+  if(el.dataset.act==='routine'){const t=TODAY();const r=S.routine.get(t)||{items:{}};const items={...(r.items||{}),[el.dataset.v]:el.checked};put('routine',t,{items});const nb=o=>ROUTINE.filter(it=>o&&o[it.id]).length,n=ptsRoutine(t,nb(items))-ptsRoutine(t,nb(r.items));if(n>0)gagne(n,nb(items)===ROUTINE.length?'Code du chevalier complet !':'');return}
 });
 document.addEventListener('dragover',e=>{const d=e.target.closest&&e.target.closest('#drop,#scan-drop');if(d){e.preventDefault();d.classList.add('over')}});
 document.addEventListener('dragleave',e=>{const d=e.target.closest&&e.target.closest('#drop,#scan-drop');if(d)d.classList.remove('over')});
@@ -2221,7 +2226,7 @@ document.addEventListener('submit',async e=>{
     f.reset();return}
   if(kind==='note'){const val=Number(fd.valeur),sur=Number(fd.sur)||20;if(isNaN(val)||val<0||val>sur){toast(`La note doit être entre 0 et ${sur}.`);return}
     put('notes',uid(),{intitule:fd.intitule,matiere:fd.matiere,valeur:val,sur,date:fd.date||TODAY(),commentaire:fd.commentaire||'',createdAt:Date.now()});
-    const p=val/sur;gagne(p>=.8?10:p>=.6?5:2,p>=.8?'Superbe note, bravo !':p>=.6?'Belle note !':"Merci de l'avoir rentrée. On va travailler ça ensemble.");f.reset();return}
+    const p=val/sur;gagne(ptsNote({valeur:val,sur,createdAt:Date.now()}),p>=.8?'Superbe note, bravo !':p>=.6?'Belle note !':"Merci de l'avoir rentrée. On va travailler ça ensemble.");f.reset();return}
   if(kind==='pin'){const c=cfg();if(!c.pin){if(!/^\d{4,8}$/.test(fd.pin)){toast('Choisissez un code de 4 à 8 chiffres.');return}put('config','main',{...c,pin:fd.pin});state.parent=true;render();toast('Code parent créé.')}else if(fd.pin===c.pin){state.parent=true;render()}else toast('Code incorrect.');return}
   if(kind==='rec'){put('recompenses',uid(),{titre:fd.titre,cout:Math.max(1,Number(fd.cout)||1)});f.reset();return}
   if(kind==='prenom'){put('config','main',{...cfg(),prenom:fd.prenom||'l'enfant'});toast('Enregistré.');return}
