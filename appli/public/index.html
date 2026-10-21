@@ -138,6 +138,15 @@ nav.tabs .wrap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8p
 :root[data-theme="dark"] .tab{--c:var(--sec-l)} :root[data-theme="dark"] .tab[aria-current="page"]{color:#150f2e}
 @media (max-width:640px){nav.tabs .wrap{gap:6px}.tab{font-size:.8rem;padding:6px 4px}.tab .ico{font-size:1.35rem}}
 main{padding-block:24px 110px}
+/* Sa semaine (espace parents) */
+.sem-jours{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.sem-jours span{display:flex;flex-direction:column;align-items:center;padding:6px 0;border-radius:12px;background:var(--surface-2);border:2px solid var(--line);font-size:1.1rem;color:var(--ink-soft)}
+.sem-jours span b{font-size:.75rem;text-transform:capitalize}
+.sem-jours span.ok{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+.sem-chiffres{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.sem-chiffres > div{display:flex;flex-direction:column;padding:10px 12px;border-radius:var(--r-s);background:var(--tint)}
+.sem-chiffres b{font-family:var(--f-display);font-size:1.6rem;line-height:1.1}
+.sem-chiffres span{font-size:.85rem;color:var(--ink-soft)}
 /* Les 3 règles des étoiles */
 .regles{display:grid;gap:10px}
 .regle{display:flex;align-items:center;gap:14px;padding:10px 14px;border-radius:var(--r-s);background:var(--tint);font-size:1.05rem}
@@ -1578,16 +1587,19 @@ function preuves(){
   });
   all('lecons').forEach(l=>{const ts=l.createdAt||D(l.date);const ex=(l.exercices||[]).filter(e=>e.juste===true||e.juste===false);
     (l.competences||[]).forEach(id=>{
-      ex.forEach(e=>add(id,{ts,ok:e.juste?1:0,poids:1,src:'cahier',question:e.enonce,rep:e.reponseEleve,bonne:e.bonneReponse}));
+      ex.forEach(e=>add(id,{ts,seance:D(l.date),ok:e.juste?1:0,poids:1,src:'cahier',question:e.enonce,rep:e.reponseEleve,bonne:e.bonneReponse}));
       // Points faibles sans exercice corrigé : un signal, sauf pour le classeur importé (couvert par le bilan de départ) et les leçons spéciales.
-      if(!ex.length&&(l.pointsFaibles||[]).length&&!l.importe&&!l.special)add(id,{ts,ok:0,poids:2,src:'faible'});
+      if(!ex.length&&(l.pointsFaibles||[]).length&&!l.importe&&!l.special)add(id,{ts,seance:D(l.date),ok:0,poids:2,src:'faible'});
     })});
   all('notes').forEach(n=>(n.competences||[]).forEach(id=>add(id,{ts:n.createdAt||D(n.date),ok:n.valeur/n.sur,poids:3,src:'note'})));
   return preuvesCache=P;
 }
-function etatComp(c){
-  const lecons=all('lecons').filter(l=>(l.competences||[]).includes(c.id));
-  const P=(preuves().get(c.id)||[]).slice().sort((a,b)=>b.ts-a.ts);
+/* jusqua (timestamp, facultatif) : l'état tel qu'il était à cette date, pour le bilan de la semaine.
+   Le travail du cahier compte à la date de la séance (seance), pas à la date où la photo a été rangée. */
+function etatComp(c,jusqua){
+  const avant=ts=>!jusqua||ts<=jusqua;
+  const lecons=all('lecons').filter(l=>(l.competences||[]).includes(c.id)&&avant(D(l.date)));
+  const P=(preuves().get(c.id)||[]).filter(p=>avant(p.seance||p.ts)).slice().sort((a,b)=>b.ts-a.ts);
   let sw=0,so=0;P.forEach((p,i)=>{const w=p.poids*Math.pow(.9,i);sw+=w;so+=w*p.ok});
   const score=sw?so/sw:null;
   const nb=P.reduce((s,p)=>s+(p.src==='note'?3:p.src==='faible'?0:1),0);
@@ -1595,7 +1607,8 @@ function etatComp(c){
   const auto=score===null?(lecons.length?'vu':'avenir'):score>=.8&&nb>=4?'acquis':score>=.6?'progres':'fragile';
   // Un choix à la main (ou le bilan de départ) vaut jusqu'à la prochaine preuve.
   const man=S.programme.get(c.id);const manTs=man?(man.ts||D(man.date)):0;
-  const manuel=man&&ETATS[man.etat]&&manTs>=dernier;
+  // Le bilan de départ compte comme connu depuis toujours : ce n'est pas un progrès de la semaine.
+  const manuel=man&&ETATS[man.etat]&&manTs>=dernier&&(man.source==='bilan'||avant(manTs));
   const quiz=P.filter(p=>p.src==='quiz');
   const erreurs=P.filter(p=>p.src!=='faible'&&p.src!=='note'&&!p.ok);
   return {etat:manuel?man.etat:auto,manuel:manuel?(man.source==='bilan'?'bilan':'main'):null,score,nb,lecons,dernier,erreurs,
@@ -2152,12 +2165,53 @@ function vRecompenses(){
   <section class="card"><h3>Dernières étoiles gagnées</h3><div class="stack">${b.gains.slice(0,10).map(g=>`<div class="item small"><span class="grow">${esc(g.why)}</span><span class="muted">${esc(shortDate(g.date))}</span><span class="cost">+${g.pts}</span></div>`).join('')||'<div class="empty">Ton premier quiz te rapportera tes premières étoiles.</div>'}</div></section>
 `;
 }
+/* ---- Sa semaine (espace parents) : les 7 derniers jours, comparés aux 7 d'avant ---- */
+function bilanSemaine(){
+  const t=TODAY(),debut=addDays(t,-6),dAvant=addDays(t,-13),finAvant=addDays(debut,-1);
+  const dans=(d,a,b)=>d>=a&&d<=b,ts0=new Date(debut+'T00:00:00').getTime();
+  const actifs=joursActifs(),jours=[...Array(7)].map((_,i)=>addDays(debut,i));
+  const quiz=all('quiz').filter(q=>q.termine&&!q.valide);
+  const qs=quiz.filter(q=>dans(q.date,debut,t)),nbAvant=quiz.filter(q=>dans(q.date,dAvant,finAvant)).length;
+  const vrais=qs.filter(q=>!q.defi),defis=qs.filter(q=>q.defi);
+  // Refait alors qu'il l'avait déjà réussi (80 % ou plus) dans les 7 jours d'avant : c'est ce que freine la règle ÷2.
+  const refaits=vrais.filter(q=>{const k=(q.leconIds||[]).join(',');return quiz.some(x=>x!==q&&!x.defi&&x.createdAt<q.createdAt&&x.createdAt>q.createdAt-7*864e5&&(x.leconIds||[]).join(',')===k&&quizPct(x)>=.8)});
+  const moy=a=>a.length?Math.round(100*a.reduce((n,q)=>n+quizPct(q),0)/a.length):null;
+  const parMat=MATIERES.map(m=>({m,qs:vrais.filter(q=>q.matiere===m.id)})).filter(o=>o.qs.length).sort((a,b)=>b.qs.length-a.qs.length);
+  const b=bilan(),somme=(a,z)=>b.gains.filter(g=>dans(g.date,a,z)).reduce((n,g)=>n+g.pts,0);
+  const dv=all('devoirs').filter(d=>d.fait&&d.faitLe&&dans(d.faitLe,debut,t));
+  const mis=plansVac().flatMap(p=>p.jours.filter(j=>dans(j.date,debut,t)).map(j=>missionFaite(p,j)));
+  const rang={avenir:0,vu:1,fragile:1,progres:2,acquis:3};
+  const evol=COMPETENCES.map(c=>({c,a:etatComp(c,ts0).etat,n:etatComp(c).etat})).filter(x=>x.a!==x.n);
+  return {jours:jours.map(d=>({d,ok:actifs.has(d)})),serie:serie().n,nbQuiz:vrais.length,nbDefis:defis.length,nbAvant,moy:moy(vrais),
+    faciles:vrais.filter(q=>q.niveau==='facile').length,refaits,parMat,moyDe:moy,etoiles:somme(debut,t),etoilesAvant:somme(dAvant,finAvant),
+    devoirs:dv.length,aTemps:dv.filter(d=>d.faitLe<=d.pour).length,retard:all('devoirs').filter(d=>!d.fait&&d.pour<t).length,
+    missions:mis.length?{faites:mis.filter(Boolean).length,total:mis.length}:null,
+    progres:evol.filter(x=>rang[x.n]>rang[x.a]&&rang[x.n]>=2),recul:evol.filter(x=>x.n==='fragile'||rang[x.n]<rang[x.a])};
+}
+function vSemaine(){
+  const w=bilanSemaine(),ecart=(n,a)=>a===n?'pareil que la semaine d\'avant':`${n>a?'+':''}${n-a} par rapport à la semaine d'avant`;
+  const ligneComp=x=>`<div class="item small"><span class="grow">${esc(x.c.t)}<br><span class="muted">${mchip(x.c.m)} ${ETATS[x.a]} → <b>${ETATS[x.n]}</b></span></span></div>`;
+  return `<section class="card stack sem-parents"><div class="sec-title"><h3>Sa semaine</h3><span class="small muted">du ${esc(shortDate(w.jours[0].d))} au ${esc(shortDate(w.jours[6].d))}</span></div>
+    <div class="sem-jours" role="img" aria-label="${w.jours.filter(j=>j.ok).length} jours travaillés sur 7">${w.jours.map(j=>`<span class="${j.ok?'ok':''}"><b>${esc(D(j.d).toLocaleDateString('fr-FR',{weekday:'short'}).slice(0,2))}</b>${j.ok?'✓':'·'}</span>`).join('')}</div>
+    <div class="sem-chiffres">
+      <div><b>${w.jours.filter(j=>j.ok).length}/7</b><span>jours travaillés · série ${w.serie} j</span></div>
+      <div><b>${w.nbQuiz}</b><span>quiz${w.moy!==null?` · ${w.moy} % de réussite`:''}${w.nbDefis?` · ${w.nbDefis} défi${w.nbDefis>1?'s':''}`:''}</span></div>
+      <div><b>${w.etoiles}</b><span>étoiles · ${ecart(w.etoiles,w.etoilesAvant)}</span></div>
+      ${w.missions?`<div><b>${w.missions.faites}/${w.missions.total}</b><span>missions de vacances</span></div>`:`<div><b>${w.devoirs}</b><span>devoirs faits${w.devoirs?` · ${w.aTemps} à temps`:''}${w.retard?` · <strong style="color:var(--bad)">${w.retard} en retard</strong>`:''}</span></div>`}
+    </div>
+    ${w.refaits.length||w.faciles?`<p class="small">${w.refaits.length?`🔁 <b>${w.refaits.length}</b> quiz refait${w.refaits.length>1?'s':''} alors qu'il l'avait déjà réussi${w.refaits.length>1?'s':''}${w.faciles?', ':'.'}`:''}${w.faciles?`<b>${w.faciles}</b> en mode Facile.`:''} <span class="muted">Ils rapportent moitié moins d'étoiles.</span></p>`:''}
+    ${w.parMat.length?`<div class="tablewrap"><table class="t"><tr><th>Matière</th><th>Quiz</th><th>Réussite</th></tr>${w.parMat.map(o=>`<tr><td>${mchip(o.m.id)}</td><td>${o.qs.length}</td><td>${w.moyDe(o.qs)} %</td></tr>`).join('')}</table></div>`:'<p class="small muted">Aucun quiz cette semaine.</p>'}
+    ${w.progres.length?`<details id="sem-progres" ${ouvert('sem-progres')}><summary>📈 ${w.progres.length} point${w.progres.length>1?'s':''} du programme en progrès</summary><div class="stack" style="margin-top:8px">${w.progres.slice(0,8).map(ligneComp).join('')}</div></details>`:''}
+    ${w.recul.length?`<details id="sem-recul" ${ouvert('sem-recul')}><summary>⚠️ ${w.recul.length} point${w.recul.length>1?'s':''} à surveiller</summary><div class="stack" style="margin-top:8px">${w.recul.slice(0,8).map(ligneComp).join('')}</div></details>`:''}
+    <p class="small muted">Chiffres des 7 derniers jours, aujourd'hui compris.</p>
+  </section>`;
+}
 const pinDefini=()=>!!(S.config.get('pin')||{}).defini;
 function vParents(){
   const c=cfg();
   if(!state.parent)return `<section class="card"><h3>Espace parents</h3><p class="small muted" style="margin-bottom:8px">Pour suivre le programme de CM1, gérer les récompenses et valider les demandes de l'enfant.</p><form class="row" data-form="pin"><input type="password" id="pin" name="pin" inputmode="numeric" placeholder="${pinDefini()?'Code parent':'Choisissez un code (4 chiffres)'}" style="max-width:240px" required><button class="btn">${pinDefini()?'Ouvrir':'Créer le code'}</button></form></section>`;
   const ach=all('achats').filter(a=>a.statut==='demandé');const rec=all('recompenses').sort((a,b)=>a.cout-b.cout);
-  return `<section class="card stack"><div class="sec-title"><h3>Espace parents</h3><button class="btn ghost" data-act="parent-off">Fermer</button></div>
+  return `${vSemaine()}<section class="card stack"><div class="sec-title"><h3>Espace parents</h3><button class="btn ghost" data-act="parent-off">Fermer</button></div>
     <p class="eyebrow">Suivi scolaire</p><div class="row"><button class="btn primary" data-act="tab" data-v="programme">🗺️ Programme CM1 : où en est ${esc(c.prenom||'l'enfant')}</button></div>
     <p class="eyebrow">Demandes à valider</p>${ach.length?ach.map(a=>`<div class="reward"><span>${esc(a.titre)} <span class="cost">${a.cout}</span></span><span class="row"><button class="btn primary" data-act="valider" data-id="${a.id}">Accorder</button><button class="btn" data-act="refuser" data-id="${a.id}">Refuser</button></span></div>`).join(''):'<p class="small muted">Aucune demande en attente.</p>'}
     <p class="eyebrow">Récompenses proposées</p>${rec.map(r=>`<div class="reward"><span>${esc(r.titre)}</span><span class="row"><span class="cost">${r.cout}</span><button class="btn ghost danger" data-act="del-rec" data-id="${r.id}">Retirer</button></span></div>`).join('')}
