@@ -980,12 +980,19 @@ function carteEtoileDuJour(){
   return `<section class="card mission"><div class="sec-title"><h3>${STAR} Leçon du jour</h3><span class="small muted">Choisie pour toi aujourd'hui</span></div>
     <div class="item"><div class="grow"><div class="t">${esc(l.titre)}</div><div class="small muted">${mchip(l.matiere)} ${esc(etatLecon(l).raison)}</div></div><button class="btn" data-act="lecon" data-id="${l.id}">Relire</button><button class="btn primary" data-act="quiz-lecon" data-id="${l.id}" data-niveau="normal">Quiz</button></div></section>`;
 }
-/* Étoiles d'un quiz ou d'un défi éclair (règles 1 à 3), calculées à la fin puis enregistrées avec le quiz.
+/* Étoiles d'un quiz ou d'un défi éclair (règles 1 à 4), calculées à la fin puis enregistrées avec le quiz.
+   Règle 4, pour qu'il ne gagne pas en refaisant ce qu'il sait déjà : un quiz Facile ou un défi des tables de 2, 5 ou 10
+   rapporte moitié moins, comme un quiz déjà réussi (80 % ou plus) dans la semaine ; réussi 2 fois ou plus : le quart.
    bonusJour marque le quiz de la leçon du jour, pour en proposer une autre ensuite. */
 function calculEtoiles(q){
   const parfait=q.total>0&&q.score===q.total,d=[];
   let pts=q.score+5;d.push(`${q.score} bonne${q.score>1?'s':''} réponse${q.score>1?'s':''} : +${q.score}`,`${q.defi?'Défi':'Quiz'} terminé : +5`);
   if(parfait){pts*=2;d.push('Sans faute : étoiles doublées')}
+  if(q.defi?q.type==='tables'&&[2,5,10].includes(Number(q.n)):q.niveau==='facile'){pts/=2;d.push(q.defi?'Table facile : moitié des étoiles':'Quiz Facile : moitié des étoiles')}
+  const cle=(q.leconIds||[]).join(',');
+  const reussis=all('quiz').filter(x=>x.termine&&!x.valide&&(x.leconIds||[]).join(',')===cle&&x.createdAt>Date.now()-7*864e5&&quizPct(x)>=.8).length;
+  if(reussis){pts/=reussis>=2?4:2;d.push(reussis>=2?`Déjà réussi ${reussis} fois cette semaine : le quart des étoiles`:'Déjà réussi cette semaine : moitié des étoiles')}
+  pts=Math.max(1,Math.round(pts));
   const ej=!q.defi&&etoileDuJour();
   return {pts,detail:d,bonusJour:!!(ej&&q.leconIds.length===1&&q.leconIds[0]===ej.id)};
 }
@@ -2093,7 +2100,8 @@ function vRecompenses(){
   <section class="card"><h3>Comment gagner des étoiles</h3><div class="regles">
     <div class="regle"><b>+1</b><span>pour chaque bonne réponse, dans un quiz ou un défi éclair</span></div>
     <div class="regle"><b>+5</b><span>pour chaque chose finie : un quiz, un défi, un devoir coché, une leçon rangée, une note rentrée, ton code du chevalier complet, une tâche de vacances</span></div>
-    <div class="regle"><b>×2</b><span>sans faute : les étoiles du quiz sont doublées</span></div></div></section>
+    <div class="regle"><b>×2</b><span>sans faute : les étoiles du quiz sont doublées</span></div>
+    <div class="regle"><b>÷2</b><span>quiz Facile, tables de 2, 5 ou 10, ou quiz déjà réussi cette semaine (le quart si déjà réussi 2 fois)</span></div></div></section>
   <section class="card"><h3>Dernières étoiles gagnées</h3><div class="stack">${b.gains.slice(0,10).map(g=>`<div class="item small"><span class="grow">${esc(g.why)}</span><span class="muted">${esc(shortDate(g.date))}</span><span class="cost">+${g.pts}</span></div>`).join('')||'<div class="empty">Ton premier quiz te rapportera tes premières étoiles.</div>'}</div></section>
 `;
 }
