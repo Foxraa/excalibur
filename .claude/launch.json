@@ -1,0 +1,13 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "cartable",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "appli/server.mjs"
+      ],
+      "port": 3000
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "excalibur",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.135.0",
+    "@duckdb/node-api": "^1.5.6-r.1",
+    "marked": "^15.0.12"
+  }
+}

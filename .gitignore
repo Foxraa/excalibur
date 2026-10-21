@@ -1,0 +1,6 @@
+# Données de l'enfant, photos du cahier et clés : jamais dans git
+appli/data/
+appli/.env
+photos/
+node_modules/
+.claude/tmp/
