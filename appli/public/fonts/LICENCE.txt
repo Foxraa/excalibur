@@ -1,0 +1,4 @@
+Andika (SIL International) et Grandstander (Ricardo Marcin) sont distribuées
+sous la licence SIL Open Font License 1.1 : https://openfontlicense.org
+Fichiers récupérés sur Google Fonts le 21/10/2026 (sous-ensemble « latin »,
+qui contient les accents français).
