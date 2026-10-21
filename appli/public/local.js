@@ -1,5 +1,5 @@
 /* Pont entre le cartable et le serveur local : remplace window.claude.use('db') et use('sample')
-   de claude.ai par des appels au serveur de ce PC (données dans data/db.json, Claude via la clé API). */
+   de claude.ai par des appels au serveur de ce PC (données dans data/cartable.duckdb, IA : Ollama sur ce PC). */
 (function () {
   let cache = null, pending = 0;
   const subs = {};

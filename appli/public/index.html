@@ -825,6 +825,46 @@ function difficulteVisee(q){
   const avant=faites[faites.length-2];
   return avant&&avant.r.ok?Math.min(max,d+1):d;
 }
+/* Vérification des calculs : l'IA locale se trompe parfois dans ses propres corrigés.
+   Pour une question de calcul, elle donne l'opération dans "calcul" ; le code la refait
+   et corrige la réponse attendue (ou écarte la question) si l'IA s'est trompée. */
+const NOMBRE=/\d{1,3}(?: \d{3})+(?:[.,]\d+)?|\d+(?:[.,]\d+)?/;
+const lireNombre=s=>{const m=String(s??'').match(NOMBRE);return m?Number(m[0].replace(/ /g,'').replace(',','.')):null};
+function evalCalcul(s){
+  const t=String(s??'').replace(/[−–]/g,'-').replace(/[×*]/g,'*').replace(/(\d)\s*x\s*(?=\d)/gi,'$1*').replace(/[÷:\/]/g,'/').replace(/=\s*\??\s*$/,'');
+  const toks=t.match(new RegExp(NOMBRE.source+'|[-+*/()]','g'))||[];
+  if(!toks.length||t.replace(new RegExp(NOMBRE.source,'g'),'').replace(/[-+*\/()\s]/g,'')!=='')return null;
+  let i=0;const vu=()=>toks[i],pris=()=>toks[i++];
+  const facteur=()=>{const k=pris();if(k==='-')return -facteur();if(k==='('){const v=somme();if(pris()!==')')throw 0;return v}if(k&&/\d/.test(k))return Number(k.replace(/ /g,'').replace(',','.'));throw 0};
+  const produit=()=>{let v=facteur();while(vu()==='*'||vu()==='/'){const o=pris(),w=facteur();if(o==='/'&&w===0)throw 0;v=o==='*'?v*w:v/w}return v};
+  const somme=()=>{let v=produit();while(vu()==='+'||vu()==='-'){const o=pris(),w=produit();v=o==='+'?v+w:v-w}return v};
+  try{const v=somme();return i===toks.length&&Number.isFinite(v)?Math.round(v*1e6)/1e6:null}catch(e){return null}
+}
+const memeNombre=(a,b)=>a!==null&&b!==null&&Math.abs(a-b)<1e-6;
+/* Écritures acceptées d'un nombre : 20,25 et 20.25 ; 1234 et 1 234. */
+function ecrituresNombre(v){
+  const [e,d]=String(v).split('.'),g=e.replace(/\B(?=(\d{3})+(?!\d))/g,' ');
+  return [...new Set([g,e].flatMap(x=>d?[x+','+d,x+'.'+d]:[x]))];
+}
+/* Renvoie la question (corrigée si besoin), ou null s'il vaut mieux l'écarter. */
+function verifierCalcul(q){
+  // Sans champ "calcul", on prend l'opération écrite dans la question (« 245 + 378 = ? »).
+  const op=q.calcul||(q.type==='courte'&&(q.question.match(/\d[\d ,.]*(?:\s*[-+×÷−]\s*\(?\d[\d ,.]*\)?)+/)||[])[0]);
+  const v=op?evalCalcul(op):null;if(v===null||q.type==='vf')return q;
+  const bon=`Le calcul : ${String(op).trim()} = ${ecrituresNombre(v)[0]}.`;
+  if(q.type==='courte'){
+    if(q.reponses.some(r=>memeNombre(lireNombre(r),v)))return q;
+    console.warn('Calcul corrigé',q.question,q.reponses,'→',v);
+    return {...q,reponses:ecrituresNombre(v),explication:bon};
+  }
+  if(q.type==='qcm'){
+    if(memeNombre(lireNombre(q.choix[q.bonne]),v))return q;
+    const j=q.choix.findIndex(c=>memeNombre(lireNombre(c),v));
+    console.warn('Calcul corrigé',q.question,q.choix[q.bonne],'→',v);
+    return j>=0?{...q,bonne:j,explication:bon}:null;
+  }
+  return q;
+}
 async function genererQuestions(q,diffs){
   const nv=NIVEAU_QUIZ[q.niveau],{erreurs,contenu,faibles,comps,plusieurs}=q.ctx;
   const faites=q.questions.map((x,i)=>({x,r:q.rep[i]}));
@@ -844,7 +884,8 @@ Règles :
 - "explication" : 2 phrases courtes, 40 mots au plus : la règle, puis pourquoi c'est la bonne réponse ici (ou pourquoi le piège est faux). l'enfant peut demander plus de détails ensuite.
 - "indice" : une seule phrase courte (15 mots au plus) qui met sur la piste sans donner la réponse.
 - Choix de QCM et réponses courtes : quelques mots seulement.
-- Pour "courte", donne dans "reponses" la réponse attendue et ses variantes acceptables.${faibles.length?`\n- Dans son cahier, l'enfant se trompe souvent sur ces points : consacre-leur au moins la moitié des questions, avec des exemples nouveaux :\n${faibles.map(e=>'  * '+e).join('\n')}`:''}${erreurs.length?`\n- l'enfant s'est déjà trompé sur ces questions, reviens sur les mêmes notions autrement :\n${erreurs.map(e=>'  * '+e).join('\n')}`:''}${comps.length>1?`\n- Pour chaque question, mets dans "competence" l'identifiant de l'objectif du programme qu'elle vérifie, pris dans cette liste :\n${comps.map(id=>`  * ${id} : ${COMP(id).t}`).join('\n')}`:''}
+- Pour "courte", donne dans "reponses" la réponse attendue et ses variantes acceptables.
+- Si la réponse d'un QCM ou d'une réponse courte s'obtient par un calcul, écris l'opération complète dans "calcul", avec seulement des nombres, + - × : et des parenthèses (par exemple "4,75 + 13 + 2,50"). Sinon, ne mets pas "calcul".${faibles.length?`\n- Dans son cahier, l'enfant se trompe souvent sur ces points : consacre-leur au moins la moitié des questions, avec des exemples nouveaux :\n${faibles.map(e=>'  * '+e).join('\n')}`:''}${erreurs.length?`\n- l'enfant s'est déjà trompé sur ces questions, reviens sur les mêmes notions autrement :\n${erreurs.map(e=>'  * '+e).join('\n')}`:''}${comps.length>1?`\n- Pour chaque question, mets dans "competence" l'identifiant de l'objectif du programme qu'elle vérifie, pris dans cette liste :\n${comps.map(id=>`  * ${id} : ${COMP(id).t}`).join('\n')}`:''}
 
 Contenu :
 ${contenu}
@@ -853,7 +894,7 @@ Forme JSON de chaque type de question :
 {"questions":[
  {"type":"qcm","question":"...","choix":["...","...","...","..."],"bonne":0,"explication":"...","indice":"...","difficulte":1${comps.length>1?',"competence":"identifiant"':''}},
  {"type":"vf","question":"affirmation à juger","bonne":true,"explication":"...","indice":"...","difficulte":2},
- {"type":"courte","question":"...","reponses":["réponse attendue","variante"],"explication":"...","indice":"...","difficulte":3}
+ {"type":"courte","question":"...","reponses":["réponse attendue","variante"],"calcul":"opération si c'est un calcul","explication":"...","indice":"...","difficulte":3}
 ]}
 
 ${historique?`Questions déjà posées (ne les répète pas, change de notion ou d'angle) :
@@ -875,7 +916,7 @@ Réponds uniquement avec un objet JSON {"questions":[...]} contenant exactement 
     q.difficulte=Number(q.difficulte)||1;
     q.competence=comps.length===1?comps[0]:comps.includes(q.competence)?q.competence:undefined;
   });
-  return qs.filter(q=>q.type!=='qcm'||(q.choix.length>=2&&q.bonne>=0)).slice(0,diffs.length);
+  return qs.filter(q=>q.type!=='qcm'||(q.choix.length>=2&&q.bonne>=0)).map(verifierCalcul).filter(Boolean).slice(0,diffs.length);
 }
 /* Complète le quiz jusqu'à avoir `jusqua` questions (une seule génération à la fois, 2 essais). */
 async function prepareQuestions(q,jusqua){
@@ -1164,7 +1205,9 @@ function lancerDefi(type,n){
   if(type==='tables'){
     n=Number(n)||7;const autres=[2,3,4,5,6,7,8,9].filter(x=>x!==n);
     const f=[...Array(10)].map((_,i)=>i+1).sort(()=>Math.random()-.5).slice(0,8).map(k=>[n,k]);
-    const m=[...Array(4)].map(()=>[pick(autres),2+Math.floor(Math.random()*8)]);
+    // 4 calculs d'autres tables pour réviser, tous différents (4 × 2 et 2 × 4 comptent pour un).
+    const m=[],vus=new Set();
+    while(m.length<4){const a=pick(autres),b=2+Math.floor(Math.random()*8),k=Math.min(a,b)+'x'+Math.max(a,b);if(b===n||vus.has(k))continue;vus.add(k);m.push([a,b])}
     qs=[...f,...m].sort(()=>Math.random()-.5).map(([a,b])=>Math.random()<.5?[a,b]:[b,a]).map(([a,b])=>({type:'courte',question:`${a} × ${b}`,reponses:[String(a*b)],competence:'maths-4-1'}));
   }else{
     qs=[...ORTHO_VAC].sort(()=>Math.random()-.5).slice(0,10).map(([p,c,b,ex])=>({type:'qcm',question:p,choix:c,bonne:b,explication:ex,competence:'francais-4-6'}));
@@ -1190,7 +1233,7 @@ function vDefi(){
   const fb=r?`<div class="fb ${r.ok?'ok':'ko'}"><span class="h">${r.ok?pick(['Bravo !','Exact !','Touché, chevalier !',"Coup d'épée parfait !"]):'Pas tout à fait…'}</span>${!r.ok?`<p>La bonne réponse : <strong>${esc(x.type==='courte'?x.reponses[0]:x.choix[x.bonne])}</strong></p>`:''}${x.explication?`<p>${rich(x.explication)}</p>`:''}
     <div class="row"><button class="btn primary" data-act="defi-suite" data-autofocus>${d.i<d.questions.length-1?'Suivant':'Voir mon résultat'}</button></div></div>`:'';
   return `<div class="quiz defi stack">
-    <div class="sec-title"><div><p class="eyebrow">Sans Claude, rien qu'avec ta tête</p><h2>${esc(titre)}</h2></div><button class="btn ghost" data-act="tab" data-v="jour">Arrêter</button></div>
+    <div class="sec-title"><div><p class="eyebrow">${d.type==='tables'?`8 calculs de la table de ${d.n}, 4 d'autres tables`:'Rien qu’avec ta tête'}</p><h2>${esc(titre)}</h2></div><button class="btn ghost" data-act="tab" data-v="jour">Arrêter</button></div>
     <div class="dots" aria-label="Question ${d.i+1} sur ${d.questions.length}">${dots}</div>
     <section class="card stack"><span class="small muted">Question ${d.i+1} / ${d.questions.length}</span>${body}${fb}</section></div>`;
 }
@@ -1426,7 +1469,7 @@ function itemTache(p,j,x){
       <button class="btn" ${ref?`data-act="cours" data-id="${esc(String(j.lecon).slice(4))}"`:`data-act="lecon" data-id="${esc(l.id)}"`}>Relire</button><button class="btn ${x.ok?'':'primary'}" data-act="quiz-lecon" data-id="${esc(j.lecon)}" data-niveau="normal">${x.ok?'Refaire':'Quiz'}</button></div>`;
   }
   if(x.k==='defi'){const tb=j.defi.type==='tables';
-    return `<div class="item ${ok}"><span class="num" aria-hidden="true">${x.ok?'✅':'⚡'}</span><div class="grow"><div class="t">Défi éclair : ${tb?`table de ${j.defi.n}`:'orthographe'}</div><div class="small muted">${tb?'12 calculs de tête, le plus vite possible':'a/à, et/est, son/sont, on/ont, é/er… 10 phrases'}</div></div>
+    return `<div class="item ${ok}"><span class="num" aria-hidden="true">${x.ok?'✅':'⚡'}</span><div class="grow"><div class="t">Défi éclair : ${tb?`table de ${j.defi.n}`:'orthographe'}</div><div class="small muted">${tb?`8 calculs de la table de ${j.defi.n} et 4 d'autres tables, le plus vite possible`:'a/à, et/est, son/sont, on/ont, é/er… 10 phrases'}</div></div>
       ${x.ok?'':`<button class="btn primary" data-act="defi" data-v="${j.defi.type}" data-n="${j.defi.n||''}">Jouer</button>`}</div>`;
   }
   const lib={lire:['📚',"Lire 15 minutes : un livre, une BD, un magazine…",'+5 étoiles'],rentree:['🎒','Préparer la rentrée : regarde les leçons de la semaine prochaine (plus bas), tes devoirs et ton cartable','+5 étoiles']}[x.k];
@@ -2105,9 +2148,10 @@ function vRecompenses(){
   <section class="card"><h3>Dernières étoiles gagnées</h3><div class="stack">${b.gains.slice(0,10).map(g=>`<div class="item small"><span class="grow">${esc(g.why)}</span><span class="muted">${esc(shortDate(g.date))}</span><span class="cost">+${g.pts}</span></div>`).join('')||'<div class="empty">Ton premier quiz te rapportera tes premières étoiles.</div>'}</div></section>
 `;
 }
+const pinDefini=()=>!!(S.config.get('pin')||{}).defini;
 function vParents(){
   const c=cfg();
-  if(!state.parent)return `<section class="card"><h3>Espace parents</h3><p class="small muted" style="margin-bottom:8px">Pour suivre le programme de CM1, gérer les récompenses et valider les demandes de l'enfant.</p><form class="row" data-form="pin"><input type="password" id="pin" name="pin" inputmode="numeric" placeholder="${c.pin?'Code parent':'Choisissez un code (4 chiffres)'}" style="max-width:240px" required><button class="btn">${c.pin?'Ouvrir':'Créer le code'}</button></form></section>`;
+  if(!state.parent)return `<section class="card"><h3>Espace parents</h3><p class="small muted" style="margin-bottom:8px">Pour suivre le programme de CM1, gérer les récompenses et valider les demandes de l'enfant.</p><form class="row" data-form="pin"><input type="password" id="pin" name="pin" inputmode="numeric" placeholder="${pinDefini()?'Code parent':'Choisissez un code (4 chiffres)'}" style="max-width:240px" required><button class="btn">${pinDefini()?'Ouvrir':'Créer le code'}</button></form></section>`;
   const ach=all('achats').filter(a=>a.statut==='demandé');const rec=all('recompenses').sort((a,b)=>a.cout-b.cout);
   return `<section class="card stack"><div class="sec-title"><h3>Espace parents</h3><button class="btn ghost" data-act="parent-off">Fermer</button></div>
     <p class="eyebrow">Suivi scolaire</p><div class="row"><button class="btn primary" data-act="tab" data-v="programme">🗺️ Programme CM1 : où en est ${esc(c.prenom||'l'enfant')}</button></div>
@@ -2235,7 +2279,10 @@ document.addEventListener('submit',async e=>{
   if(kind==='note'){const val=Number(fd.valeur),sur=Number(fd.sur)||20;if(isNaN(val)||val<0||val>sur){toast(`La note doit être entre 0 et ${sur}.`);return}
     put('notes',uid(),{intitule:fd.intitule,matiere:fd.matiere,valeur:val,sur,date:fd.date||TODAY(),commentaire:fd.commentaire||'',createdAt:Date.now()});
     const p=val/sur;gagne(ptsNote({valeur:val,sur,createdAt:Date.now()}),p>=.8?'Superbe note, bravo !':p>=.6?'Belle note !':"Merci de l'avoir rentrée. On va travailler ça ensemble.");f.reset();return}
-  if(kind==='pin'){const c=cfg();if(!c.pin){if(!/^\d{4,8}$/.test(fd.pin)){toast('Choisissez un code de 4 à 8 chiffres.');return}put('config','main',{...c,pin:fd.pin});state.parent=true;render();toast('Code parent créé.')}else if(fd.pin===c.pin){state.parent=true;render()}else toast('Code incorrect.');return}
+  // Le code parent est vérifié par le serveur, qui le garde haché : il n'arrive jamais dans la page.
+  if(kind==='pin'){const creer=!pinDefini();if(creer&&!/^\d{4,8}$/.test(fd.pin)){toast('Choisissez un code de 4 à 8 chiffres.');return}
+    let r;try{r=await fetch('/api/pin',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({pin:fd.pin,creer})}).then(x=>x.json())}catch(e){toast("Le serveur du cartable ne répond pas.");return}
+    if(r.ok){if(creer){S.config.set('pin',{id:'pin',defini:true});toast('Code parent créé.')}state.parent=true;render()}else toast(r.code==='deja'?'Un code existe déjà.':'Code incorrect.');return}
   if(kind==='rec'){put('recompenses',uid(),{titre:fd.titre,cout:Math.max(1,Number(fd.cout)||1)});f.reset();return}
   if(kind==='prenom'){put('config','main',{...cfg(),prenom:fd.prenom||'l'enfant'});toast('Enregistré.');return}
 });

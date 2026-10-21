@@ -2,6 +2,7 @@
 // Sert l'appli (public/), garde les données dans data/cartable.duckdb et appelle Claude
 // avec la clé API, qui reste sur ce PC et n'est jamais envoyée au navigateur.
 import http from "node:http";
+import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -80,6 +81,26 @@ if (ancien) {
 }
 // Au démarrage : ce qui restait dans le journal (fenêtre fermée d'un coup, coupure) part tout de suite dans le fichier.
 await duck.run("CHECKPOINT");
+
+/* ---------- Code parent ---------- */
+// Gardé haché (scrypt) dans config/pin : jamais envoyé au navigateur, ni lisible ni modifiable par /api/db.
+// Le navigateur le vérifie par POST /api/pin.
+const hacher = (pin, sel) => crypto.scryptSync(String(pin), sel, 32).toString("hex");
+const lireDoc = async (col, id) => {
+  const rows = (await tour(() => duck.runAndReadAll("SELECT data::VARCHAR FROM docs WHERE col = $1 AND id = $2", [col, id]))).getRows();
+  return rows.length ? JSON.parse(rows[0][0]) : null;
+};
+const enregistrerPin = pin => { const sel = crypto.randomBytes(16).toString("hex"); return ecrire("config", "pin", { sel, hash: hacher(pin, sel) }); };
+// Avant le 21/10/2026, le code était en clair dans config/main : on le range à l'abri.
+{
+  const main = await lireDoc("config", "main");
+  if (main?.pin) {
+    if (!(await lireDoc("config", "pin"))) await enregistrerPin(main.pin);
+    const { pin, ...reste } = main;
+    await ecrire("config", "main", reste);
+    console.log("Code parent rangé à l'abri (haché).");
+  }
+}
 
 /* ---------- Outils HTTP ---------- */
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".ico": "image/x-icon" };
@@ -268,13 +289,36 @@ const server = http.createServer(async (req, res) => {
       ai: iaPrete(IA) && iaPrete(IA_QUICK), ia: IA, iaQuick: IA_QUICK, maxImages: MAX_IMAGES,
       model: IA === "ollama" ? OLLAMA_MODEL : MODEL, modelQuick: IA_QUICK === "ollama" ? OLLAMA_MODEL : MODEL_QUICK,
     });
-    if (p === "/api/db" && req.method === "GET") return json(res, 200, await toutLire());
+    if (p === "/api/db" && req.method === "GET") {
+      const db = await toutLire();
+      if (db.config?.pin) db.config.pin = { defini: true };
+      if (db.config?.main) delete db.config.main.pin;
+      return json(res, 200, db);
+    }
+    if (p === "/api/pin" && req.method === "POST") {
+      const { pin = "", creer = false } = await readBody(req, 1000);
+      const doc = await lireDoc("config", "pin");
+      if (creer) {
+        if (doc) return json(res, 409, { code: "deja" });
+        if (!/^\d{4,8}$/.test(String(pin))) return json(res, 400, { code: "format" });
+        await enregistrerPin(pin);
+        return json(res, 200, { ok: true });
+      }
+      const ok = !!doc && crypto.timingSafeEqual(Buffer.from(hacher(pin, doc.sel), "hex"), Buffer.from(doc.hash, "hex"));
+      if (!ok) await new Promise(r => setTimeout(r, 1000)); // une seconde par erreur : deviner au hasard devient très long
+      return json(res, 200, { ok });
+    }
     if (p === "/api/cours") return json(res, 200, await coursEtProgression());
     const m = p.match(/^\/api\/db\/([a-z]+)\/([^/]+)$/);
     if (m) {
       const [, col, id] = m;
       if (!COLS.has(col)) return json(res, 404, { code: "unknown_collection" });
-      if (req.method === "PUT") { await ecrire(col, id, await readBody(req)); return json(res, 200, { ok: true }); }
+      if (col === "config" && id === "pin") return json(res, 403, { code: "forbidden" });
+      if (req.method === "PUT") {
+        const data = await readBody(req);
+        if (col === "config" && id === "main") delete data.pin; // un ancien onglet pourrait renvoyer l'ancien code en clair
+        await ecrire(col, id, data); return json(res, 200, { ok: true });
+      }
       if (req.method === "DELETE") { await effacer(col, id); return json(res, 200, { ok: true }); }
     }
     if (p === "/api/sample" && req.method === "POST") return await sample(req, res);
