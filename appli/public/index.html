@@ -691,6 +691,59 @@ Types (n'en utilise pas d'autre) :
 Exemple : "schema": {"type":"barre","corps":"1/2 : un demi | bleu\\n2/4 : deux quarts | vert\\nlegende: **1/2 = 2/4** : la même longueur."}`;
 const LISTE_COMP=(mats)=>COMPETENCES.filter(c=>!mats||mats.includes(c.m)).map(c=>`${c.id} : ${c.t} [${M(c.m).nom} – ${c.d}]`).join('\n');
 const compValides=ids=>[...new Set((Array.isArray(ids)?ids:[]).map(String).filter(id=>COMP(id)))].slice(0,6);
+/* Rattachement au programme sans IA : les mots d'un devoir, d'une note ou d'une leçon sont comparés
+   aux objectifs du programme et aux leçons du cahier déjà reliées. Les mots rares comptent davantage. */
+const MOTS_VIDES=new Set('pour avec dans sont seront leur leurs cette faire savoir apprendre devoir devoirs page pages exercice exercices suivants suivantes etre avoir mathematiques francais lecon lecons evaluation controle choix fiche'.split(' '));
+const racines=s=>[...new Set(norm(s).replace(/[,.]/g,' ').split(' ').filter(w=>w.length>=4&&!/^\d+$/.test(w)&&!MOTS_VIDES.has(w)).map(w=>w.replace(/(es|s|x)$/,'').slice(0,6)))];
+const MAT_PROCHES={histoire:['histoire','geographie'],geographie:['histoire','geographie']};
+var idxLien=null;
+function indexLien(){
+  const docs=[...COMPETENCES.map(c=>({c,r:racines(c.t+' '+c.d)})),
+    ...all('lecons').filter(l=>(l.competences||[]).length&&l.lien!=='auto').map(l=>({l,r:racines(l.titre+' '+(l.notions||[]).join(' '))}))];
+  const df=new Map();docs.forEach(d=>d.r.forEach(w=>df.set(w,(df.get(w)||0)+1)));
+  return idxLien={docs,idf:w=>Math.log(docs.length/(df.get(w)||docs.length))};
+}
+function devinerComp(x){
+  if(x.type==='Matériel à apporter')return [];
+  // Une révision planifiée reprend le contrôle qu'elle prépare.
+  const ctl=/\(contrôle : (.+)\)$/.exec(x.titre||'');
+  if(ctl){const d=all('devoirs').find(d=>d.type==='Contrôle'&&d.titre===ctl[1]&&d.matiere===x.matiere);if(d)return (d.competences||[]).length?d.competences:devinerComp(d)}
+  const {docs,idf}=idxLien||indexLien(),mats=MAT_PROCHES[x.matiere]||[x.matiere];
+  const t=new Set(racines([x.titre,x.titre,x.detail,x.intitule,x.commentaire,...(x.notions||[])].filter(Boolean).join(' ')));
+  const sc=new Map();
+  docs.forEach(d=>{
+    if(d.l===x||!mats.includes(d.c?d.c.m:d.l.matiere))return;
+    const s=d.r.filter(w=>t.has(w)).reduce((a,w)=>a+idf(w),0);if(s<2.5)return;
+    (d.c?[d.c.id]:d.l.competences.filter(COMP)).forEach(id=>sc.set(id,Math.max(sc.get(id)||0,s*(d.c?1:.8))));
+  });
+  const top=Math.max(0,...sc.values());
+  return [...sc].filter(([,s])=>s>=top*.6).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([id])=>id);
+}
+/* Les objectifs donnés par l'IA d'abord, sinon ceux devinés (marqués lien:'auto' pour que l'IA puisse les revoir). */
+function avecLien(x,ia){
+  const cs=compValides(ia);if(cs.length)return {...x,competences:cs,lien:'ia'};
+  const g=devinerComp(x);return g.length?{...x,competences:g,lien:'auto'}:{...x,competences:[]};
+}
+/* Leçons du cahier et leçons du programme les plus proches d'un devoir ou d'une note. */
+function leconsLiees(x){
+  const cs=x.competences||[];if(!cs.length)return [];
+  const t=new Set(racines([x.titre,x.detail,x.intitule].filter(Boolean).join(' ')));
+  const ref=x.pour||x.date||TODAY();
+  return all('lecons').map(l=>({l,n:(l.competences||[]).filter(id=>cs.includes(id)).length,m:racines(l.titre+' '+(l.notions||[]).join(' ')).filter(w=>t.has(w)).length}))
+    .filter(o=>o.n&&(o.l.matiere===x.matiere||o.m))
+    .sort((a,b)=>b.m-a.m||b.n-a.n||Math.abs(daysBetween(a.l.date,ref))-Math.abs(daysBetween(b.l.date,ref))).map(o=>o.l);
+}
+const refsLiees=x=>COURS&&!COURS.err?Object.values(COURS.lecons).filter(c=>c.objectifs.some(id=>(x.competences||[]).includes(id))):[];
+function chipsLiens(x){
+  const l=leconsLiees(x)[0],r=refsLiees(x).find(c=>!l||c.matiere===x.matiere);
+  return l||r?`<div class="links">${l?`<button class="lchip" data-act="lecon" data-id="${l.id}" title="Ma leçon sur ce sujet">📖 ${esc(l.titre)}</button>`:''}${r?`<button class="lchip ref" data-act="cours" data-id="${esc(r.id)}" title="Leçon du programme : ${esc(r.titre)}">Leçon ${esc(r.code)}</button>`:''}</div>`:'';
+}
+/* Les révisions d'un contrôle, réparties sur les 3 jours d'avant. */
+function planifierRevisions(d){
+  const t=TODAY();let n=0;
+  [[3,'Relire la leçon'],[2,'Faire un quiz'],[1,'Revoir mes erreurs']].forEach(([j,txt])=>{const p=addDays(d.pour,-j);if(p>=t){n++;put('devoirs',uid(),{titre:`${txt} (contrôle : ${d.titre})`,matiere:d.matiere,type:'Révision',pour:p,fait:false,faitLe:null,createdAt:Date.now(),competences:d.competences||[],...(d.lien?{lien:d.lien}:{})})}});
+  return n;
+}
 const TYPES_DV=['Devoir','Leçon à apprendre','Contrôle','Exposé','Matériel à apporter'];
 const GENRES={lecon:'Leçon',exercice:'Exercices',evaluation:'Évaluation',agenda:'Agenda et devoirs',autre:'Autre document'};
 const LECON_SCHEMA=COURS_SCHEMA.replace(/^\{\n "lisible": true,\n/,'{\n').replace(/\n\}$/,`,
@@ -731,6 +784,7 @@ B) "devoirs" : tout ce qui est à faire pour un jour précis (agenda, cahier de 
 - Une ligne par devoir. "titre" : court et clair pour un enfant (ex : « Apprendre la poésie (2 strophes) », « Exercices 3 et 4 p. 42 »). "detail" : le reste de la consigne, ou "".
 - "type" : "Contrôle" pour une évaluation à préparer ; "Leçon à apprendre" pour apprendre ou réviser ; "Matériel à apporter" pour un objet ou un papier à rapporter ou faire signer ; "Exposé" ; sinon "Devoir".
 - Ignore ce qui est barré et les dessins.
+- "competences" : les objectifs du programme (liste plus bas) que le devoir fait travailler, 0 à 3 ; liste vide pour un objet à apporter ou un papier à signer.
 
 C) "note" : seulement si une note chiffrée est écrite (ex. 15/20, 8/10). Sinon null. Si l'évaluation est notée en lettres ou en couleurs (A, EA, NA, vert, orange, rouge…), mets null et dis-le dans "description".
 
@@ -752,8 +806,8 @@ Réponds uniquement avec un objet JSON de cette forme :
 "genre": "lecon | exercice | evaluation | agenda | autre",
 "description": "en 1 ou 2 phrases adressées à l'enfant, ce que tu as trouvé sur les photos",
 "lecon": ${LECON_SCHEMA},
-"devoirs": [{"titre": "...", "detail": "...", "matiere": "un des identifiants: ${MAT_LIST}", "type": "${TYPES_DV.join('" ou "')}", "pour": "AAAA-MM-JJ", "certain": true}],
-"note": {"intitule": "ex : Évaluation sur les fractions", "matiere": "un des identifiants", "valeur": 15, "sur": 20, "commentaire": "l'appréciation de la maîtresse, ou \\"\\""},
+"devoirs": [{"titre": "...", "detail": "...", "matiere": "un des identifiants: ${MAT_LIST}", "type": "${TYPES_DV.join('" ou "')}", "pour": "AAAA-MM-JJ", "certain": true, "competences": ["identifiant"]}],
+"note": {"intitule": "ex : Évaluation sur les fractions", "matiere": "un des identifiants", "valeur": 15, "sur": 20, "commentaire": "l'appréciation de la maîtresse, ou \\"\\"", "competences": ["identifiants des objectifs évalués, 1 à 4"]},
 "infos": ["..."]
 }`;
   return normRes(await askJSON(prompt,{images,modelTier:'default',cache:false},progressAdd));
@@ -763,9 +817,9 @@ function normRes(r){
   if(!r||typeof r!=='object')throw {code:'invalid_json'};
   const mat=m=>MATIERES.some(x=>x.id===m)?m:'francais';
   const lecon=r.lecon&&typeof r.lecon==='object'&&(r.lecon.titre||r.lecon.cours)?{...r.lecon,matiere:mat(r.lecon.matiere),exercices:(Array.isArray(r.lecon.exercices)?r.lecon.exercices:[]).filter(x=>x&&x.enonce),pointsFaibles:(Array.isArray(r.lecon.pointsFaibles)?r.lecon.pointsFaibles:[]).filter(Boolean).map(String)}:null;
-  const devoirs=(Array.isArray(r.devoirs)?r.devoirs:[]).filter(d=>d&&d.titre).map(d=>{const ok=/^\d{4}-\d{2}-\d{2}$/.test(d.pour||'');return {titre:String(d.titre),detail:d.detail?String(d.detail):'',matiere:mat(d.matiere),type:TYPES_DV.includes(d.type)?d.type:'Devoir',pour:ok?d.pour:addDays(TODAY(),1),certain:ok&&d.certain!==false}});
+  const devoirs=(Array.isArray(r.devoirs)?r.devoirs:[]).filter(d=>d&&d.titre).map(d=>{const ok=/^\d{4}-\d{2}-\d{2}$/.test(d.pour||'');return {titre:String(d.titre),detail:d.detail?String(d.detail):'',matiere:mat(d.matiere),type:TYPES_DV.includes(d.type)?d.type:'Devoir',pour:ok?d.pour:addDays(TODAY(),1),certain:ok&&d.certain!==false,competences:compValides(d.competences)}});
   const n=r.note,v=n&&Number(n.valeur),s=n&&Number(n.sur);
-  const note=n&&isFinite(v)&&s>0&&v>=0&&v<=s?{intitule:String(n.intitule||(lecon&&lecon.titre)||'Évaluation'),matiere:mat(n.matiere||(lecon&&lecon.matiere)),valeur:v,sur:s,commentaire:n.commentaire?String(n.commentaire):''}:null;
+  const note=n&&isFinite(v)&&s>0&&v>=0&&v<=s?{intitule:String(n.intitule||(lecon&&lecon.titre)||'Évaluation'),matiere:mat(n.matiere||(lecon&&lecon.matiere)),valeur:v,sur:s,commentaire:n.commentaire?String(n.commentaire):'',competences:compValides(n.competences)}:null;
   return {lisible:r.lisible!==false,genre:GENRES[r.genre]?r.genre:lecon?'lecon':devoirs.length?'agenda':'autre',description:String(r.description||r.resume||''),lecon,devoirs,note,infos:(Array.isArray(r.infos)?r.infos:[]).filter(Boolean).map(String)};
 }
 async function lireAgenda(images,indice){
@@ -782,13 +836,17 @@ Ta mission : relever tous les devoirs écrits, même à la main ou abrégés («
 - "titre" : court et clair pour un enfant (ex : « Apprendre la poésie (2 strophes) », « Exercices 3 et 4 p. 42 »). "detail" : le reste de la consigne, ou "".
 - "type" : "Contrôle" pour une évaluation, une dictée bilan ou un contrôle à préparer ; "Leçon à apprendre" pour apprendre ou réviser ; "Matériel à apporter" pour un objet ou un papier à rapporter ou faire signer ; "Exposé" ; sinon "Devoir".
 - Ignore ce qui est barré, les dessins et les mots des parents qui ne sont pas des devoirs.
+- "competences" : les objectifs du programme (liste ci-dessous) que le devoir fait travailler, 0 à 3 ; liste vide pour un objet à apporter ou un papier à signer.
 Si rien n'est lisible, mets "lisible": false et explique pourquoi dans "remarque".
 
 Calendrier :
 ${cal}
 
+Objectifs du programme officiel de CM1 (pour remplir "competences", n'utilise que ces identifiants) :
+${LISTE_COMP()}
+
 Réponds uniquement avec un objet JSON de cette forme :
-{"lisible": true, "devoirs": [{"titre": "...", "detail": "...", "matiere": "un des identifiants: ${MAT_LIST}", "type": "${TYPES_DV.join('" ou "')}", "pour": "AAAA-MM-JJ", "certain": true}], "remarque": "une phrase pour l'enfant si quelque chose était difficile à lire, sinon \\"\\""}`;
+{"lisible": true, "devoirs": [{"titre": "...", "detail": "...", "matiere": "un des identifiants: ${MAT_LIST}", "type": "${TYPES_DV.join('" ou "')}", "pour": "AAAA-MM-JJ", "certain": true, "competences": ["identifiant"]}], "remarque": "une phrase pour l'enfant si quelque chose était difficile à lire, sinon \\"\\""}`;
   return askJSON(prompt,{images,modelTier:'default',cache:false},n=>{const el=app.querySelector('[data-progress]');if(el)el.textContent=`Je recopie tes devoirs… (${n} caractères)`});
 }
 const dejaNote=x=>all('devoirs').some(d=>d.pour===x.pour&&norm(d.titre)===norm(x.titre));
@@ -1391,8 +1449,16 @@ function renderHeader(){
   if(cur)document.documentElement.dataset.sec=cur;
   document.getElementById('tabs').innerHTML=TABS.map(([id,l])=>`<button class="tab" data-sec="${id}" data-act="tab" data-v="${id}" ${cur===id?'aria-current="page"':''}><span class="ico" aria-hidden="true">${vac&&id==='jour'?'🏖️':TAB_ICO[id]}</span>${vac&&id==='jour'?'Mes vacances':l}</button>`).join('');
 }
+/* Une fois par ouverture : ce qui a été rangé sans lien avec le programme reçoit les objectifs devinés. */
+var dejaLie=false;
+function lierAuto(){
+  if(dejaLie||loading())return;dejaLie=true;
+  [['lecons',l=>!l.horsProgramme&&!l.ref],['devoirs',()=>true],['notes',()=>true]].forEach(([col,ok])=>all(col).filter(x=>!x.lien&&!(x.competences||[]).length&&ok(x)).forEach(x=>{
+    const cs=devinerComp(x);if(cs.length)put(col,x.id,{...x,competences:cs,lien:'auto'});
+  }));
+}
 function render(){
-  dirty=false;preuvesCache=null;renderHeader();
+  dirty=false;preuvesCache=null;idxLien=null;lierAuto();renderHeader();
   const v={jour:modeVac()?vVacances:vJour,defi:vDefi,matieres:vMatieres,matiere:vMatiere,lecon:vLecon,ajouter:vAjouter,quiz:vQuiz,devoirs:vDevoirs,notes:vNotes,recompenses:vRecompenses,programme:vProgramme,annee:vAnnee,cours:vCours,parents:vParents}[state.view]||vJour;
   app.innerHTML=(storeMode==='local'?`<div class="offline small">Le serveur du cartable ne répond pas : les données restent pour l'instant dans ce navigateur. Lance « Démarrer le cartable » sur l'ordinateur, puis recharge la page.</div>`:'')+sousOnglets()+v();
   const af=app.querySelector('[data-autofocus]');if(af)af.focus({preventScroll:true});
@@ -1418,7 +1484,7 @@ function nudge(){
 function itemDevoir(d){
   const t=TODAY(),late=!d.fait&&d.pour<t;
   const quand=d.pour===t?"aujourd'hui":d.pour===addDays(t,1)?'demain':longDate(d.pour);
-  return `<div class="item ${late?'late':''} ${d.fait?'done':''}"><input type="checkbox" class="chk" data-act="devoir-fait" data-id="${d.id}" ${d.fait?'checked':''} aria-label="Fait : ${esc(d.titre)}"><div class="grow"><div class="t">${esc(d.titre)}</div>${d.detail?`<div class="small">${esc(d.detail)}</div>`:''}<div class="small muted">${mchip(d.matiere)} ${esc(d.type||'Devoir')} · pour ${late?'<strong style="color:var(--bad)">':''}${quand}${late?' (en retard)</strong>':''}</div></div></div>`;
+  return `<div class="item ${late?'late':''} ${d.fait?'done':''}"><input type="checkbox" class="chk" data-act="devoir-fait" data-id="${d.id}" ${d.fait?'checked':''} aria-label="Fait : ${esc(d.titre)}"><div class="grow"><div class="t">${esc(d.titre)}</div>${d.detail?`<div class="small">${esc(d.detail)}</div>`:''}<div class="small muted">${mchip(d.matiere)} ${esc(d.type||'Devoir')} · pour ${late?'<strong style="color:var(--bad)">':''}${quand}${late?' (en retard)</strong>':''}</div>${d.fait?'':chipsLiens(d)}</div></div>`;
 }
 /* La mission du jour : UNE chose à faire maintenant, de la plus urgente à la moins urgente.
    Devoir en retard ou proche, puis la leçon à réviser (étoile du jour d'abord), un objectif à retravailler,
@@ -1426,8 +1492,9 @@ function itemDevoir(d){
 function missionDuJour(){
   const t=TODAY(),dv=all('devoirs').filter(d=>!d.fait).sort((a,b)=>a.pour<b.pour?-1:1);
   const d=dv.find(x=>x.pour<t)||dv.find(x=>x.pour===t)||dv.find(x=>x.pour===addDays(t,1));
-  if(d)return {devoir:true,ico:'✏️',titre:d.titre,detail:`${M(d.matiere).nom} · ${d.type||'Devoir'} ${d.pour<t?'en retard':d.pour===t?"pour aujourd'hui":'pour demain'}${d.detail?' · '+d.detail:''}`,
-    btn:`<button class="btn primary big" data-act="devoir-ok" data-id="${d.id}">C'est fait !</button><button class="btn" data-act="tab" data-v="devoirs">Tous mes devoirs</button>`};
+  if(d){const l=['Contrôle','Leçon à apprendre','Révision'].includes(d.type)&&leconsLiees(d)[0];
+    return {devoir:true,ico:'✏️',titre:d.titre,detail:`${M(d.matiere).nom} · ${d.type||'Devoir'} ${d.pour<t?'en retard':d.pour===t?"pour aujourd'hui":'pour demain'}${d.detail?' · '+d.detail:''}`,
+    btn:`${l?`<button class="btn" data-act="lecon" data-id="${l.id}">📖 Relire « ${esc(l.titre)} »</button>${sample?`<button class="btn" data-act="quiz-lecon" data-id="${l.id}" data-niveau="normal">Me tester</button>`:''}`:''}<button class="btn primary big" data-act="devoir-ok" data-id="${d.id}">C'est fait !</button><button class="btn" data-act="tab" data-v="devoirs">Tous mes devoirs</button>`}}
   const ej=etoileDuJour(),l=ej||(aReviser()[0]||{}).l;
   if(l)return {ico:'📖',titre:`Relis « ${l.titre} », puis fais le quiz`,detail:`${M(l.matiere).nom} · ${etatLecon(l).raison}${ej?" · leçon du jour":''}`,
     btn:`${sample?`<button class="btn primary big" data-act="quiz-lecon" data-id="${l.id}" data-niveau="normal">Faire le quiz</button>`:''}<button class="btn ${sample?'':'primary big'}" data-act="lecon" data-id="${l.id}">Relire d'abord</button>`};
@@ -1516,7 +1583,8 @@ function vVacances(){
     cells.push(`<button class="vday ${cls}" data-act="vac-jour" data-v="${d}" aria-pressed="${sel&&sel.date===d}" title="${esc(longDate(d))}${j.fait?' : mission faite':d<t?' : à rattraper':''}"><span class="e" aria-hidden="true">${e}</span>${n}</button>`);
   }
   const idee=sel?IDEES_VAC[daysBetween(p.debut,sel.date)%IDEES_VAC.length]:null;
-  const dvR=all('devoirs').filter(d=>!d.fait&&d.pour<=addDays(v.reprise,6)).sort((a,b)=>a.pour<b.pour?-1:1);
+  /* Les devoirs cochés restent affichés (barrés) pour pouvoir les décocher. */
+  const dvR=all('devoirs').filter(d=>d.pour<=addDays(v.reprise,6)&&(!d.fait||d.pour>=v.debut)).sort((a,b)=>a.fait!==b.fait?(a.fait?1:-1):a.pour<b.pour?-1:1);
   const sd=semaineDuJour(),sem=sd&&COURS.semaines.find(x=>x.n===sd.n);
   const ej=etoileDuJour(),plus=aReviser().filter(x=>x.l!==ej&&!p.jours.some(j=>j.lecon===x.l.id)).slice(0,3);
   const parMat=MATIERES.map(m=>{const ls=all('lecons').filter(l=>l.matiere===m.id);if(!ls.length)return '';const e=ls.map(etatLecon);
@@ -1591,7 +1659,8 @@ function preuves(){
       // Points faibles sans exercice corrigé : un signal, sauf pour le classeur importé (couvert par le bilan de départ) et les leçons spéciales.
       if(!ex.length&&(l.pointsFaibles||[]).length&&!l.importe&&!l.special)add(id,{ts,seance:D(l.date),ok:0,poids:2,src:'faible'});
     })});
-  all('notes').forEach(n=>(n.competences||[]).forEach(id=>add(id,{ts:n.createdAt||D(n.date),ok:n.valeur/n.sur,poids:3,src:'note'})));
+  // Une note reliée par devinette compte un peu moins qu'une note reliée par l'IA.
+  all('notes').forEach(n=>(n.competences||[]).forEach(id=>add(id,{ts:n.createdAt||D(n.date),ok:n.valeur/n.sur,poids:n.lien==='auto'?2:3,src:'note'})));
   return preuvesCache=P;
 }
 /* jusqua (timestamp, facultatif) : l'état tel qu'il était à cette date, pour le bilan de la semaine.
@@ -1599,23 +1668,27 @@ function preuves(){
 function etatComp(c,jusqua){
   const avant=ts=>!jusqua||ts<=jusqua;
   const lecons=all('lecons').filter(l=>(l.competences||[]).includes(c.id)&&avant(D(l.date)));
+  const devoirs=all('devoirs').filter(d=>(d.competences||[]).includes(c.id)&&avant(d.createdAt||D(d.pour)));
+  const notes=all('notes').filter(n=>(n.competences||[]).includes(c.id)&&avant(n.createdAt||D(n.date)));
   const P=(preuves().get(c.id)||[]).filter(p=>avant(p.seance||p.ts)).slice().sort((a,b)=>b.ts-a.ts);
   let sw=0,so=0;P.forEach((p,i)=>{const w=p.poids*Math.pow(.9,i);sw+=w;so+=w*p.ok});
   const score=sw?so/sw:null;
   const nb=P.reduce((s,p)=>s+(p.src==='note'?3:p.src==='faible'?0:1),0);
   const dernier=P.length?P[0].ts:0;
-  const auto=score===null?(lecons.length?'vu':'avenir'):score>=.8&&nb>=4?'acquis':score>=.6?'progres':'fragile';
+  const auto=score===null?(lecons.length||devoirs.length?'vu':'avenir'):score>=.8&&nb>=4?'acquis':score>=.6?'progres':'fragile';
   // Un choix à la main (ou le bilan de départ) vaut jusqu'à la prochaine preuve.
   const man=S.programme.get(c.id);const manTs=man?(man.ts||D(man.date)):0;
   // Le bilan de départ compte comme connu depuis toujours : ce n'est pas un progrès de la semaine.
   const manuel=man&&ETATS[man.etat]&&manTs>=dernier&&(man.source==='bilan'||avant(manTs));
   const quiz=P.filter(p=>p.src==='quiz');
   const erreurs=P.filter(p=>p.src!=='faible'&&p.src!=='note'&&!p.ok);
-  return {etat:manuel?man.etat:auto,manuel:manuel?(man.source==='bilan'?'bilan':'main'):null,score,nb,lecons,dernier,erreurs,
+  return {etat:manuel?man.etat:auto,manuel:manuel?(man.source==='bilan'?'bilan':'main'):null,score,nb,lecons,devoirs,notes,dernier,erreurs,
     nbQuiz:quiz.length,okQuiz:quiz.filter(p=>p.ok).length,best:score};
 }
 function resumePreuves(e){
   const t=[];if(e.nbQuiz)t.push(`${e.okQuiz}/${e.nbQuiz} bonnes réponses en quiz`);
+  if(e.notes.length)t.push(e.notes.map(n=>`${fmtN(n.valeur)}/${n.sur}`).join(', ')+' en évaluation');
+  if(e.devoirs.length)t.push(`${e.devoirs.length} devoir${e.devoirs.length>1?'s':''}`);
   if(e.manuel==='bilan')t.push('d\'après le bilan du classeur');else if(e.manuel==='main')t.push('choisi à la main');
   return t.join(' · ');
 }
@@ -1678,24 +1751,30 @@ function progLecon(id){
 }
 function compteurs(cs){const n={avenir:0,vu:0,fragile:0,progres:0,acquis:0,total:cs.length};cs.forEach(c=>n[etatComp(c).etat]++);n.vus=n.total-n.avenir;return n}
 function barre(n){const t=n.total||1;return `<div class="pbar" role="img" aria-label="${n.acquis} sus, ${n.progres} en bonne voie, ${n.fragile} à retravailler, ${n.vu} vus en classe, ${n.avenir} pas encore vus">${['acquis','progres','vu','fragile'].map(k=>n[k]?`<i style="width:${100*n[k]/t}%;background:${ETAT_COUL[k]}"></i>`:'').join('')}</div>`}
-async function relierLecons(){
-  const ls=all('lecons').filter(l=>!(l.competences||[]).length);if(!ls.length||!sample)return;
+/* À relier par l'IA : ce qui n'a aucun objectif, et ce que l'appli a seulement deviné. */
+const aRelier=()=>[...all('lecons').filter(l=>!l.horsProgramme&&(!(l.competences||[]).length||l.lien==='auto')).map(x=>['l',x]),
+  ...all('devoirs').filter(d=>d.type!=='Matériel à apporter'&&(!(d.competences||[]).length||d.lien==='auto')).map(x=>['d',x]),
+  ...all('notes').filter(n=>!(n.competences||[]).length||n.lien==='auto').map(x=>['n',x])].filter(([,x])=>!x.lien||x.lien==='auto');
+async function relierTout(){
+  const its=aRelier().slice(0,40);if(!its.length||!sample)return;
   state.relier={busy:true};render();
+  const COLL={l:'lecons',d:'devoirs',n:'notes'},NOM={l:'leçon',d:'devoir',n:'note'};
   try{
-    const mats=[...new Set(ls.map(l=>l.matiere))].filter(m=>PROG_MATS.includes(m));
+    const mats=[...new Set(its.map(([,x])=>x.matiere).flatMap(m=>MAT_PROCHES[m]||[m]))].filter(m=>PROG_MATS.includes(m));
     const r=await askJSON(`${ROLE}
 
-Voici des leçons que l'enfant a faites en classe. Pour chacune, indique les objectifs du programme officiel de CM1 qu'elle travaille (1 à 4 identifiants, uniquement pris dans la liste). Si aucun ne correspond, mets une liste vide.
+Voici des leçons, des devoirs et des notes de l'enfant. Pour chacun, indique les objectifs du programme officiel de CM1 qu'il fait travailler (1 à 4 identifiants, uniquement pris dans la liste). Pour un devoir, pense à la leçon qu'il fait revoir. Si aucun ne correspond, mets une liste vide.
 
-Leçons :
-${ls.map(l=>`- id ${l.id} : ${l.titre} (${M(l.matiere).nom}) ${(l.notions||[]).join(', ')}${l.resume?' — '+String(l.resume).slice(0,200):''}`).join('\n')}
+À relier :
+${its.map(([k,x])=>`- id ${k}:${x.id} (${NOM[k]}, ${M(x.matiere).nom}) : ${x.titre||x.intitule}${x.detail?' — '+String(x.detail).slice(0,200):''}${(x.notions||[]).length?' — '+x.notions.join(', '):''}${x.resume?' — '+String(x.resume).slice(0,200):''}${(x.competences||[]).length?' [deviné : '+x.competences.join(', ')+']':''}`).join('\n')}
 
 Objectifs du programme :
 ${LISTE_COMP(mats.length?mats:null)}
 
-Réponds uniquement en JSON : {"liens":[{"id":"id de la leçon","competences":["identifiant"]}]}`,{modelTier:'default',cache:false});
-    let n=0;(r&&Array.isArray(r.liens)?r.liens:[]).forEach(x=>{const l=S.lecons.get(String(x.id));const cs=compValides(x.competences);if(l&&cs.length){put('lecons',l.id,{...l,competences:cs});n++}});
-    state.relier={};toast(n?`${n} leçon${n>1?'s':''} reliée${n>1?'s':''} au programme.`:"Je n'ai trouvé aucun lien.");
+Réponds uniquement en JSON : {"liens":[{"id":"id donné ci-dessus","competences":["identifiant"]}]}`,{modelTier:'default',cache:false});
+    let n=0;(r&&Array.isArray(r.liens)?r.liens:[]).forEach(x=>{const [k,id]=String(x.id).split(':');const col=COLL[k],o=col&&S[col].get(id);const cs=compValides(x.competences).slice(0,4);
+      if(o&&cs.length){put(col,o.id,{...o,competences:cs,lien:'ia'});n++}else if(o)put(col,o.id,{...o,lien:'ia'})});
+    state.relier={};toast(n?`${n} élément${n>1?'s':''} relié${n>1?'s':''} au programme.`:"Je n'ai trouvé aucun lien.");
   }catch(e){state.relier={err:errMsg(e)}}
   render();
 }
@@ -1703,7 +1782,7 @@ function vProgramme(){
   if(!state.parent)return vParents();
   const m=PROG_MATS.includes(state.param)?state.param:'maths';
   const doms=PROGRAMME.filter(d=>d.m===m);const n=compteurs(COMPETENCES.filter(c=>c.m===m));
-  const sansLien=all('lecons').filter(l=>!(l.competences||[]).length&&!l.horsProgramme).length;
+  const sansLien=aRelier().length;
   const rl=state.relier||{};const sp=state.special||{};
   const plan=planTravail(m).slice(0,5);
   return `<div class="row"><button class="btn ghost" data-act="tab" data-v="parents">‹ Espace parents</button></div>
@@ -1712,7 +1791,7 @@ function vProgramme(){
     <div class="matpick">${PROG_MATS.map(id=>{const c=compteurs(COMPETENCES.filter(x=>x.m===id));return `<button class="btn" style="--m:${M(id).c}" data-act="prog-mat" data-v="${id}" aria-pressed="${id===m}">${esc(M(id).nom)} <span class="small muted">${c.acquis}/${c.total}</span></button>`}).join('')}</div>
     ${barre(n)}
     <div class="leg"><span style="--c:var(--ok)">Je sais (${n.acquis})</span><span style="--c:var(--accent)">En bonne voie (${n.progres})</span><span style="--c:var(--seyes-strong)">Vu en classe (${n.vu})</span><span style="--c:var(--warn)">À retravailler (${n.fragile})</span><span style="--c:var(--line)">Pas encore vu (${n.avenir})</span></div>
-    ${sansLien&&sample?`<div class="row"><button class="btn" data-act="relier" ${rl.busy?'disabled':''}>Relier mes ${sansLien} leçon${sansLien>1?'s':''} au programme</button>${rl.busy?`<span class="small muted">Je range tes leçons dans le programme…</span>`:''}${rl.err?`<span class="small" style="color:var(--bad)">${esc(rl.err)}</span>`:''}</div>`:''}
+    ${sansLien&&sample?`<div class="row"><button class="btn" data-act="relier" ${rl.busy?'disabled':''}>Vérifier les liens de ${sansLien} leçon${sansLien>1?'s, devoirs ou notes':', devoir ou note'} avec l'IA</button>${rl.busy?`<span class="small muted">Je range tout dans le programme…</span>`:''}${rl.err?`<span class="small" style="color:var(--bad)">${esc(rl.err)}</span>`:''}</div>`:''}
     <p class="small muted">Source : ${esc(PROGRAMME_SOURCES[m]||'')}</p>
   </section>
   ${plan.length?`<section class="card"><div class="sec-title"><h3>Mon plan de travail en ${esc(M(m).nom)}</h3><span class="small muted">D'abord ce qui est à retravailler, puis ce qu'il faut vérifier</span></div>
@@ -1725,7 +1804,8 @@ function vProgramme(){
     <div>${d.items.map(c=>{const e=etatComp(c);const info=resumePreuves(e);const spc=speciale(c.id);const refs=COURS?Object.values(COURS.lecons).filter(x=>x.objectifs.includes(c.id)):[];return `<div class="comp">
       <button class="etat ${e.etat}" data-act="comp-etat" data-id="${c.id}" title="Appuie pour changer">${ETATS[e.etat]}</button>
       <div class="t">${esc(c.t)}${info?` <span class="small muted">· ${esc(info)}</span>`:''}
-        ${e.lecons.length||refs.length?`<div class="links">${refs.map(x=>`<button class="lchip ref" data-act="cours" data-id="${esc(x.id)}" title="Leçon du programme : ${esc(x.titre)}">Leçon ${esc(x.code)}</button>`).join('')}${e.lecons.map(l=>`<button class="lchip" data-act="lecon" data-id="${l.id}">${esc(l.titre)}</button>`).join('')}</div>`:''}</div>
+        ${e.lecons.length||refs.length?`<div class="links">${refs.map(x=>`<button class="lchip ref" data-act="cours" data-id="${esc(x.id)}" title="Leçon du programme : ${esc(x.titre)}">Leçon ${esc(x.code)}</button>`).join('')}${e.lecons.map(l=>`<button class="lchip" data-act="lecon" data-id="${l.id}">${esc(l.titre)}</button>`).join('')}</div>`:''}
+        ${e.devoirs.length||e.notes.length?`<div class="links">${e.devoirs.slice(-3).map(d=>`<button class="lchip" data-act="tab" data-v="devoirs" title="Devoir pour le ${esc(longDate(d.pour))}${d.lien==='auto'?' (lien deviné)':''}">✏️ ${esc(d.titre)}</button>`).join('')}${e.notes.map(n=>`<button class="lchip" data-act="tab" data-v="notes" title="${esc(shortDate(n.date))}">📝 ${esc(n.intitule)} : ${fmtN(n.valeur)}/${n.sur}</button>`).join('')}</div>`:''}</div>
       ${sample?`<span class="row" style="flex:none">${e.etat==='fragile'&&!spc?`<button class="btn small" data-act="speciale" data-id="${c.id}" ${sp.busy?'disabled':''}>Leçon spéciale</button>`:''}<button class="btn ghost small" data-act="quiz-comp" data-id="${c.id}">M'entraîner</button></span>`:''}
     </div>`}).join('')}</div></section>`}).join('')}`;
 }
@@ -1806,6 +1886,7 @@ function corpsLecon(l){
     ${(l.entrainement||[]).length?`<div class="stack" style="gap:8px"><h3>Je m'entraîne sur mon cahier</h3><p class="small muted">Fais l'exercice, puis ouvre la solution pour vérifier.</p>${l.entrainement.map((x,i)=>`<div class="answer"><p><strong>${i+1}.</strong> ${rich(x.consigne)}</p><details><summary class="small">Voir la solution</summary><p class="small" style="margin-top:6px">${rich(x.solution||'')}</p></details></div>`).join('')}</div>`:''}
     ${l.lienProgramme?`<p class="small muted"><strong>Dans le programme de CM1 :</strong> ${rich(l.lienProgramme)}</p>`:''}
     ${(l.competences||[]).filter(COMP).length?`<div class="small"><strong>Objectifs du programme travaillés :</strong><div class="links">${l.competences.filter(COMP).map(id=>`<button class="lchip" data-act="prog-mat" data-v="${COMP(id).m}">${esc(COMP(id).t)}</button>`).join('')}</div></div>`:''}
+    ${(()=>{const dv=l.ref?[]:all('devoirs').filter(d=>leconsLiees(d)[0]===l).sort((a,b)=>a.pour<b.pour?1:-1);return dv.length?`<div class="small"><strong>Mes devoirs sur cette leçon :</strong><div class="links">${dv.slice(0,5).map(d=>`<button class="lchip" data-act="tab" data-v="devoirs">${d.fait?'✅':'✏️'} ${esc(d.titre)} · ${esc(shortDate(d.pour))}</button>`).join('')}</div></div>`:''})()}
     ${l.pourAllerPlusLoin?`<p class="small"><strong>Pour aller plus loin :</strong> ${rich(l.pourAllerPlusLoin)}</p>`:''}
     ${(l.thumbs||[]).length?`<div class="thumbs">${l.thumbs.map(t=>`<img src="${esc(t)}" alt="Photo du cahier">`).join('')}</div>`:''}
     ${(l.exercices||[]).length?`<details><summary>Mes exercices corrigés (${l.exercices.filter(x=>x.juste===true).length} juste${l.exercices.filter(x=>x.juste===true).length>1?'s':''} sur ${l.exercices.length})</summary>${lignesExercices(l.exercices)}</details>`:''}
@@ -1915,14 +1996,17 @@ function vApercu(){
   </form>`}`;
 }
 function enregistrerRes(fd){
-  const a=state.add,r=a.res,t=TODAY();let lid=null,nd=0,nc=0,note=false;
+  const a=state.add,r=a.res;let lid=null,nd=0,nc=0,note=false;
   if(r.lecon&&fd.kl)lid=nouvelleLecon(r.lecon,{titre:fd.titre,matiere:fd.matiere,date:fd.date||a.date,genre:r.genre,thumbs:a.images.map(i=>i.thumb).filter(Boolean)});
-  r.devoirs.forEach((x,i)=>{if(!fd['k'+i])return;const d={titre:fd['titre'+i]||x.titre,detail:x.detail||'',matiere:fd['mat'+i]||x.matiere,type:fd['type'+i]||x.type,pour:fd['pour'+i]||x.pour,fait:false,faitLe:null,createdAt:Date.now(),source:'photo'};
+  // Un devoir donné le jour d'une leçon porte en général sur elle : elle sert d'indice si l'IA n'a rien relié.
+  const lec=lid&&S.lecons.get(lid);
+  r.devoirs.forEach((x,i)=>{if(!fd['k'+i])return;const m=fd['mat'+i]||x.matiere;
+    const d=avecLien({titre:fd['titre'+i]||x.titre,detail:x.detail||'',matiere:m,type:fd['type'+i]||x.type,pour:fd['pour'+i]||x.pour,fait:false,faitLe:null,createdAt:Date.now(),source:'photo'},(x.competences||[]).length?x.competences:lec&&lec.matiere===m&&lec.competences);
     if(dejaNote(d))return;put('devoirs',uid(),d);nd++;
-    if(d.type==='Contrôle'&&fd.plan){nc++;[[3,'Relire la leçon'],[2,'Faire un quiz'],[1,'Revoir mes erreurs']].forEach(([j,txt])=>{const p=addDays(d.pour,-j);if(p>=t)put('devoirs',uid(),{titre:`${txt} (contrôle : ${d.titre})`,matiere:d.matiere,type:'Révision',pour:p,fait:false,faitLe:null,createdAt:Date.now()})})}});
+    if(d.type==='Contrôle'&&fd.plan){nc++;planifierRevisions(d)}});
   if(r.note&&fd.kn){const val=Number(fd.nVal),sur=Number(fd.nSur)||20;
     if(isNaN(val)||val<0||val>sur){toast(`La note doit être entre 0 et ${sur}.`);return}
-    put('notes',uid(),{intitule:fd.nIntitule||r.note.intitule,matiere:fd.nMat||r.note.matiere,valeur:val,sur,date:fd.nDate||a.date,commentaire:r.note.commentaire||'',createdAt:Date.now(),leconId:lid||null,competences:(lid&&S.lecons.get(lid)&&S.lecons.get(lid).competences)||[]});note=true;
+    put('notes',uid(),avecLien({intitule:fd.nIntitule||r.note.intitule,matiere:fd.nMat||r.note.matiere,valeur:val,sur,date:fd.nDate||a.date,commentaire:r.note.commentaire||'',createdAt:Date.now(),leconId:lid||null},lec&&lec.competences.length?lec.competences:r.note.competences));note=true;
     const p=val/sur;gagne(ptsNote({valeur:val,sur,createdAt:Date.now()}),p>=.8?'Superbe note, bravo !':p>=.6?'Belle note !':"Merci de l'avoir rentrée. On va travailler ça ensemble.")}
   state.add={images:[],indice:'',date:TODAY(),busy:false,res:null,err:'',sujet:''};
   const fait=[lid&&'la leçon',nd&&`${nd} devoir${nd>1?'s':''}${nc?' (révisions planifiées)':''}`,note&&'la note'].filter(Boolean);
@@ -1944,8 +2028,8 @@ async function ajouterFichiers(files,a=state.add){const arr=[...files].filter(f=
 }
 function nouvelleLecon(r,base){
   const id=uid();
-  const l={matiere:base.matiere,titre:base.titre||r.titre||'Leçon',date:base.date||TODAY(),createdAt:Date.now(),notions:r.notions||[],resume:r.resume||'',transcription:r.transcription||'',cours:r.cours||{},corrections:r.corrections||[],lienProgramme:r.lienProgramme||'',competences:compValides(r.competences),pourAllerPlusLoin:r.pourAllerPlusLoin||'',exercices:r.exercices||[],pointsFaibles:r.pointsFaibles||[],genre:base.genre||'lecon',thumbs:base.thumbs||[],questions:[]};
-  put('lecons',id,l);gagne(ptsLecon(l),'Leçon rangée dans ton cartable.');return id;
+  const l={matiere:base.matiere,titre:base.titre||r.titre||'Leçon',date:base.date||TODAY(),createdAt:Date.now(),notions:r.notions||[],resume:r.resume||'',transcription:r.transcription||'',cours:r.cours||{},corrections:r.corrections||[],lienProgramme:r.lienProgramme||'',competences:[],pourAllerPlusLoin:r.pourAllerPlusLoin||'',exercices:r.exercices||[],pointsFaibles:r.pointsFaibles||[],genre:base.genre||'lecon',thumbs:base.thumbs||[],questions:[]};
+  const ll=avecLien(l,r.competences);put('lecons',id,ll);gagne(ptsLecon(ll),'Leçon rangée dans ton cartable.');return id;
 }
 
 /* ---- Quiz ---- */
@@ -2117,7 +2201,7 @@ function vDevoirs(){
 }
 
 /* ---- Notes ---- */
-function itemNote(n){const p=n.valeur/n.sur;return `<div class="item"><div class="grow"><div class="t">${esc(n.intitule)}</div><div class="small muted">${mchip(n.matiere)} ${esc(shortDate(n.date))}${n.commentaire?' · '+esc(n.commentaire):''}</div></div><b style="color:${p>=.8?'var(--ok)':p>=.5?'var(--ink)':'var(--bad)'};font-variant-numeric:tabular-nums">${fmtN(n.valeur)}/${n.sur}</b>${state.confirm===n.id?`<button class="btn danger small" data-act="del-note" data-id="${n.id}">Supprimer</button>`:`<button class="btn ghost small" data-act="ask-del" data-id="${n.id}" aria-label="Supprimer">×</button>`}</div>`}
+function itemNote(n){const p=n.valeur/n.sur;return `<div class="item"><div class="grow"><div class="t">${esc(n.intitule)}</div><div class="small muted">${mchip(n.matiere)} ${esc(shortDate(n.date))}${n.commentaire?' · '+esc(n.commentaire):''}</div>${chipsLiens(n)}</div><b style="color:${p>=.8?'var(--ok)':p>=.5?'var(--ink)':'var(--bad)'};font-variant-numeric:tabular-nums">${fmtN(n.valeur)}/${n.sur}</b>${state.confirm===n.id?`<button class="btn danger small" data-act="del-note" data-id="${n.id}">Supprimer</button>`:`<button class="btn ghost small" data-act="ask-del" data-id="${n.id}" aria-label="Supprimer">×</button>`}</div>`}
 function chartNotes(ns){
   const s=ns.slice().sort((a,b)=>a.date<b.date?-1:1);if(s.length<2)return '';
   const W=640,H=220,L=34,R=14,T=12,B=30;const x=i=>L+(W-L-R)*(s.length===1?.5:i/(s.length-1));const y=v=>T+(H-T-B)*(1-v/20);
@@ -2291,7 +2375,7 @@ document.addEventListener('click',async e=>{
     case 'comp-etat':{const c=COMP(id);if(!c)break;const cur=etatComp(c).etat;const next={avenir:'vu',vu:'fragile',fragile:'progres',progres:'acquis',acquis:'avenir'}[cur];put('programme',id,{etat:next,date:TODAY(),ts:Date.now()});break}
     case 'speciale':leconSpeciale(id);break;
     case 'quiz-comp':{const l=progLecon('prog:'+id);if(l)lancerQuiz([l],el.dataset.niveau||'normal',l.titre,l.matiere);break}
-    case 'relier':relierLecons();break;
+    case 'relier':relierTout();break;
   }
 });
 // Le brouillon est gardé à chaque frappe : la page se redessine quand l'enfant répond.
@@ -2325,17 +2409,17 @@ document.addEventListener('submit',async e=>{
     try{const {text}=await sample(`${ROLE}\n\nVoici la leçon de l'enfant :\n${resumeLecon(l)}\n\nl'enfant demande : « ${q} »\nRéponds-lui en 100 à 200 mots, pas à pas : explique le pourquoi, donne un exemple concret de sa vie, montre le raisonnement, puis finis par une petite question ou une astuce pour vérifier qu'il a compris. Si la question n'a rien à voir avec l'école, ramène-le gentiment vers sa leçon.`,{modelTier:'default',cache:false,onText:({text})=>{state.ask[l.id].text=text;const el=app.querySelector('.thinking span');if(el)el.innerHTML=rich(text)}});
       const cur=S.lecons.get(l.id)||l;put('lecons',l.id,{...cur,questions:[...(cur.questions||[]),{q,a:text}].slice(-10)});state.ask[l.id]={}}catch(err){state.ask[l.id]={err:errMsg(err)}}
     render();return}
-  if(kind==='scan-save'){const t=TODAY();let n=0,nc=0;
-    state.scan.res.devoirs.forEach((x,i)=>{if(!fd['k'+i])return;const d={titre:fd['titre'+i]||x.titre,detail:x.detail||'',matiere:fd['mat'+i]||x.matiere,type:fd['type'+i]||x.type,pour:fd['pour'+i]||x.pour,fait:false,faitLe:null,createdAt:Date.now(),source:'agenda'};
+  if(kind==='scan-save'){let n=0,nc=0;
+    state.scan.res.devoirs.forEach((x,i)=>{if(!fd['k'+i])return;const d=avecLien({titre:fd['titre'+i]||x.titre,detail:x.detail||'',matiere:fd['mat'+i]||x.matiere,type:fd['type'+i]||x.type,pour:fd['pour'+i]||x.pour,fait:false,faitLe:null,createdAt:Date.now(),source:'agenda'},x.competences);
       if(dejaNote(d))return;put('devoirs',uid(),d);n++;
-      if(d.type==='Contrôle'&&fd.plan){nc++;[[3,'Relire la leçon'],[2,'Faire un quiz'],[1,'Revoir mes erreurs']].forEach(([j,txt])=>{const r=addDays(d.pour,-j);if(r>=t)put('devoirs',uid(),{titre:`${txt} (contrôle : ${d.titre})`,matiere:d.matiere,type:'Révision',pour:r,fait:false,faitLe:null,createdAt:Date.now()})})}});
+      if(d.type==='Contrôle'&&fd.plan){nc++;planifierRevisions(d)}});
     state.scan={images:[],indice:'',busy:false,res:null,err:''};render();
     toast(n?`${n} devoir${n>1?'s':''} ajouté${n>1?'s':''}${nc?', révisions planifiées':''} !`:'Aucun devoir ajouté.');window.scrollTo({top:0});return}
-  if(kind==='devoir'){const base={titre:fd.titre,matiere:fd.matiere,type:fd.type,pour:fd.pour,fait:false,faitLe:null,createdAt:Date.now()};put('devoirs',uid(),base);
-    if(fd.type==='Contrôle'&&fd.plan){const t=TODAY();[[3,'Relire la leçon'],[2,'Faire un quiz'],[1,'Revoir mes erreurs']].forEach(([j,txt])=>{const d=addDays(fd.pour,-j);if(d>=t)put('devoirs',uid(),{titre:`${txt} (contrôle : ${fd.titre})`,matiere:fd.matiere,type:'Révision',pour:d,fait:false,faitLe:null,createdAt:Date.now()})});toast('Contrôle noté, et tes révisions sont planifiées !')}else toast('Devoir noté.');
+  if(kind==='devoir'){const base=avecLien({titre:fd.titre,matiere:fd.matiere,type:fd.type,pour:fd.pour,fait:false,faitLe:null,createdAt:Date.now()});put('devoirs',uid(),base);
+    if(fd.type==='Contrôle'&&fd.plan){planifierRevisions(base);toast('Contrôle noté, et tes révisions sont planifiées !')}else toast('Devoir noté.');
     f.reset();return}
   if(kind==='note'){const val=Number(fd.valeur),sur=Number(fd.sur)||20;if(isNaN(val)||val<0||val>sur){toast(`La note doit être entre 0 et ${sur}.`);return}
-    put('notes',uid(),{intitule:fd.intitule,matiere:fd.matiere,valeur:val,sur,date:fd.date||TODAY(),commentaire:fd.commentaire||'',createdAt:Date.now()});
+    put('notes',uid(),avecLien({intitule:fd.intitule,matiere:fd.matiere,valeur:val,sur,date:fd.date||TODAY(),commentaire:fd.commentaire||'',createdAt:Date.now()}));
     const p=val/sur;gagne(ptsNote({valeur:val,sur,createdAt:Date.now()}),p>=.8?'Superbe note, bravo !':p>=.6?'Belle note !':"Merci de l'avoir rentrée. On va travailler ça ensemble.");f.reset();return}
   // Le code parent est vérifié par le serveur, qui le garde haché : il n'arrive jamais dans la page.
   if(kind==='pin'){const creer=!pinDefini();if(creer&&!/^\d{4,8}$/.test(fd.pin)){toast('Choisissez un code de 4 à 8 chiffres.');return}
