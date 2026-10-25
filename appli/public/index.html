@@ -1,6 +1,6 @@
 <title>Excalibur</title>
 <meta charset="utf-8">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏰</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><g transform='rotate(-25 50 68)'><path d='M46 28 H54 V72 H46 Z' fill='%23cfd6df' stroke='%23697180' stroke-width='2'/><rect x='34' y='21' width='32' height='8' rx='4' fill='%23d4a017'/><rect x='46' y='10' width='8' height='12' fill='%237a4a1f'/><circle cx='50' cy='9' r='6' fill='%23d4a017'/></g><path d='M10 94 Q12 66 34 61 L66 61 Q88 66 90 94 Z' fill='%238a8f98'/></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preload" href="fonts/andika-400.woff2" as="font" type="font/woff2" crossorigin>
@@ -526,7 +526,7 @@ table.t tr:last-child td{border-bottom:0}
   <div class="wrap">
     <div class="brand">
       <svg width="52" height="52" viewBox="0 0 40 40" aria-hidden="true"><path d="M17.5 14.5h5v15h-5z" fill="#e9ecef" stroke="#868e96" stroke-width="1"/><path d="M20 15v14" stroke="#adb5bd" stroke-width="1"/><rect x="18.5" y="5" width="3" height="6.5" rx="1" fill="#8d5524"/><circle cx="20" cy="3.5" r="2.5" fill="#ffd43b" stroke="#f08c00" stroke-width="1"/><rect x="11" y="11" width="18" height="3.5" rx="1.75" fill="#ffd43b" stroke="#f08c00" stroke-width="1"/><path d="M4 37q0-11 9-12 4-3 9-1 8-1 11 4 4 3 3 9z" fill="var(--accent)"/><path d="M10 31q3-2 6-1M25 30q3-1 5 1" stroke="#fff" stroke-width="1.5" fill="none" opacity=".5" stroke-linecap="round"/><path d="M6 8l1 2 2 1-2 1-1 2-1-2-2-1 2-1zM33 5l.8 1.6 1.6.8-1.6.8-.8 1.6-.8-1.6-1.6-.8 1.6-.8z" fill="#ffd43b"/></svg>
-      <h1><span class="nom">Excalibur</span><small>L'épée du savoir de l'enfant, chevalier de CM1</small></h1>
+      <h1><span class="nom">Excalibur</span><small id="devise">L'épée du savoir, chevalier de CM1</small></h1>
     </div>
     <div class="wallet" id="wallet"></div>
   </div>
@@ -621,6 +621,11 @@ async function put(col,id,data){
 async function del(col,id){S[col].delete(id);requestRender(true);if(db){try{await db.collection(col).doc(id).delete()}catch(e){console.warn(e)}}else saveLocal()}
 const all=c=>[...S[c].values()];
 const cfg=()=>S.config.get('main')||{};
+/* Prénom de l'enfant, réglé dans l'espace parents. deP()/queP() font l'élision : « de l'enfant », « de Léa ». */
+const prenom=()=>(cfg().prenom||'').trim()||"l'élève";
+const voyelle=p=>/^[aeiouyhàâäéèêëîïôöûüœ]/i.test(p);
+const deP=()=>(voyelle(prenom())?"d'":'de ')+prenom();
+const queP=()=>(voyelle(prenom())?"qu'":'que ')+prenom();
 
 /* ============ Claude ============ */
 let sample=null,imagesOK=false,maxImages=4;
@@ -641,18 +646,18 @@ async function askJSON(prompt,opts={},onProgress){
 function progressAdd(n){const el=app.querySelector('[data-progress]');if(el)el.textContent=`J'écris ta fiche… (${n} caractères)`}
 function errMsg(e){return({no_ollama:"Ollama ne répond pas. Lance l'application Ollama sur ce PC, puis réessaie.",no_model:"Le modèle d'Ollama n'est pas installé (voir la fenêtre du cartable).",no_key:"Il manque la clé API dans le fichier .env du cartable.",bad_key:"La clé API est refusée. Vérifie-la dans le fichier .env.",network:"Je n'arrive pas à joindre Claude. Vérifie la connexion internet et que le cartable est bien lancé.",bad_request:"Claude n'a pas compris la demande. Réessaie.",api_error:"Claude a eu un petit souci. Réessaie dans un instant.",save_failed:"Je n'ai pas pu enregistrer.",rate_limited:"Claude est très occupé. Réessaie dans quelques minutes.",image_rejected:"Cette photo n'a pas pu être lue. Prends-en une autre, bien éclairée et nette.",images_unavailable:"L'envoi de photos n'est pas possible ici. Ouvre la page dans l'application Claude.",invalid_json:"La réponse est arrivée en désordre. Appuie sur Réessayer.",refused:"Claude n'a pas pu traiter cette demande. Essaie avec une autre photo ou une autre question.",session_expired:"Reconnecte-toi à Claude puis réessaie.",prompt_too_large:"C'est trop long d'un coup. Envoie moins de photos.",empty_completion:"Claude n'a rien répondu. Réessaie."}[e&&e.code])||`Petit souci de connexion. Réessaie dans un instant. (code : ${(e&&(e.code||e.message))||'inconnu'})`}
 const MAT_LIST=MATIERES.map(m=>`"${m.id}" (${m.nom})`).join(', ');
-const ROLE=`Tu es un professeur des écoles expérimenté, spécialiste du programme officiel de CM1 (cycle 3, Éducation nationale, France), et le compagnon de travail bienveillant de l'enfant, 9 ans, élève de CM1. L'appli s'appelle Excalibur : de temps en temps, tu peux encourager l'enfant comme un jeune chevalier (quête, épée, dragon à vaincre), sans que cela gêne l'explication. Tu écris en français, avec des phrases courtes, un vocabulaire simple mais exact, et des exemples tirés de la vie d'un enfant.
+const ROLE=()=>`Tu es un professeur des écoles expérimenté, spécialiste du programme officiel de CM1 (cycle 3, Éducation nationale, France), et le compagnon de travail bienveillant ${deP()}, 9 ans, élève de CM1. L'appli s'appelle Excalibur : de temps en temps, tu peux encourager ${prenom()} comme un jeune chevalier (quête, épée, dragon à vaincre), sans que cela gêne l'explication. Tu écris en français, avec des phrases courtes, un vocabulaire simple mais exact, et des exemples tirés de la vie d'un enfant.
 
-Ta priorité est la PÉDAGOGIE : l'enfant doit vraiment comprendre, pas seulement retenir. Quand tu expliques :
+Ta priorité est la PÉDAGOGIE : ${prenom()} doit vraiment comprendre, pas seulement retenir. Quand tu expliques :
 - Pars de ce qu'il connaît déjà (sa vie, ce qu'il a vu avant), puis avance par petites marches, une idée à la fois.
 - Dis toujours POURQUOI, pas seulement comment : la raison, la règle, le sens.
 - Montre avant de dire : un exemple concret d'abord, la règle ensuite, puis un deuxième exemple pour vérifier.
 - Pour une méthode, donne des étapes numérotées et un exemple résolu pas à pas, en disant à voix haute ce qu'on pense à chaque étape (« Je regarde… donc… »).
 - Utilise des images mentales, des comparaisons, des manipulations (« prends 3 billes… »), et un contre-exemple pour montrer ce qui n'est PAS la règle.
 - Explique chaque mot difficile la première fois que tu l'utilises.
-- Quand l'enfant se trompe, montre pourquoi l'erreur était tentante, puis comment ne plus la faire, sans jamais le juger.
+- Quand ${prenom()} se trompe, montre pourquoi l'erreur était tentante, puis comment ne plus la faire, sans jamais le juger.
 - Termine par une petite vérification : « Pour vérifier, je peux… » ou une question à se poser.
-- Tutoie l'enfant et encourage-le.`;
+- Tutoie ${prenom()} et encourage-le.`;
 const COURS_SCHEMA=`{
  "lisible": true,
  "matiere": "un des identifiants: ${MAT_LIST}",
@@ -661,7 +666,7 @@ const COURS_SCHEMA=`{
  "transcription": "ce qui est écrit sur les documents, fidèlement",
  "resume": "l'essentiel en 2 phrases",
  "cours": {
-   "intro": "pourquoi on apprend ça et à quoi ça sert dans la vie, en partant de ce que l'enfant connaît déjà (3-4 phrases)",
+   "intro": "pourquoi on apprend ça et à quoi ça sert dans la vie, en partant de ce que l'élève connaît déjà (3-4 phrases)",
    "sections": [{"titre":"...","explication":"explication détaillée et progressive (5 à 10 phrases courtes) : d'abord une situation ou un exemple, puis la règle avec le POURQUOI, puis la méthode en étapes numérotées si c'est une méthode ; mets les **mots importants** en gras et explique chaque mot difficile","exemple":"un exemple résolu pas à pas, en montrant le raisonnement à chaque étape, puis un contre-exemple ou un piège","schema":null}],
    "aRetenir": ["phrase à retenir 1","phrase à retenir 2"],
    "motsCles": [{"mot":"...","definition":"..."}],
@@ -747,24 +752,24 @@ function planifierRevisions(d){
 const TYPES_DV=['Devoir','Leçon à apprendre','Contrôle','Exposé','Matériel à apporter'];
 const GENRES={lecon:'Leçon',exercice:'Exercices',evaluation:'Évaluation',agenda:'Agenda et devoirs',autre:'Autre document'};
 const LECON_SCHEMA=COURS_SCHEMA.replace(/^\{\n "lisible": true,\n/,'{\n').replace(/\n\}$/,`,
- "exercices": [{"enonce":"la consigne, en bref","reponseEleve":"ce que l'enfant a écrit (\\"\\" si rien)","bonneReponse":"la réponse juste","juste": true}],
- "pointsFaibles": ["ce que l'enfant doit retravailler, en une phrase courte (liste vide si tout est juste)"]
+ "exercices": [{"enonce":"la consigne, en bref","reponseEleve":"ce que l'élève a écrit (\\"\\" si rien)","bonneReponse":"la réponse juste","juste": true}],
+ "pointsFaibles": ["ce que l'élève doit retravailler, en une phrase courte (liste vide si tout est juste)"]
 }`);
 // Une seule analyse pour toutes les photos : Claude reconnaît le genre de document
 // (leçon, exercices, évaluation, agenda…) et ne remplit que les parties utiles.
 async function analyserPhotos(images,indice,dateSeance){
   const t=TODAY();
   const cal=[...Array(50)].map((_,i)=>addDays(t,i-14)).map(d=>`${d} : ${longDate(d)}${d===t?" (aujourd'hui)":''}`).join('\n');
-  const prompt=`${ROLE}
+  const prompt=`${ROLE()}
 
-Voici ${images.length>1?images.length+' photos envoyées':'une photo envoyée'} par l'enfant ou ses parents. Ce peut être :
+Voici ${images.length>1?images.length+' photos envoyées':'une photo envoyée'} par ${prenom()} ou ses parents. Ce peut être :
 - une leçon (cahier, classeur, trace écrite, affiche ou tableau de la classe) ;
 - des exercices (fichier, fiche, cahier du jour, ardoise), faits ou non ;
 - une évaluation ou un contrôle, corrigé ou non par la maîtresse ;
 - une page d'agenda, de cahier de textes ou une fiche de devoirs ;
 - autre chose : mot aux parents, circulaire, emploi du temps…
-Plusieurs photos peuvent montrer des choses différentes : traite-les toutes.${indice?`\nl'enfant précise : « ${indice} »`:''}
-l'enfant dit que c'est du ${longDate(dateSeance||t)}.
+Plusieurs photos peuvent montrer des choses différentes : traite-les toutes.${indice?`\n${prenom()} précise : « ${indice} »`:''}
+${prenom()} dit que c'est du ${longDate(dateSeance||t)}.
 
 Étape 1. Dans "genre", indique le genre principal : "lecon", "exercice", "evaluation", "agenda" ou "autre".
 
@@ -772,9 +777,9 @@ l'enfant dit que c'est du ${longDate(dateSeance||t)}.
 
 A) "lecon" : pour une leçon, des exercices ou une évaluation. Sinon null.
 - Lis attentivement tout ce qui est écrit, même à la main. Identifie la matière et la notion travaillée.
-- Rédige un cours remanié et complet pour l'enfant : réexplique pas à pas, complète ce qui manque pour bien comprendre, explique le pourquoi, ajoute des exemples résolus. 3 à 5 sections, chacune bien développée. Reste au niveau CM1. Pour des exercices ou une évaluation, fais le cours de la notion travaillée, même si la leçon n'est pas sur la photo.
-- "exercices" : pour des exercices ou une évaluation, une ligne par exercice ou par question, avec la réponse de l'enfant, la bonne réponse et "juste" (true, false, ou null si ce n'est pas fait). Tiens compte des corrections de la maîtresse (stylo rouge ou vert, croix, coches). Pour une simple leçon, liste vide.
-- "pointsFaibles" : ce que l'enfant doit retravailler d'après ses erreurs. Liste vide s'il n'y a pas d'erreur.
+- Rédige un cours remanié et complet pour ${prenom()} : réexplique pas à pas, complète ce qui manque pour bien comprendre, explique le pourquoi, ajoute des exemples résolus. 3 à 5 sections, chacune bien développée. Reste au niveau CM1. Pour des exercices ou une évaluation, fais le cours de la notion travaillée, même si la leçon n'est pas sur la photo.
+- "exercices" : pour des exercices ou une évaluation, une ligne par exercice ou par question, avec la réponse ${deP()}, la bonne réponse et "juste" (true, false, ou null si ce n'est pas fait). Tiens compte des corrections de la maîtresse (stylo rouge ou vert, croix, coches). Pour une simple leçon, liste vide.
+- "pointsFaibles" : ce ${queP()} doit retravailler d'après ses erreurs. Liste vide s'il n'y a pas d'erreur.
 - "corrections" : une erreur ou une imprécision dans ce qui est recopié dans le cahier, avec la correction. Liste vide si tout est juste.
 
 B) "devoirs" : tout ce qui est à faire pour un jour précis (agenda, cahier de textes, fiche de devoirs, ou « pour le… » écrit ailleurs). Sinon [].
@@ -804,7 +809,7 @@ Réponds uniquement avec un objet JSON de cette forme :
 {
 "lisible": true,
 "genre": "lecon | exercice | evaluation | agenda | autre",
-"description": "en 1 ou 2 phrases adressées à l'enfant, ce que tu as trouvé sur les photos",
+"description": "en 1 ou 2 phrases adressées à ${prenom()}, ce que tu as trouvé sur les photos",
 "lecon": ${LECON_SCHEMA},
 "devoirs": [{"titre": "...", "detail": "...", "matiere": "un des identifiants: ${MAT_LIST}", "type": "${TYPES_DV.join('" ou "')}", "pour": "AAAA-MM-JJ", "certain": true, "competences": ["identifiant"]}],
 "note": {"intitule": "ex : Évaluation sur les fractions", "matiere": "un des identifiants", "valeur": 15, "sur": 20, "commentaire": "l'appréciation de la maîtresse, ou \\"\\"", "competences": ["identifiants des objectifs évalués, 1 à 4"]},
@@ -825,9 +830,9 @@ function normRes(r){
 async function lireAgenda(images,indice){
   const t=TODAY();
   const cal=[...Array(50)].map((_,i)=>addDays(t,i-14)).map(d=>`${d} : ${longDate(d)}${d===t?" (aujourd'hui)":''}`).join('\n');
-  const prompt=`${ROLE}
+  const prompt=`${ROLE()}
 
-Voici ${images.length>1?images.length+' photos':'une photo'} de l'agenda (ou du cahier de textes) de l'enfant, ou d'une fiche de devoirs donnée par la maîtresse.${indice?`\nl'enfant précise : « ${indice} »`:''}
+Voici ${images.length>1?images.length+' photos':'une photo'} de l'agenda (ou du cahier de textes) ${deP()}, ou d'une fiche de devoirs donnée par la maîtresse.${indice?`\n${prenom()} précise : « ${indice} »`:''}
 
 Ta mission : relever tous les devoirs écrits, même à la main ou abrégés (« apprendre », « réviser », « ex 3 p 42 », « éval », « poésie », « signer », « apporter »…).
 - Dans un agenda, un devoir est en général écrit sur la page du jour où il faut le faire pour (le jour où on le rend). Une mention « pour le… » est prioritaire.
@@ -846,14 +851,14 @@ Objectifs du programme officiel de CM1 (pour remplir "competences", n'utilise qu
 ${LISTE_COMP()}
 
 Réponds uniquement avec un objet JSON de cette forme :
-{"lisible": true, "devoirs": [{"titre": "...", "detail": "...", "matiere": "un des identifiants: ${MAT_LIST}", "type": "${TYPES_DV.join('" ou "')}", "pour": "AAAA-MM-JJ", "certain": true, "competences": ["identifiant"]}], "remarque": "une phrase pour l'enfant si quelque chose était difficile à lire, sinon \\"\\""}`;
+{"lisible": true, "devoirs": [{"titre": "...", "detail": "...", "matiere": "un des identifiants: ${MAT_LIST}", "type": "${TYPES_DV.join('" ou "')}", "pour": "AAAA-MM-JJ", "certain": true, "competences": ["identifiant"]}], "remarque": "une phrase pour ${prenom()} si quelque chose était difficile à lire, sinon \\"\\""}`;
   return askJSON(prompt,{images,modelTier:'default',cache:false},n=>{const el=app.querySelector('[data-progress]');if(el)el.textContent=`Je recopie tes devoirs… (${n} caractères)`});
 }
 const dejaNote=x=>all('devoirs').some(d=>d.pour===x.pour&&norm(d.titre)===norm(x.titre));
 async function coursDepuisSujet(sujet){
-  const prompt=`${ROLE}
+  const prompt=`${ROLE()}
 
-l'enfant a travaillé en classe sur ce sujet : « ${sujet} ». Rédige-lui une leçon complète, détaillée et progressive (3 à 5 sections bien développées), conforme au programme de CM1. Laisse "transcription" vide et "corrections" vide.
+${prenom()} a travaillé en classe sur ce sujet : « ${sujet} ». Rédige-lui une leçon complète, détaillée et progressive (3 à 5 sections bien développées), conforme au programme de CM1. Laisse "transcription" vide et "corrections" vide.
 
 ${SCHEMAS_AIDE}
 
@@ -867,7 +872,7 @@ ${COURS_SCHEMA}`;
 const NIVEAU_QUIZ={facile:{n:6,dur:1,label:'Facile'},normal:{n:8,dur:2,label:'Normal'},defi:{n:10,dur:4,label:'Défi'}};
 function resumeLecon(l,court){
   const c=l.cours||{};
-  if(court)return `- ${l.titre} (${M(l.matiere).nom}) : ${(c.aRetenir||[]).join(' ; ')||l.resume||''}${(l.pointsFaibles||[]).length?` [difficultés de l'enfant : ${l.pointsFaibles.join(' ; ')}]`:''}`;
+  if(court)return `- ${l.titre} (${M(l.matiere).nom}) : ${(c.aRetenir||[]).join(' ; ')||l.resume||''}${(l.pointsFaibles||[]).length?` [difficultés ${deP()} : ${l.pointsFaibles.join(' ; ')}]`:''}`;
   return JSON.stringify({titre:l.titre,matiere:M(l.matiere).nom,notions:l.notions,resume:l.resume,cours:c,pointsFaibles:l.pointsFaibles||[],transcription:(l.transcription||'').slice(0,l.ref?14000:3000)});
 }
 /* Quiz progressif : les questions sont générées par petits lots pendant que l'enfant joue.
@@ -917,12 +922,26 @@ function ecrituresNombre(v){
   const [e,d]=String(v).split('.'),g=e.replace(/\B(?=(\d{3})+(?!\d))/g,' ');
   return [...new Set([g,e].flatMap(x=>d?[x+','+d,x+'.'+d]:[x]))];
 }
+/* Égalité à trou (« 142 - ___ = 145 - 17 ») : le code trouve lui-même le nombre manquant,
+   car l'IA y donne souvent un faux corrigé et son "calcul" ne décrit pas l'égalité. */
+function resoudreTrou(question){
+  const t=String(question).replace(/_{2,}|…|\.{3}|[□▢■?]/g,'¤');
+  const eq=(t.match(/[\d¤(][\d¤ ,.+\-−–×÷*:\/()x]*=[\d¤ ,.+\-−–×÷*:\/()x]*[\d¤)]/)||[])[0];
+  if(!eq||eq.split('¤').length!==2||eq.split('=').length!==2)return null;
+  const [g,d]=eq.split('='),D=n=>{const a=evalCalcul(g.replace('¤',`(${n})`)),b=evalCalcul(d.replace('¤',`(${n})`));return a===null||b===null?null:a-b};
+  const d0=D(0),d1=D(1);if(d0===null||d1===null||d1===d0)return null;
+  const v=Math.round(-d0/(d1-d0)*1e6)/1e6,dv=D(v);if(dv===null||Math.abs(dv)>1e-6)return null;
+  const n=ecrituresNombre(v)[0],cote=evalCalcul(g.replace('¤',`(${v})`));
+  return {v,bon:`Le nombre manquant est ${n} : ${eq.replace('¤',n).replace(/\s+/g,' ').trim()}, les deux côtés font ${ecrituresNombre(cote)[0]}.`};
+}
 /* Renvoie la question (corrigée si besoin), ou null s'il vaut mieux l'écarter. */
 function verifierCalcul(q){
+  if(q.type==='vf')return q;
+  const trou=resoudreTrou(q.question);
   // Sans champ "calcul", on prend l'opération écrite dans la question (« 245 + 378 = ? »).
-  const op=q.calcul||(q.type==='courte'&&(q.question.match(/\d[\d ,.]*(?:\s*[-+×÷−]\s*\(?\d[\d ,.]*\)?)+/)||[])[0]);
-  const v=op?evalCalcul(op):null;if(v===null||q.type==='vf')return q;
-  const bon=`Le calcul : ${String(op).trim()} = ${ecrituresNombre(v)[0]}.`;
+  const op=!trou&&(q.calcul||(q.type==='courte'&&(q.question.match(/\d[\d ,.]*(?:\s*[-+×÷−]\s*\(?\d[\d ,.]*\)?)+/)||[])[0]));
+  const v=trou?trou.v:op?evalCalcul(op):null;if(v===null)return q;
+  const bon=trou?trou.bon:`Le calcul : ${String(op).trim()} = ${ecrituresNombre(v)[0]}.`;
   if(q.type==='courte'){
     if(q.reponses.some(r=>memeNombre(lireNombre(r),v)))return q;
     console.warn('Calcul corrigé',q.question,q.reponses,'→',v);
@@ -943,20 +962,20 @@ async function genererQuestions(q,diffs){
   const ratees=faites.filter(o=>o.r&&!o.r.pending&&!o.r.ok).slice(-2).map(o=>o.x.question);
   // Partie fixe d'abord (consignes + leçon), partie variable à la fin : Ollama garde en mémoire
   // la lecture du début de la demande et n'a pas à relire la leçon à chaque question.
-  const prompt=`${ROLE}
+  const prompt=`${ROLE()}
 
-l'enfant fait un questionnaire de ${q.n} questions sur ${plusieurs?'ces leçons (révision de la matière)':'cette leçon'}. Niveau : ${nv.label}. Les questions sont créées au fur et à mesure, d'après ses réponses.
+${prenom()} fait un questionnaire de ${q.n} questions sur ${plusieurs?'ces leçons (révision de la matière)':'cette leçon'}. Niveau : ${nv.label}. Les questions sont créées au fur et à mesure, d'après ses réponses.
 Règles :
 - Varie les types d'une question à l'autre : QCM (4 choix), vrai/faux et réponses courtes (un mot, un nombre ou une petite phrase).
 - Pour un QCM, les choix vont seulement dans "choix" : ne les recopie pas dans le texte de la question. Pour un vrai/faux, "question" est l'affirmation seule, sans « Vrai ou faux : ».
 - difficulte 1 = application directe de la règle, 2 = un peu de réflexion, 3 = question « pointue » qui vérifie la vraie compréhension : piège classique, application à un cas nouveau, raisonnement ou justification.
 - En mathématiques, mets des calculs et de petits problèmes. En français, fais manipuler la langue (transformer, classer, accorder).
 - Reste dans le programme de CM1 et dans le contenu de la leçon.
-- "explication" : 2 phrases courtes, 40 mots au plus : la règle, puis pourquoi c'est la bonne réponse ici (ou pourquoi le piège est faux). l'enfant peut demander plus de détails ensuite.
+- "explication" : 2 phrases courtes, 40 mots au plus : la règle, puis pourquoi c'est la bonne réponse ici (ou pourquoi le piège est faux). ${prenom()} peut demander plus de détails ensuite.
 - "indice" : une seule phrase courte (15 mots au plus) qui met sur la piste sans donner la réponse.
 - Choix de QCM et réponses courtes : quelques mots seulement.
 - Pour "courte", donne dans "reponses" la réponse attendue et ses variantes acceptables.
-- Si la réponse d'un QCM ou d'une réponse courte s'obtient par un calcul, écris l'opération complète dans "calcul", avec seulement des nombres, + - × : et des parenthèses (par exemple "4,75 + 13 + 2,50"). Sinon, ne mets pas "calcul".${faibles.length?`\n- Dans son cahier, l'enfant se trompe souvent sur ces points : consacre-leur au moins la moitié des questions, avec des exemples nouveaux :\n${faibles.map(e=>'  * '+e).join('\n')}`:''}${erreurs.length?`\n- l'enfant s'est déjà trompé sur ces questions, reviens sur les mêmes notions autrement :\n${erreurs.map(e=>'  * '+e).join('\n')}`:''}${comps.length>1?`\n- Pour chaque question, mets dans "competence" l'identifiant de l'objectif du programme qu'elle vérifie, pris dans cette liste :\n${comps.map(id=>`  * ${id} : ${COMP(id).t}`).join('\n')}`:''}
+- Si la réponse d'un QCM ou d'une réponse courte s'obtient par un calcul, écris l'opération complète dans "calcul", avec seulement des nombres, + - × : et des parenthèses (par exemple "4,75 + 13 + 2,50"). Sinon, ne mets pas "calcul".${faibles.length?`\n- Dans son cahier, ${prenom()} se trompe souvent sur ces points : consacre-leur au moins la moitié des questions, avec des exemples nouveaux :\n${faibles.map(e=>'  * '+e).join('\n')}`:''}${erreurs.length?`\n- ${prenom()} s'est déjà trompé sur ces questions, reviens sur les mêmes notions autrement :\n${erreurs.map(e=>'  * '+e).join('\n')}`:''}${comps.length>1?`\n- Pour chaque question, mets dans "competence" l'identifiant de l'objectif du programme qu'elle vérifie, pris dans cette liste :\n${comps.map(id=>`  * ${id} : ${COMP(id).t}`).join('\n')}`:''}
 
 Contenu :
 ${contenu}
@@ -970,7 +989,7 @@ Forme JSON de chaque type de question :
 
 ${historique?`Questions déjà posées (ne les répète pas, change de notion ou d'angle) :
 ${historique}
-`:''}${ratees.length?`l'enfant vient de se tromper sur : ${ratees.map(t=>'« '+t+' »').join(' et ')}. Reviens sur la même notion autrement, avec un exemple nouveau et plus simple, pour qu'il la comprenne vraiment.
+`:''}${ratees.length?`${prenom()} vient de se tromper sur : ${ratees.map(t=>'« '+t+' »').join(' et ')}. Reviens sur la même notion autrement, avec un exemple nouveau et plus simple, pour qu'il la comprenne vraiment.
 `:''}Crée maintenant ${diffs.length===1?'la question suivante':`les ${diffs.length} questions suivantes`} (n° ${q.questions.length+1}${diffs.length>1?' à '+(q.questions.length+diffs.length):''}), de difficulte : ${diffs.join(', ')}.
 Réponds uniquement avec un objet JSON {"questions":[...]} contenant exactement ${diffs.length} question(s).`;
   const r=await askJSON(prompt,{modelTier:'default',cache:false});
@@ -1028,14 +1047,14 @@ function procheOrtho(v,a){
   return false;
 }
 async function verifierCourte(q,rep,francais){
-  const r=await askJSON(`${ROLE}
+  const r=await askJSON(`${ROLE()}
 
-Question posée à l'enfant : « ${q.question} »
+Question posée à ${prenom()} : « ${q.question} »
 Réponses attendues : ${q.reponses.join(' / ')}
-Réponse de l'enfant : « ${rep} »
-La réponse de l'enfant est-elle juste sur le fond ? ${francais?"Sois bienveillant sur l'orthographe si le sens est bon, mais exigeant sur la notion.":"Ce n'est pas une question de français : ne tiens AUCUN compte de l'orthographe, de la grammaire, de la conjugaison, des accents ni de la ponctuation. Un mot mal écrit mais reconnaissable compte comme juste ; seul le sens compte, et ne parle pas de l'orthographe dans le commentaire."}
+Réponse ${deP()} : « ${rep} »
+La réponse ${deP()} est-elle juste sur le fond ? ${francais?"Sois bienveillant sur l'orthographe si le sens est bon, mais exigeant sur la notion.":"Ce n'est pas une question de français : ne tiens AUCUN compte de l'orthographe, de la grammaire, de la conjugaison, des accents ni de la ponctuation. Un mot mal écrit mais reconnaissable compte comme juste ; seul le sens compte, et ne parle pas de l'orthographe dans le commentaire."}
 Si c'est faux, le commentaire dit ce qui est juste dans sa réponse, puis où est l'erreur et pourquoi.
-Réponds uniquement en JSON : {"correct":true,"commentaire":"1 ou 2 phrases pour l'enfant"}`,{modelTier:'quick'});
+Réponds uniquement en JSON : {"correct":true,"commentaire":"1 ou 2 phrases pour ${prenom()}"}`,{modelTier:'quick'});
   return {ok:!!(r&&(r.correct===true||r.correct==='true')),commentaire:r&&r.commentaire?String(r.commentaire):''};
 }
 
@@ -1240,7 +1259,7 @@ const IDEES_VAC=[
 ];
 /* Défi orthographe : ses pièges du classeur (a/à, et/est, son/sont, ses/c'est, on/ont, é/er). [phrase avec ___, choix, bonne, astuce] */
 const ORTHO_VAC=[
-  ["l'enfant ___ un nouveau vélo.",['a','à'],0,"On peut dire « avait » : c'est le verbe avoir, **a** sans accent."],
+  ["Papa ___ un nouveau vélo.",['a','à'],0,"On peut dire « avait » : c'est le verbe avoir, **a** sans accent."],
   ["Je vais ___ la plage demain.",['a','à'],1,"On ne peut pas dire « avait » : c'est **à** avec un accent."],
   ["Mon frère ___ peur du noir.",['a','à'],0,"« Mon frère avait peur » : **a**, verbe avoir."],
   ["Il joue ___ cache-cache.",['a','à'],1,"« Il joue avait cache-cache » ne veut rien dire : **à**."],
@@ -1439,6 +1458,7 @@ function checkBadges(){
 /* ============ Rendu ============ */
 function renderHeader(){
   renderStrip();
+  document.getElementById('devise').textContent=`L'épée du savoir ${deP()}, chevalier de CM1`;
   const b=bilan();
   const maxi=b.niveau>=NIVEAUX.length-1,pct=maxi?100:b.dansNiveau;
   document.getElementById('wallet').innerHTML=`<span class="pill or" title="Étoiles disponibles">${STAR}<span>${b.solde}</span></span><span class="pill niv" title="${maxi?'Niveau maximum atteint !':`Encore ${100-b.dansNiveau} étoiles pour devenir ${esc(NIVEAUX[b.niveau+1])}`}"><span>Niv. ${b.niveau+1}<span class="nom"> · ${esc(b.nomNiveau)}</span></span><span class="mini-bar" role="progressbar" aria-label="Vers le niveau suivant" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></span><span class="small muted">${maxi?'max':`${b.dansNiveau}/100`}</span></span>`;
@@ -1517,7 +1537,7 @@ function vJour(){
   return `${vacEnCours()?`<div class="row" style="justify-content:center"><button class="btn primary" data-act="vac-on">🏖️ Revenir à mes vacances</button></div>`:''}
   <section class="card hello">
     ${MASCOTTE}
-    <div><p class="eyebrow">${esc(longDate(t))}</p><h2>Bonjour <span class="nom">${esc(cfg().prenom||'l'enfant')}</span> !</h2>${s.n>=2?`<p class="small muted">🔥 ${s.n} jours de suite</p>`:''}</div>
+    <div><p class="eyebrow">${esc(longDate(t))}</p><h2>Bonjour <span class="nom">${esc(prenom())}</span> !</h2>${s.n>=2?`<p class="small muted">🔥 ${s.n} jours de suite</p>`:''}</div>
   </section>
   <section class="card mission-jour"><p class="eyebrow">Ma mission du jour</p>
     ${!m?`<p class="muted">J'ouvre ton cartable…</p>`
@@ -1556,10 +1576,10 @@ function itemTache(p,j,x){
   return `<label class="item ${ok}"><span class="num" aria-hidden="true">${x.ok?'✅':lib[0]}</span><span class="grow"><span class="t">${esc(lib[1])}</span><br><span class="small muted">${lib[2]}</span></span><input type="checkbox" class="chk" data-act="vac-coche" data-v="${x.k==='lire'?'lu':'rentree'}" data-id="${j.date}" ${x.ok?'checked':''}></label>`;
 }
 function vVacances(){
-  const v=vacEnCours(),t=TODAY(),b=bilan(),prenom=esc(cfg().prenom||'l'enfant');
+  const v=vacEnCours(),t=TODAY(),b=bilan();
   const reste=daysBetween(t,v.reprise);
   const hero=(nudge,stats)=>`<section class="card hello vac-hero">${MASCOTTE_VAC}
-    <div><p class="eyebrow">${esc(v.nom)} · ${esc(longDate(t))}</p><h2>Bonnes vacances <span class="nom">${prenom}</span> !</h2><p class="nudge">${esc(nudge)}</p></div>
+    <div><p class="eyebrow">${esc(v.nom)} · ${esc(longDate(t))}</p><h2>Bonnes vacances <span class="nom">${esc(prenom())}</span> !</h2><p class="nudge">${esc(nudge)}</p></div>
     <div class="stack" style="min-width:230px"><div class="stats">${stats}</div></div></section>`;
   if(loading()||!COURS)return hero("J'ouvre ton carnet de vacances…",'');
   let p=planVac(v);
@@ -1714,9 +1734,9 @@ async function leconSpeciale(id){
     const liees=e.lecons.filter(l=>!l.special);
     const faibles=[...new Set(liees.flatMap(l=>l.pointsFaibles||[]))].slice(0,10);
     const erreurs=e.erreurs.slice(0,8);
-    const r=await askJSON(`${ROLE}
+    const r=await askJSON(`${ROLE()}
 
-l'enfant ne maîtrise pas encore cet objectif du programme de CM1 : « ${c.t} » (${M(c.m).nom}, ${c.d}).${dom.p?`\nPrécision du programme : ${dom.p}`:''}
+${prenom()} ne maîtrise pas encore cet objectif du programme de CM1 : « ${c.t} » (${M(c.m).nom}, ${c.d}).${dom.p?`\nPrécision du programme : ${dom.p}`:''}
 ${liees.length?`\nCe qu'il a vu en classe :\n${liees.map(l=>resumeLecon(l,true)).join('\n')}`:''}${faibles.length?`\n\nSes difficultés repérées dans le cahier :\n${faibles.map(x=>'- '+x).join('\n')}`:''}${erreurs.length?`\n\nSes erreurs récentes :\n${erreurs.map(p=>`- « ${String(p.question||'').slice(0,200)} » : il a répondu « ${p.rep??''} », la bonne réponse était « ${p.bonne??''} »`).join('\n')}`:''}
 
 Écris une leçon spéciale, rien que pour lui :
@@ -1761,9 +1781,9 @@ async function relierTout(){
   const COLL={l:'lecons',d:'devoirs',n:'notes'},NOM={l:'leçon',d:'devoir',n:'note'};
   try{
     const mats=[...new Set(its.map(([,x])=>x.matiere).flatMap(m=>MAT_PROCHES[m]||[m]))].filter(m=>PROG_MATS.includes(m));
-    const r=await askJSON(`${ROLE}
+    const r=await askJSON(`${ROLE()}
 
-Voici des leçons, des devoirs et des notes de l'enfant. Pour chacun, indique les objectifs du programme officiel de CM1 qu'il fait travailler (1 à 4 identifiants, uniquement pris dans la liste). Pour un devoir, pense à la leçon qu'il fait revoir. Si aucun ne correspond, mets une liste vide.
+Voici des leçons, des devoirs et des notes ${deP()}. Pour chacun, indique les objectifs du programme officiel de CM1 qu'il fait travailler (1 à 4 identifiants, uniquement pris dans la liste). Pour un devoir, pense à la leçon qu'il fait revoir. Si aucun ne correspond, mets une liste vide.
 
 À relier :
 ${its.map(([k,x])=>`- id ${k}:${x.id} (${NOM[k]}, ${M(x.matiere).nom}) : ${x.titre||x.intitule}${x.detail?' — '+String(x.detail).slice(0,200):''}${(x.notions||[]).length?' — '+x.notions.join(', '):''}${x.resume?' — '+String(x.resume).slice(0,200):''}${(x.competences||[]).length?' [deviné : '+x.competences.join(', ')+']':''}`).join('\n')}
@@ -2293,16 +2313,16 @@ function vSemaine(){
 const pinDefini=()=>!!(S.config.get('pin')||{}).defini;
 function vParents(){
   const c=cfg();
-  if(!state.parent)return `<section class="card"><h3>Espace parents</h3><p class="small muted" style="margin-bottom:8px">Pour suivre le programme de CM1, gérer les récompenses et valider les demandes de l'enfant.</p><form class="row" data-form="pin"><input type="password" id="pin" name="pin" inputmode="numeric" placeholder="${pinDefini()?'Code parent':'Choisissez un code (4 chiffres)'}" style="max-width:240px" required><button class="btn">${pinDefini()?'Ouvrir':'Créer le code'}</button></form></section>`;
+  if(!state.parent)return `<section class="card"><h3>Espace parents</h3><p class="small muted" style="margin-bottom:8px">Pour suivre le programme de CM1, gérer les récompenses et valider les demandes ${esc(deP())}.</p><form class="row" data-form="pin"><input type="password" id="pin" name="pin" inputmode="numeric" placeholder="${pinDefini()?'Code parent':'Choisissez un code (4 chiffres)'}" style="max-width:240px" required><button class="btn">${pinDefini()?'Ouvrir':'Créer le code'}</button></form></section>`;
   const ach=all('achats').filter(a=>a.statut==='demandé');const rec=all('recompenses').sort((a,b)=>a.cout-b.cout);
   return `${vSemaine()}<section class="card stack"><div class="sec-title"><h3>Espace parents</h3><button class="btn ghost" data-act="parent-off">Fermer</button></div>
-    <p class="eyebrow">Suivi scolaire</p><div class="row"><button class="btn primary" data-act="tab" data-v="programme">🗺️ Programme CM1 : où en est ${esc(c.prenom||'l'enfant')}</button></div>
+    <p class="eyebrow">Suivi scolaire</p><div class="row"><button class="btn primary" data-act="tab" data-v="programme">🗺️ Programme CM1 : où en est ${esc(prenom())}</button></div>
     <p class="eyebrow">Demandes à valider</p>${ach.length?ach.map(a=>`<div class="reward"><span>${esc(a.titre)} <span class="cost">${a.cout}</span></span><span class="row"><button class="btn primary" data-act="valider" data-id="${a.id}">Accorder</button><button class="btn" data-act="refuser" data-id="${a.id}">Refuser</button></span></div>`).join(''):'<p class="small muted">Aucune demande en attente.</p>'}
     <p class="eyebrow">Récompenses proposées</p>${rec.map(r=>`<div class="reward"><span>${esc(r.titre)}</span><span class="row"><span class="cost">${r.cout}</span><button class="btn ghost danger" data-act="del-rec" data-id="${r.id}">Retirer</button></span></div>`).join('')}
     <form class="form-grid" data-form="rec"><label class="f">Nouvelle récompense<input type="text" id="rec-t" name="titre" required></label><label class="f">Prix en étoiles<input type="number" id="rec-c" name="cout" min="1" value="50" required></label><div><button class="btn">Ajouter</button></div></form>
     ${!rec.length?`<div><button class="btn" data-act="suggestions">Ajouter des récompenses suggérées</button></div>`:''}
     <p class="small muted">Repère : un quiz de 10 questions rapporte 13 étoiles avec 8 bonnes réponses, 30 sans faute. Une bonne journée complète rapporte 30 à 50 étoiles.</p>
-    <form class="form-grid" data-form="prenom"><label class="f">Prénom affiché<input type="text" id="cfg-prenom" name="prenom" value="${esc(c.prenom||'l'enfant')}"></label><div><button class="btn">Enregistrer</button></div></form>
+    <form class="form-grid" data-form="prenom"><label class="f">Prénom affiché<input type="text" id="cfg-prenom" name="prenom" value="${esc(c.prenom||'')}" required></label><div><button class="btn">Enregistrer</button></div></form>
   </section>`;
 }
 
@@ -2348,7 +2368,7 @@ document.addEventListener('click',async e=>{
     case 'quiz-regen':{const q=state.quiz;if(q){q.genErr=null;render();prepareQuestions(q,q.i+1)}break}
     case 'quiz-finir':{const q=state.quiz;if(q){finirQuiz();render()}break}
     case 'explique':{const q=state.quiz,x=q.questions[q.i],r=q.rep[q.i],idx=q.i;q.extra[idx]={busy:true};render();
-      try{const {text}=await sample(`${ROLE}\n\nl'enfant n'a pas bien compris cette question de quiz.\nQuestion : « ${x.question} »\nSa réponse : « ${x.type==='qcm'?x.choix[r.v]:x.type==='vf'?(r.v?'Vrai':'Faux'):r.v} »\nExplication déjà donnée : « ${x.explication} »\nRéexplique autrement, en 120 à 180 mots, avec une autre approche que l'explication déjà donnée : commence par comprendre pourquoi sa réponse lui a semblé juste, puis utilise une image ou un exemple de la vie de tous les jours, déroule le raisonnement pas à pas sur la question, et finis par une astuce pour ne plus se tromper. Pas de titre, pas de liste à puces.`,{modelTier:'quick'});q.extra[idx]={text}}catch(err){q.extra[idx]={};toast(errMsg(err))}
+      try{const {text}=await sample(`${ROLE()}\n\n${prenom()} n'a pas bien compris cette question de quiz.\nQuestion : « ${x.question} »\nSa réponse : « ${x.type==='qcm'?x.choix[r.v]:x.type==='vf'?(r.v?'Vrai':'Faux'):r.v} »\nExplication déjà donnée : « ${x.explication} »\nRéexplique autrement, en 120 à 180 mots, avec une autre approche que l'explication déjà donnée : commence par comprendre pourquoi sa réponse lui a semblé juste, puis utilise une image ou un exemple de la vie de tous les jours, déroule le raisonnement pas à pas sur la question, et finis par une astuce pour ne plus se tromper. Pas de titre, pas de liste à puces.`,{modelTier:'quick'});q.extra[idx]={text}}catch(err){q.extra[idx]={};toast(errMsg(err))}
       if(state.quiz===q)render();break}
     case 'rm-img':state.add.images.splice(Number(v),1);render();break;
     case 'reset-add':state.add={images:[],indice:'',date:TODAY(),busy:false,res:null,err:'',sujet:''};render();break;
@@ -2406,7 +2426,7 @@ document.addEventListener('submit',async e=>{
   if(kind==='manuel'){const lignes=(fd.txt||'').split('\n').map(s=>s.trim()).filter(Boolean);const id=nouvelleLecon({cours:{aRetenir:lignes}},{titre:fd.titre,matiere:fd.matiere,date:fd.date});go('lecon',id);return}
   if(kind==='edit-lecon'){const l=S.lecons.get(f.dataset.id);if(l){put('lecons',l.id,{...l,titre:fd.titre||l.titre,matiere:fd.matiere,date:fd.date||l.date});toast('Leçon modifiée.')}return}
   if(kind==='ask'){const l=S.lecons.get(f.dataset.id);if(!l||!sample)return;const q=fd.q;state.ask[l.id]={busy:true,text:''};render();
-    try{const {text}=await sample(`${ROLE}\n\nVoici la leçon de l'enfant :\n${resumeLecon(l)}\n\nl'enfant demande : « ${q} »\nRéponds-lui en 100 à 200 mots, pas à pas : explique le pourquoi, donne un exemple concret de sa vie, montre le raisonnement, puis finis par une petite question ou une astuce pour vérifier qu'il a compris. Si la question n'a rien à voir avec l'école, ramène-le gentiment vers sa leçon.`,{modelTier:'default',cache:false,onText:({text})=>{state.ask[l.id].text=text;const el=app.querySelector('.thinking span');if(el)el.innerHTML=rich(text)}});
+    try{const {text}=await sample(`${ROLE()}\n\nVoici la leçon ${deP()} :\n${resumeLecon(l)}\n\n${prenom()} demande : « ${q} »\nRéponds-lui en 100 à 200 mots, pas à pas : explique le pourquoi, donne un exemple concret de sa vie, montre le raisonnement, puis finis par une petite question ou une astuce pour vérifier qu'il a compris. Si la question n'a rien à voir avec l'école, ramène-le gentiment vers sa leçon.`,{modelTier:'default',cache:false,onText:({text})=>{state.ask[l.id].text=text;const el=app.querySelector('.thinking span');if(el)el.innerHTML=rich(text)}});
       const cur=S.lecons.get(l.id)||l;put('lecons',l.id,{...cur,questions:[...(cur.questions||[]),{q,a:text}].slice(-10)});state.ask[l.id]={}}catch(err){state.ask[l.id]={err:errMsg(err)}}
     render();return}
   if(kind==='scan-save'){let n=0,nc=0;
@@ -2426,7 +2446,7 @@ document.addEventListener('submit',async e=>{
     let r;try{r=await fetch('/api/pin',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({pin:fd.pin,creer})}).then(x=>x.json())}catch(e){toast("Le serveur du cartable ne répond pas.");return}
     if(r.ok){if(creer){S.config.set('pin',{id:'pin',defini:true});toast('Code parent créé.')}state.parent=true;render()}else toast(r.code==='deja'?'Un code existe déjà.':'Code incorrect.');return}
   if(kind==='rec'){put('recompenses',uid(),{titre:fd.titre,cout:Math.max(1,Number(fd.cout)||1)});f.reset();return}
-  if(kind==='prenom'){put('config','main',{...cfg(),prenom:fd.prenom||'l'enfant'});toast('Enregistré.');return}
+  if(kind==='prenom'){put('config','main',{...cfg(),prenom:(fd.prenom||'').trim()});toast('Enregistré.');return}
 });
 const h=(location.hash||'').slice(1);if(TABS.some(t=>t[0]===h))state.view=h;
 render();initStore();
