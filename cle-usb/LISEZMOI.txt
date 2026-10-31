@@ -1,0 +1,22 @@
+EXCALIBUR SUR CLE USB
+=====================
+
+Tout est dans ce dossier : le cartable de l'enfant, les lecons du programme,
+Node, Ollama et le modele d'IA (gemma). Rien a installer, pas d'internet.
+
+Demarrer
+--------
+Double-clic sur "Demarrer Excalibur.bat". Le navigateur s'ouvre tout seul.
+Pour arreter, fermer la fenetre noire.
+
+Bon a savoir
+------------
+- PC Windows 64 bits obligatoire. 16 Go de memoire conseilles (8 Go minimum,
+  ce sera lent).
+- Depuis une cle, la premiere reponse de l'IA peut etre longue (le modele
+  de 6 Go est lu depuis la cle). Pour aller plus vite, copier tout le
+  dossier Excalibur sur le bureau du PC et lancer le .bat depuis la.
+- Les devoirs, notes et etoiles sont enregistres dans ce dossier
+  (appli\data). Ils ne se melangent pas avec ceux du PC d'origine.
+- Si Ollama est deja installe sur le PC, pas de souci : la version de la
+  cle utilise son propre port et ses propres fichiers.

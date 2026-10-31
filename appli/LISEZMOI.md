@@ -45,6 +45,10 @@ L'IA donne l'opération de chaque question de calcul, et le cartable refait le c
 Ajouter `HOST=0.0.0.0` dans `.env`, relancer, puis ouvrir `http://<nom-ou-IP-du-PC>:3000` sur la tablette.
 Windows demandera d'autoriser Node.js sur le réseau privé.
 
+## Sur une clé USB (autre PC, sans rien installer)
+
+Fermer le cartable, brancher une clé en **exFAT ou NTFS** (le modèle fait 5,5 Go, trop gros pour FAT32) avec au moins 10 Go libres, puis double-cliquer sur `cle-usb\Preparer la cle USB.bat`. La clé reçoit un dossier `Excalibur` avec le cartable, les leçons, Node, Ollama et gemma. Sur l'autre PC (Windows 64 bits), double-cliquer sur `Excalibur\Demarrer Excalibur.bat`. L'Ollama de la clé utilise le port 11435 et ses propres fichiers, donc il ne gêne pas un Ollama déjà installé. Les données de l'enfant sont copiées, mais ensuite les deux cartables vivent chacun de leur côté. Pour une clé avec un cartable vide, lancer `preparer-cle.ps1 -SansDonnees`.
+
 ## Sauvegarde
 
 Tout est dans `data/cartable.duckdb`. Le serveur y recopie chaque modification au bout de 3 secondes, ainsi qu'au démarrage et à la fermeture. Si un fichier `cartable.duckdb.wal` traîne à côté, c'est seulement que la dernière modification a moins de 3 secondes : il sera vidé au prochain lancement. Pour une copie à la main, fermer le cartable, puis copier `data/cartable.duckdb`. Le dossier est dans OneDrive, donc il est déjà sauvegardé.
