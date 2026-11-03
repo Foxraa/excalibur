@@ -412,10 +412,30 @@ table.t tr:last-child td{border-bottom:0}
 .drop::before{content:"📸";font-size:3rem;line-height:1}
 .drop:hover{background:var(--tint-2);transform:scale(1.01)}
 .drop.over{border-color:var(--accent);border-style:solid;background:var(--tint-2)}
-.thinking{display:flex;align-items:center;gap:12px;padding:16px;border-radius:var(--r-s);background:var(--tint);border:2px solid var(--tint-2);font-weight:700}
-.pencil{width:32px;height:32px;flex:none}
-@media (prefers-reduced-motion:no-preference){.pencil{animation:write 1.1s ease-in-out infinite}}
-@keyframes write{0%,100%{transform:translate(0,0) rotate(0)}50%{transform:translate(6px,-3px) rotate(-8deg)}}
+.thinking{display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:var(--r-s);background:var(--tint);border:2px solid var(--tint-2);font-weight:700}
+.attente-txt{display:flex;flex-direction:column;gap:6px;min-width:0}
+.attente-txt .small{font-weight:400}
+/* Le hibou chevalier tranche les mauvaises notes : l'épée frappe toutes les 1,4 s, une note arrive à chaque coup. */
+.hibou-attente{width:105px;height:70px;flex:none}
+.hibou-attente .epee{transform-box:view-box;transform-origin:76px 68px;transform:rotate(8deg)}
+.hibou-attente .mauvaise{opacity:0}
+.hibou-attente .n1{opacity:1}
+.cases{display:flex;gap:6px}
+.case{width:22px;height:14px;border-radius:4px;border:2px solid color-mix(in srgb,var(--accent) 40%,var(--line))}
+.case.faite{background:var(--accent);border-color:var(--accent)}
+.case.en-cours{border-color:var(--accent)}
+@media (prefers-reduced-motion:no-preference){
+  .hibou-attente .corps{animation:sautille 1.4s ease-in-out infinite}
+  .hibou-attente .epee{animation:coup 1.4s ease-in-out infinite}
+  .hibou-attente .mauvaise{animation:mauvaise-note 4.2s linear infinite}
+  .hibou-attente .n2{animation-delay:1.4s}
+  .hibou-attente .n3{animation-delay:2.8s}
+  .case.en-cours{animation:clignote 1s ease-in-out infinite}
+}
+@keyframes sautille{50%{transform:translateY(-3px)}}
+@keyframes coup{0%,100%{transform:rotate(8deg)}45%{transform:rotate(-4deg)}66%{transform:rotate(64deg)}}
+@keyframes mauvaise-note{0%{transform:translateX(46px);opacity:0}5%{opacity:1}20%{transform:translateX(0);opacity:1}26%{transform:translate(4px,-6px) scale(1.35) rotate(-18deg);opacity:0}100%{transform:translateX(46px);opacity:0}}
+@keyframes clignote{50%{background:color-mix(in srgb,var(--accent) 35%,transparent)}}
 .offline{background:var(--warn-bg);border:2px solid color-mix(in srgb,var(--warn) 40%,transparent);border-radius:var(--r-s);padding:12px 16px}
 
 /* Bandeau du haut : l'année scolaire et l'avancement du travail */
@@ -775,7 +795,9 @@ ${prenom()} dit que c'est du ${longDate(dateSeance||t)}.
 
 Étape 2. Remplis seulement les parties qui servent.
 
-A) "lecon" : pour une leçon, des exercices ou une évaluation. Sinon null.
+A) "lecons" : une entrée par leçon, exercices ou évaluation. Liste vide sinon.
+- Les photos peuvent montrer plusieurs leçons différentes (par exemple une leçon de fractions et une leçon de conjugaison) : fais alors une entrée par notion, sans les mélanger. Les pages d'une même leçon, ou une leçon et ses exercices sur la même notion, vont dans une seule entrée.
+- "photos" : les numéros des photos (1 pour la première) où se trouve cette leçon.
 - Lis attentivement tout ce qui est écrit, même à la main. Identifie la matière et la notion travaillée.
 - Rédige un cours remanié et complet pour ${prenom()} : réexplique pas à pas, complète ce qui manque pour bien comprendre, explique le pourquoi, ajoute des exemples résolus. 3 à 5 sections, chacune bien développée. Reste au niveau CM1. Pour des exercices ou une évaluation, fais le cours de la notion travaillée, même si la leçon n'est pas sur la photo.
 - "exercices" : pour des exercices ou une évaluation, une ligne par exercice ou par question, avec la réponse ${deP()}, la bonne réponse et "juste" (true, false, ou null si ce n'est pas fait). Tiens compte des corrections de la maîtresse (stylo rouge ou vert, croix, coches). Pour une simple leçon, liste vide.
@@ -810,7 +832,7 @@ Réponds uniquement avec un objet JSON de cette forme :
 "lisible": true,
 "genre": "lecon | exercice | evaluation | agenda | autre",
 "description": "en 1 ou 2 phrases adressées à ${prenom()}, ce que tu as trouvé sur les photos",
-"lecon": ${LECON_SCHEMA},
+"lecons": [${LECON_SCHEMA.replace(/^\{\n/,'{\n "photos": [1],\n')}],
 "devoirs": [{"titre": "...", "detail": "...", "matiere": "un des identifiants: ${MAT_LIST}", "type": "${TYPES_DV.join('" ou "')}", "pour": "AAAA-MM-JJ", "certain": true, "competences": ["identifiant"]}],
 "note": {"intitule": "ex : Évaluation sur les fractions", "matiere": "un des identifiants", "valeur": 15, "sur": 20, "commentaire": "l'appréciation de la maîtresse, ou \\"\\"", "competences": ["identifiants des objectifs évalués, 1 à 4"]},
 "infos": ["..."]
@@ -821,11 +843,13 @@ Réponds uniquement avec un objet JSON de cette forme :
 function normRes(r){
   if(!r||typeof r!=='object')throw {code:'invalid_json'};
   const mat=m=>MATIERES.some(x=>x.id===m)?m:'francais';
-  const lecon=r.lecon&&typeof r.lecon==='object'&&(r.lecon.titre||r.lecon.cours)?{...r.lecon,matiere:mat(r.lecon.matiere),exercices:(Array.isArray(r.lecon.exercices)?r.lecon.exercices:[]).filter(x=>x&&x.enonce),pointsFaibles:(Array.isArray(r.lecon.pointsFaibles)?r.lecon.pointsFaibles:[]).filter(Boolean).map(String)}:null;
+  // "lecons" (liste) ; "lecon" seul reste accepté (cours depuis un sujet, ancienne forme de réponse).
+  const lecons=(Array.isArray(r.lecons)?r.lecons:[r.lecon]).filter(l=>l&&typeof l==='object'&&(l.titre||l.cours)).map(l=>({...l,matiere:mat(l.matiere),photos:(Array.isArray(l.photos)?l.photos:[]).map(Number).filter(n=>Number.isInteger(n)&&n>0),exercices:(Array.isArray(l.exercices)?l.exercices:[]).filter(x=>x&&x.enonce),pointsFaibles:(Array.isArray(l.pointsFaibles)?l.pointsFaibles:[]).filter(Boolean).map(String)}));
+  const lecon=lecons[0]||null;
   const devoirs=(Array.isArray(r.devoirs)?r.devoirs:[]).filter(d=>d&&d.titre).map(d=>{const ok=/^\d{4}-\d{2}-\d{2}$/.test(d.pour||'');return {titre:String(d.titre),detail:d.detail?String(d.detail):'',matiere:mat(d.matiere),type:TYPES_DV.includes(d.type)?d.type:'Devoir',pour:ok?d.pour:addDays(TODAY(),1),certain:ok&&d.certain!==false,competences:compValides(d.competences)}});
   const n=r.note,v=n&&Number(n.valeur),s=n&&Number(n.sur);
   const note=n&&isFinite(v)&&s>0&&v>=0&&v<=s?{intitule:String(n.intitule||(lecon&&lecon.titre)||'Évaluation'),matiere:mat(n.matiere||(lecon&&lecon.matiere)),valeur:v,sur:s,commentaire:n.commentaire?String(n.commentaire):'',competences:compValides(n.competences)}:null;
-  return {lisible:r.lisible!==false,genre:GENRES[r.genre]?r.genre:lecon?'lecon':devoirs.length?'agenda':'autre',description:String(r.description||r.resume||''),lecon,devoirs,note,infos:(Array.isArray(r.infos)?r.infos:[]).filter(Boolean).map(String)};
+  return {lisible:r.lisible!==false,genre:GENRES[r.genre]?r.genre:lecon?'lecon':devoirs.length?'agenda':'autre',description:String(r.description||r.resume||''),lecons,devoirs,note,infos:(Array.isArray(r.infos)?r.infos:[]).filter(Boolean).map(String)};
 }
 async function lireAgenda(images,indice){
   const t=TODAY();
@@ -966,6 +990,9 @@ async function genererQuestions(q,diffs){
 
 ${prenom()} fait un questionnaire de ${q.n} questions sur ${plusieurs?'ces leçons (révision de la matière)':'cette leçon'}. Niveau : ${nv.label}. Les questions sont créées au fur et à mesure, d'après ses réponses.
 Règles :
+- Chaque question doit être parfaitement claire pour un enfant de 9 ans, sans rien à deviner : une seule chose demandée, tous les renseignements utiles donnés, et ce qu'il faut répondre (un nombre, une unité, un mot…). Précise tout ce qui pourrait se comprendre de deux façons. Par exemple, pour une horloge, dis toujours quelle aiguille montre quoi : « la petite aiguille (celle des heures) est sur le 3, la grande aiguille (celle des minutes) est sur le 6 », jamais seulement « l'aiguille est sur le 6 ».
+- Chaque question se suffit à elle-même : ${prenom()} ne voit ni la leçon ni les questions d'avant. Ne parle jamais de « la solution », « le problème », « l'exercice » ou « le texte » sans les écrire en entier dans la question : un problème de mathématiques donne tout son énoncé (la situation, les nombres, ce qu'on cherche) avant de poser la question.
+- La question ne doit jamais contenir ni laisser voir sa réponse. En français surtout : pour faire conjuguer, accorder ou transformer, donne la forme de départ et la consigne, mais pas le résultat attendu (par exemple « Conjugue le verbe chanter au futur avec nous », et non « Conjugue : nous chanterons »).
 - Varie les types d'une question à l'autre : QCM (4 choix), vrai/faux et réponses courtes (un mot, un nombre ou une petite phrase).
 - Pour un QCM, les choix vont seulement dans "choix" : ne les recopie pas dans le texte de la question. Pour un vrai/faux, "question" est l'affirmation seule, sans « Vrai ou faux : ».
 - difficulte 1 = application directe de la règle, 2 = un peu de réflexion, 3 = question « pointue » qui vérifie la vraie compréhension : piège classique, application à un cas nouveau, raisonnement ou justification.
@@ -1427,7 +1454,7 @@ function sousOnglets(){
 // Pictogramme de chaque onglet : un enfant qui lit encore lentement reconnaît l'image avant le mot.
 const TAB_ICO={jour:'☀️',matieres:'📚',ajouter:'📷',programme:'🗺️',annee:'📅',devoirs:'✏️',notes:'📊',recompenses:'👑'};
 const MAT_ICO={francais:'📖',maths:'🔢',sciences:'🔬',histoire:'🏰',geographie:'🌍',anglais:'💬',emc:'🤝',arts:'🎨',musique:'🎵',eps:'⚽'};
-const MASCOTTE=`<svg class="mascotte" viewBox="0 0 120 120" aria-hidden="true"><ellipse cx="60" cy="112" rx="30" ry="5" fill="#000" opacity=".08"/><path d="M28 30l8 14M92 30l-8 14" stroke="#7048e8" stroke-width="8" stroke-linecap="round"/><ellipse cx="60" cy="68" rx="38" ry="42" fill="#845ef7"/><ellipse cx="60" cy="80" rx="24" ry="26" fill="#e5dbff"/><path d="M44 78q4 3 8 0M56 86q4 3 8 0M68 78q4 3 8 0M50 94q4 3 8 0M62 94q4 3 8 0" stroke="#b197fc" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="44" cy="52" r="15" fill="#fff"/><circle cx="76" cy="52" r="15" fill="#fff"/><g class="oeil"><circle cx="46" cy="53" r="7" fill="#22184a"/><circle cx="48" cy="50" r="2.5" fill="#fff"/></g><g class="oeil"><circle cx="74" cy="53" r="7" fill="#22184a"/><circle cx="76" cy="50" r="2.5" fill="#fff"/></g><path d="M55 64l5 7 5-7z" fill="#ffa94d"/><path d="M22 70q-6 18 10 26M98 70q6 18-10 26" stroke="#7048e8" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M38 31l-2-19 12 10 12-16 12 16 12-10-2 19z" fill="#ffd43b" stroke="#f08c00" stroke-width="2" stroke-linejoin="round"/><circle cx="60" cy="24" r="3" fill="#e03131"/><circle cx="47" cy="27" r="2" fill="#4dabf7"/><circle cx="73" cy="27" r="2" fill="#4dabf7"/><path d="M88 74h20v11q0 12-10 17-10-5-10-17z" fill="#2f6fd8" stroke="#ffd43b" stroke-width="2.5" stroke-linejoin="round"/><path d="M98 77v21M91 85h14" stroke="#ffd43b" stroke-width="3"/></svg>`;
+const MASCOTTE=`<svg class="mascotte" viewBox="0 0 120 120" aria-hidden="true"><ellipse cx="60" cy="112" rx="30" ry="5" fill="#000" opacity=".08"/><path d="M28 30l8 14M92 30l-8 14" stroke="#7048e8" stroke-width="8" stroke-linecap="round"/><ellipse cx="60" cy="68" rx="38" ry="42" fill="#845ef7"/><ellipse cx="60" cy="80" rx="24" ry="26" fill="#e5dbff"/><path d="M44 78q4 3 8 0M56 86q4 3 8 0M68 78q4 3 8 0M50 94q4 3 8 0M62 94q4 3 8 0" stroke="#b197fc" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="44" cy="52" r="15" fill="#fff"/><circle cx="76" cy="52" r="15" fill="#fff"/><g class="oeil"><circle cx="46" cy="53" r="7" fill="#22184a"/><circle cx="48" cy="50" r="2.5" fill="#fff"/></g><g class="oeil"><circle cx="74" cy="53" r="7" fill="#22184a"/><circle cx="76" cy="50" r="2.5" fill="#fff"/></g><path d="M55 64l5 7 5-7z" fill="#ffa94d"/><path d="M22 70q-6 18 10 26M98 70q6 18-10 26" stroke="#7048e8" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M38 31l-2-19 12 10 12-16 12 16 12-10-2 19z" fill="#ffd43b" stroke="#f08c00" stroke-width="2" stroke-linejoin="round"/><circle cx="60" cy="24" r="3" fill="#e03131"/><circle cx="47" cy="27" r="2" fill="#4dabf7"/><circle cx="73" cy="27" r="2" fill="#4dabf7"/><path d="M88 74h20v11q0 12-10 17-10-5-10-17z" fill="#2f6fd8" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/><path d="M98 77v21M91 85h14" stroke="#fff" stroke-width="3"/></svg>`;
 const state={view:'jour',param:null,quiz:null,add:{images:[],indice:'',date:TODAY(),busy:false,res:null,err:'',sujet:''},scan:{images:[],indice:'',busy:false,res:null,err:''},confirm:null,parent:false,ask:{},chrono:false};
 function go(view,param){state.view=view;state.param=param||null;state.confirm=null;if(view!=='quiz'&&state.quiz&&state.quiz.fini)state.quiz=null;render();window.scrollTo({top:0})}
 let dirty=false;
@@ -1543,7 +1570,7 @@ function vJour(){
     ${!m?`<p class="muted">J'ouvre ton cartable…</p>`
     :fini?`<div class="mj-ico" aria-hidden="true">✅</div><h2>Mission accomplie !</h2><p class="muted">Tu as déjà travaillé aujourd'hui. Bravo, Camelot est fier de toi !</p><button class="btn ghost" data-act="encore">J'en veux encore une</button>`
     :`<div class="mj-ico" aria-hidden="true">${m.ico}</div><h2>${esc(m.titre)}</h2><p class="muted">${esc(m.detail)}</p>
-      ${state.special&&state.special.busy?`<div class="thinking">${PENCIL}<span data-progress>J'écris ta leçon spéciale… (environ une minute)</span></div>`:''}${state.special&&state.special.err?`<p class="small" style="color:var(--bad)">${esc(state.special.err)}</p>`:''}
+      ${state.special&&state.special.busy?attente("J'écris ta leçon spéciale…",{debut:state.special.debut,sous:'Cela prend environ une minute.'}):''}${state.special&&state.special.err?`<p class="small" style="color:var(--bad)">${esc(state.special.err)}</p>`:''}
       <div class="row mj-btns">${m.btn}</div>`}
   </section>
   <section class="card"><details id="routine-d" ${ouvert('routine-d')}><summary>Mon code du chevalier · ${nbR}/${ROUTINE.length}</summary>
@@ -1728,7 +1755,7 @@ function itemPlan({c,e}){
 /* Leçon écrite rien que pour l'enfant sur un objectif qu'il ne maîtrise pas encore, à partir de ses vraies erreurs. */
 async function leconSpeciale(id){
   const c=COMP(id);if(!c||!sample)return;
-  state.special={id,busy:true};render();
+  state.special={id,busy:true,debut:Date.now()};render();
   try{
     const e=etatComp(c);const dom=PROGRAMME.find(d=>d.m===c.m&&d.d===c.d)||{};
     const liees=e.lecons.filter(l=>!l.special);
@@ -1815,7 +1842,7 @@ function vProgramme(){
     <p class="small muted">Source : ${esc(PROGRAMME_SOURCES[m]||'')}</p>
   </section>
   ${plan.length?`<section class="card"><div class="sec-title"><h3>Mon plan de travail en ${esc(M(m).nom)}</h3><span class="small muted">D'abord ce qui est à retravailler, puis ce qu'il faut vérifier</span></div>
-    ${sp.busy?`<div class="thinking">${PENCIL}<span data-progress>J'écris ta leçon spéciale… (environ une minute)</span></div>`:''}${sp.err?`<p class="small" style="color:var(--bad)">${esc(sp.err)}</p>`:''}
+    ${sp.busy?attente("J'écris ta leçon spéciale…",{debut:sp.debut,sous:'Cela prend environ une minute.'}):''}${sp.err?`<p class="small" style="color:var(--bad)">${esc(sp.err)}</p>`:''}
     <div class="stack">${plan.map(x=>itemPlan(x)).join('')}</div>
     ${!sample?`<p class="small muted" style="margin-top:8px">Les leçons spéciales et les quiz arrivent quand la clé API est installée (fichier .env).</p>`:''}</section>`:''}
   ${doms.map(d=>{const nd=compteurs(d.items);
@@ -1930,7 +1957,7 @@ function vLecon(){
   </section>
   <section class="card"><h3>J'ai une question sur cette leçon</h3>
     ${(l.questions||[]).map(x=>`<div class="answer" style="margin-bottom:8px"><p><strong>${esc(x.q)}</strong></p><p>${rich(x.a)}</p></div>`).join('')}
-    ${sample?`<form class="row" data-form="ask" data-id="${l.id}"><input type="text" id="ask-${l.id}" name="q" placeholder="Par exemple : pourquoi on met un s ici ?" style="flex:1;min-width:200px" required><button class="btn primary" ${ask.busy?'disabled':''}>Demander</button></form>${ask.busy?`<div class="thinking" style="margin-top:8px">${PENCIL}<span>${ask.text?rich(ask.text):'Je réfléchis…'}</span></div>`:''}${ask.err?`<p class="small" style="color:var(--bad);margin-top:6px">${esc(ask.err)}</p>`:''}`:`<p class="small muted">Disponible quand la clé API est installée (fichier .env).</p>`}
+    ${sample?`<form class="row" data-form="ask" data-id="${l.id}"><input type="text" id="ask-${l.id}" name="q" placeholder="Par exemple : pourquoi on met un s ici ?" style="flex:1;min-width:200px" required><button class="btn primary" ${ask.busy?'disabled':''}>Demander</button></form>${ask.busy?`<div style="margin-top:8px">${attente(ask.text?rich(ask.text):'Je réfléchis…')}</div>`:''}${ask.err?`<p class="small" style="color:var(--bad);margin-top:6px">${esc(ask.err)}</p>`:''}`:`<p class="small muted">Disponible quand la clé API est installée (fichier .env).</p>`}
   </section>
   <section class="card"><h3>Modifier</h3><form class="form-grid" data-form="edit-lecon" data-id="${l.id}">
     <label class="f">Titre<input type="text" id="el-titre" name="titre" value="${esc(l.titre)}"></label>
@@ -1939,7 +1966,17 @@ function vLecon(){
     <div class="row"><button class="btn">Enregistrer</button>${state.confirm===l.id?`<button type="button" class="btn danger" data-act="del-lecon" data-id="${l.id}">Oui, supprimer</button><button type="button" class="btn" data-act="cancel">Annuler</button>`:`<button type="button" class="btn danger" data-act="ask-del" data-id="${l.id}">Supprimer la leçon</button>`}</div>
   </form></section>`;
 }
-const PENCIL='<svg class="pencil" viewBox="0 0 24 24" aria-hidden="true"><path fill="var(--accent)" d="M3 17.25V21h3.75L17.8 9.94l-3.75-3.75z"/><path fill="var(--marge)" d="M20.7 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75z"/></svg>';
+/* Pendant que l'IA travaille : la mascotte, sourcils froncés, tranche les mauvaises notes avec son épée. */
+const HIBOU=`<svg class="hibou-attente" viewBox="0 0 150 100" aria-hidden="true"><g class="corps"><g transform="translate(0 6) scale(.78)"><path d="M28 30l8 14M92 30l-8 14" stroke="#7048e8" stroke-width="8" stroke-linecap="round"/><ellipse cx="60" cy="68" rx="38" ry="42" fill="#845ef7"/><ellipse cx="60" cy="80" rx="24" ry="26" fill="#e5dbff"/><path d="M44 78q4 3 8 0M56 86q4 3 8 0M68 78q4 3 8 0M50 94q4 3 8 0M62 94q4 3 8 0" stroke="#b197fc" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="44" cy="52" r="15" fill="#fff"/><circle cx="76" cy="52" r="15" fill="#fff"/><circle cx="47" cy="55" r="7" fill="#22184a"/><circle cx="73" cy="55" r="7" fill="#22184a"/><path d="M31 39l16 8M89 39l-16 8" stroke="#22184a" stroke-width="4" stroke-linecap="round"/><path d="M55 64l5 7 5-7z" fill="#ffa94d"/><path d="M38 31l-2-19 12 10 12-16 12 16 12-10-2 19z" fill="#ffd43b" stroke="#f08c00" stroke-width="2" stroke-linejoin="round"/><circle cx="60" cy="24" r="3" fill="#e03131"/><path d="M2 70h20v11q0 12-10 17-10-5-10-17z" fill="#2f6fd8" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/><path d="M12 73v21M5 81h14" stroke="#fff" stroke-width="3"/></g></g><g class="epee"><path d="M76 66V20" stroke="#adb5bd" stroke-width="7" stroke-linecap="round"/><path d="M76 63V23" stroke="#f1f3f5" stroke-width="2"/><path d="M66 67h20" stroke="#f08c00" stroke-width="5" stroke-linecap="round"/><path d="M76 69v9" stroke="#7048e8" stroke-width="5" stroke-linecap="round"/></g>${['3/20','5/20','2/10'].map((n,i)=>`<g class="mauvaise n${i+1}"><rect x="102" y="34" width="44" height="24" rx="6" fill="#fff5f5" stroke="#e03131" stroke-width="2"/><text x="124" y="51" text-anchor="middle" font-size="15" font-weight="700" fill="#c92a2a">${n}</text></g>`).join('')}</svg>`;
+/* Durée écoulée au format m:ss (0:00, 1:05, 10:00). */
+function duree(ms){const s=Math.max(0,Math.floor(ms/1000));return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`}
+const casesPhotos=c=>Array.from({length:c.n},(_,k)=>`<span class="case${k<c.i-1?' faite':k===c.i-1?' en-cours':''}"></span>`).join('');
+/* Bloc d'attente. o.debut : affiche le temps écoulé depuis cet instant, mis à jour chaque seconde ;
+   o.charge {i,n} : une case par photo (la i-ième en cours) ; o.sous : une petite ligne sous le texte. */
+function attente(texte,o={}){
+  return `<div class="thinking"${o.charge?' data-charge':''}>${HIBOU}<div class="attente-txt"><span data-progress>${texte}${o.debut?` <span data-chrono="${o.debut}">${duree(Date.now()-o.debut)}</span>`:''}</span>${o.charge?`<span class="cases">${casesPhotos(o.charge)}</span>`:''}${o.sous?`<span class="small muted">${o.sous}</span>`:''}</div></div>`;
+}
+setInterval(()=>app.querySelectorAll('[data-chrono]').forEach(el=>{el.textContent=duree(Date.now()-Number(el.dataset.chrono))}),1000);
 
 /* ---- Ajouter ---- */
 function vAjouter(){
@@ -1959,13 +1996,14 @@ function vAjouter(){
     ${a.images.length?`<div class="thumbs">${a.images.map((im,i)=>`<div class="stack" style="gap:4px;align-items:center"><img src="${esc(im.thumb||'')}" alt="Photo ${i+1}"><button class="btn ghost small" data-act="rm-img" data-v="${i}">Retirer</button></div>`).join('')}</div>`:''}
     <h3>2. Dis-moi en quelques mots (facultatif)</h3>
     <div class="form-grid"><label class="f">Ce qu'on a fait<input type="text" id="add-indice" value="${esc(a.indice)}" placeholder="ex : les fractions, mon agenda, l'évaluation de dictée…"></label><label class="f">Date<input type="date" id="add-date" value="${esc(a.date)}"></label></div>
-    <div class="row"><button class="btn primary big" data-act="analyser" ${a.images.length&&!a.busy?'':'disabled'}>Lire mes photos</button></div>
-    ${a.busy&&a.images.length?`<div class="thinking">${PENCIL}<span data-progress>Je regarde tes photos et je range tout… (cela peut prendre une minute)</span></div>`:''}
+    ${a.charge?attente(`Je charge la photo ${a.charge.i} sur ${a.charge.n}…`,{charge:a.charge}):''}
+    <div class="row"><button class="btn primary big" data-act="analyser" ${a.images.length&&!a.busy&&!a.charge?'':'disabled'}>Lire mes photos</button></div>
+    ${a.busy&&a.images.length?attente('Je lis tes photos…',{debut:a.debut,sous:'Cela peut prendre une ou deux minutes.'}):''}
     ${a.err&&a.errSrc==='photo'?`<p style="color:var(--bad)">${esc(a.err)}</p>`:''}
   </section>`:''}
   ${!noAI?`<section class="card stack"><h3>${imagesOK?'Ou sans photo : écris le sujet':'Écris le sujet de la leçon'}</h3>
     <form class="row" data-form="sujet"><input type="text" id="add-sujet" name="sujet" value="${esc(a.sujet)}" placeholder="ex : le passé composé avec être" style="flex:1;min-width:200px" required><button class="btn" ${a.busy?'disabled':''}>Préparer la leçon</button></form>
-    ${a.busy&&!a.images.length?`<div class="thinking">${PENCIL}<span data-progress>Je prépare ta fiche… (cela peut prendre une minute)</span></div>`:''}
+    ${a.busy&&!a.images.length?attente('Je prépare ta fiche…',{debut:a.debut,sous:'Cela peut prendre une minute.'}):''}
     ${a.err&&a.errSrc==='sujet'?`<p style="color:var(--bad)">${esc(a.err)}</p>`:''}</section>`:''}
   <section class="card"><details ${noAI?'open':''}><summary>Enregistrer une leçon à la main</summary>
     <form class="stack" data-form="manuel" style="margin-top:10px">
@@ -1976,24 +2014,24 @@ function vAjouter(){
 }
 const lignesExercices=L=>`<div class="stack" style="gap:6px;margin-top:8px">${L.map(x=>`<div class="item small" style="align-items:flex-start"><b style="color:${x.juste===true?'var(--ok)':x.juste===false?'var(--bad)':'var(--ink-soft)'}">${x.juste===true?'✓':x.juste===false?'✗':'·'}</b><div class="grow"><div class="t">${rich(x.enonce)}</div>${x.reponseEleve?`<div>Ma réponse : ${rich(x.reponseEleve)}</div>`:''}${x.juste!==true&&x.bonneReponse?`<div>Bonne réponse : <strong>${rich(x.bonneReponse)}</strong></div>`:''}</div></div>`).join('')}</div>`;
 function vApercu(){
-  const a=state.add,r=a.res,t=TODAY(),l=r.lecon,L=r.devoirs,n=r.note;
+  const a=state.add,r=a.res,t=TODAY(),LL=r.lecons,L=r.devoirs,n=r.note;
   if(r.lisible===false)return `<section class="card stack"><h2>Je n'arrive pas à bien lire</h2><p>${rich(r.description||'Les photos sont floues ou trop sombres.')}</p><p>Reprends la photo bien à plat, avec de la lumière, sans ton doigt dessus.</p><div class="row"><button class="btn primary" data-act="reset-add">Recommencer</button></div></section>`;
-  const rien=!l&&!L.length&&!n;
-  const ex=l?l.exercices:[],nJ=ex.filter(x=>x.juste===true).length;
-  return `<section class="card stack"><div class="row"><span class="pill">${esc(GENRES[r.genre])}</span></div>
+  const rien=!LL.length&&!L.length&&!n,plus=LL.length>1;
+  return `<section class="card stack"><div class="row"><span class="pill">${esc(GENRES[r.genre])}</span>${plus?`<span class="pill">${LL.length} leçons</span>`:''}</div>
     <h2>Voilà ce que j'ai trouvé</h2>
     ${r.description?`<p>${rich(r.description)}</p>`:''}
     ${r.infos.length?`<div class="note-box"><strong>Pour tes parents :</strong><ul>${r.infos.map(x=>`<li>${rich(x)}</li>`).join('')}</ul></div>`:''}
     ${rien?`<p class="muted">Il n'y a rien à ranger dans le cartable sur ${a.images.length>1?'ces photos':'cette photo'} : ni leçon, ni devoir, ni note.</p><div class="row"><button class="btn primary" data-act="reset-add">${r.infos.length?"C'est noté":'Recommencer'}</button></div>`:''}
   </section>
   ${rien?'':`<form class="stack" data-form="save-res">
-    ${l?`<section class="card stack"><label class="row" style="font-weight:700"><input type="checkbox" class="chk" name="kl" checked> ${r.genre==='lecon'?'Ranger la leçon':'Ranger la leçon de cette notion'} (+5 étoiles)</label>
-      <div class="form-grid"><label class="f">Titre<input type="text" id="res-titre" name="titre" value="${esc(l.titre||'')}" required></label><label class="f">Matière<select id="res-mat" name="matiere">${matOptions(l.matiere)}</select></label><label class="f">Date<input type="date" id="res-date" name="date" value="${esc(a.date)}"></label></div>
+    ${LL.map((l,j)=>{const ex=l.exercices,nJ=ex.filter(x=>x.juste===true).length;
+      return `<section class="card stack"><label class="row" style="font-weight:700"><input type="checkbox" class="chk" name="kl${j}" checked> ${plus?`Ranger la leçon ${j+1} sur ${LL.length}`:r.genre==='lecon'?'Ranger la leçon':'Ranger la leçon de cette notion'} (+5 étoiles)</label>
+      <div class="form-grid"><label class="f">Titre<input type="text" name="lTitre${j}" value="${esc(l.titre||'')}" required></label><label class="f">Matière<select name="lMat${j}">${matOptions(l.matiere)}</select></label><label class="f">Date<input type="date" name="lDate${j}" value="${esc(a.date)}"></label></div>
       ${l.resume?`<p><strong>En bref :</strong> ${rich(l.resume)}</p>`:''}
       ${ex.length?`<div><h3>Tes exercices : ${nJ} juste${nJ>1?'s':''} sur ${ex.length}</h3>${lignesExercices(ex)}</div>`:''}
       ${l.pointsFaibles.length?`<div class="note-box"><strong>Ce qu'on va retravailler ensemble :</strong><ul>${l.pointsFaibles.map(x=>`<li>${rich(x)}</li>`).join('')}</ul><p class="small muted">Les quiz de cette leçon insisteront sur ces points.</p></div>`:''}
       ${(l.corrections||[]).filter(Boolean).length?`<div class="note-box"><strong>J'ai repéré quelque chose à corriger :</strong><ul>${l.corrections.filter(Boolean).map(x=>`<li>${rich(x)}</li>`).join('')}</ul></div>`:''}
-    </section>`:''}
+    </section>`}).join('')}
     ${n?`<section class="card stack"><label class="row" style="font-weight:700"><input type="checkbox" class="chk" name="kn" checked> Ajouter la note dans « Mes notes »</label>
       <div class="form-grid"><label class="f">Intitulé<input type="text" name="nIntitule" value="${esc(n.intitule)}" required></label><label class="f">Matière<select name="nMat">${matOptions(n.matiere)}</select></label>
       <label class="f">Note<input type="number" name="nVal" value="${esc(n.valeur)}" min="0" step="0.25" required></label><label class="f">Sur<input type="number" name="nSur" value="${esc(n.sur)}" min="1" required></label><label class="f">Date<input type="date" name="nDate" value="${esc(a.date)}"></label></div>
@@ -2016,22 +2054,26 @@ function vApercu(){
   </form>`}`;
 }
 function enregistrerRes(fd){
-  const a=state.add,r=a.res;let lid=null,nd=0,nc=0,note=false;
-  if(r.lecon&&fd.kl)lid=nouvelleLecon(r.lecon,{titre:fd.titre,matiere:fd.matiere,date:fd.date||a.date,genre:r.genre,thumbs:a.images.map(i=>i.thumb).filter(Boolean)});
-  // Un devoir donné le jour d'une leçon porte en général sur elle : elle sert d'indice si l'IA n'a rien relié.
-  const lec=lid&&S.lecons.get(lid);
-  r.devoirs.forEach((x,i)=>{if(!fd['k'+i])return;const m=fd['mat'+i]||x.matiere;
-    const d=avecLien({titre:fd['titre'+i]||x.titre,detail:x.detail||'',matiere:m,type:fd['type'+i]||x.type,pour:fd['pour'+i]||x.pour,fait:false,faitLe:null,createdAt:Date.now(),source:'photo'},(x.competences||[]).length?x.competences:lec&&lec.matiere===m&&lec.competences);
+  const a=state.add,r=a.res;let nd=0,nc=0,note=false;
+  // Avec plusieurs leçons, chacune ne garde que les miniatures de ses propres photos.
+  const ids=r.lecons.flatMap((l,j)=>{if(!fd['kl'+j])return [];
+    const im=r.lecons.length>1&&l.photos.length?l.photos.map(k=>a.images[k-1]).filter(Boolean):a.images;
+    return [nouvelleLecon(l,{titre:fd['lTitre'+j],matiere:fd['lMat'+j],date:fd['lDate'+j]||a.date,genre:r.genre,thumbs:im.map(i=>i.thumb).filter(Boolean)})]});
+  const lecs=ids.map(id=>S.lecons.get(id)).filter(Boolean);
+  // Un devoir donné le jour d'une leçon porte en général sur elle : la leçon de même matière sert d'indice si l'IA n'a rien relié.
+  r.devoirs.forEach((x,i)=>{if(!fd['k'+i])return;const m=fd['mat'+i]||x.matiere,lec=lecs.find(l=>l.matiere===m);
+    const d=avecLien({titre:fd['titre'+i]||x.titre,detail:x.detail||'',matiere:m,type:fd['type'+i]||x.type,pour:fd['pour'+i]||x.pour,fait:false,faitLe:null,createdAt:Date.now(),source:'photo'},(x.competences||[]).length?x.competences:lec&&lec.competences);
     if(dejaNote(d))return;put('devoirs',uid(),d);nd++;
     if(d.type==='Contrôle'&&fd.plan){nc++;planifierRevisions(d)}});
-  if(r.note&&fd.kn){const val=Number(fd.nVal),sur=Number(fd.nSur)||20;
+  if(r.note&&fd.kn){const val=Number(fd.nVal),sur=Number(fd.nSur)||20,m=fd.nMat||r.note.matiere;
     if(isNaN(val)||val<0||val>sur){toast(`La note doit être entre 0 et ${sur}.`);return}
-    put('notes',uid(),avecLien({intitule:fd.nIntitule||r.note.intitule,matiere:fd.nMat||r.note.matiere,valeur:val,sur,date:fd.nDate||a.date,commentaire:r.note.commentaire||'',createdAt:Date.now(),leconId:lid||null},lec&&lec.competences.length?lec.competences:r.note.competences));note=true;
+    const lec=lecs.find(l=>l.matiere===m)||(lecs.length===1?lecs[0]:null);
+    put('notes',uid(),avecLien({intitule:fd.nIntitule||r.note.intitule,matiere:m,valeur:val,sur,date:fd.nDate||a.date,commentaire:r.note.commentaire||'',createdAt:Date.now(),leconId:lec?lec.id:null},lec&&lec.competences.length?lec.competences:r.note.competences));note=true;
     const p=val/sur;gagne(ptsNote({valeur:val,sur,createdAt:Date.now()}),p>=.8?'Superbe note, bravo !':p>=.6?'Belle note !':"Merci de l'avoir rentrée. On va travailler ça ensemble.")}
   state.add={images:[],indice:'',date:TODAY(),busy:false,res:null,err:'',sujet:''};
-  const fait=[lid&&'la leçon',nd&&`${nd} devoir${nd>1?'s':''}${nc?' (révisions planifiées)':''}`,note&&'la note'].filter(Boolean);
-  if(fait.length>1||(!lid&&!note))toast(fait.length?`Rangé : ${fait.join(', ')}.`:'Rien de coché, rien de rangé.');
-  if(lid)go('lecon',lid);else if(nd)go('devoirs');else if(note)go('notes');else render();
+  const fait=[ids.length&&(ids.length>1?`${ids.length} leçons`:'la leçon'),nd&&`${nd} devoir${nd>1?'s':''}${nc?' (révisions planifiées)':''}`,note&&'la note'].filter(Boolean);
+  if(fait.length>1||ids.length>1||(!ids.length&&!note))toast(fait.length?`Rangé : ${fait.join(', ')}.`:'Rien de coché, rien de rangé.');
+  if(ids.length)go('lecon',ids[0]);else if(nd)go('devoirs');else if(note)go('notes');else render();
   window.scrollTo({top:0});
 }
 async function prepImage(file){
@@ -2042,9 +2084,21 @@ async function prepImage(file){
     return {blob:big.b||file,thumb:small.cv.toDataURL('image/jpeg',.6)};
   }catch(e){return {blob:file,thumb:null}}
 }
-async function ajouterFichiers(files,a=state.add){const arr=[...files].filter(f=>/^image\//.test(f.type)).slice(0,Math.max(0,maxImages-a.images.length));
-  for(const f of arr)a.images.push(await prepImage(f));
-  a.err='';render();
+/* Les photos sont réduites l'une après l'autre : le bloc d'attente dit laquelle, sans tout redessiner entre deux. */
+function majCharge(a){const el=app.querySelector('[data-charge]');if(!el||!a.charge)return;
+  el.querySelector('[data-progress]').textContent=`Je charge la photo ${a.charge.i} sur ${a.charge.n}…`;
+  el.querySelector('.cases').innerHTML=casesPhotos(a.charge)}
+// Redessine en gardant la précision (et la date) que l'enfant a pu taper sans les avoir encore envoyées.
+function renderGarde(a){const id=a===state.scan?'scan-indice':'add-indice',el=document.getElementById(id),focus=el&&document.activeElement===el;
+  if(el)a.indice=el.value;const d=a===state.add&&document.getElementById('add-date');if(d&&d.value)a.date=d.value;
+  render();
+  const n=focus&&document.getElementById(id);if(n){n.focus();n.setSelectionRange(n.value.length,n.value.length)}}
+async function ajouterFichiers(files,a=state.add){if(a.charge)return;
+  const arr=[...files].filter(f=>/^image\//.test(f.type)).slice(0,Math.max(0,maxImages-a.images.length));
+  a.err='';if(!arr.length){renderGarde(a);return}
+  a.charge={i:1,n:arr.length};renderGarde(a);
+  try{for(const [k,f] of arr.entries()){a.charge.i=k+1;majCharge(a);a.images.push(await prepImage(f))}}
+  finally{a.charge=null;renderGarde(a)}
 }
 function nouvelleLecon(r,base){
   const id=uid();
@@ -2082,7 +2136,7 @@ function vQuiz(){
   if(q.loading||(q.attente&&!q.err)){
     const lec=leconAttente(q.leconIds);
     if(q.loading||lec){
-    const etat=q.loading?`<div class="thinking">${PENCIL}<span>Je prépare tes premières questions… En attendant, relis bien ta leçon !</span></div>`
+    const etat=q.loading?attente('Je prépare tes premières questions… En attendant, relis bien ta leçon !')
       :`<div class="row"><button class="btn primary" data-act="quiz-go">C'est prêt ! Je commence le quiz</button></div>`;
     return `<div class="quiz stack"><div class="card stack"><h2>${esc(q.titre)}</h2>${etat}<button class="btn" data-act="quit-quiz">Annuler</button></div>
     ${lec?`<article class="fiche"><div class="stack"><p class="eyebrow">Je relis ma leçon</p>${lec}</div></article>${q.loading?'':`<div class="row"><button class="btn primary" data-act="quiz-go">Je commence le quiz</button></div>`}`:''}</div>`;
@@ -2093,19 +2147,19 @@ function vQuiz(){
   const x=q.questions[q.i],r=q.rep[q.i];
   const dots=Array.from({length:q.n},(_,i)=>`<i class="${q.rep[i]&&!q.rep[i].pending?(q.rep[i].ok?'ok':'ko'):''} ${i===q.i?'cur':''}"></i>`).join('');
   if(!x){
-    const attente=q.gen||!q.genErr?`<div class="thinking">${PENCIL}<span>Je prépare la question suivante, d'après tes réponses…</span></div>`
+    const bloc=q.gen||!q.genErr?attente("Je prépare la question suivante, d'après tes réponses…")
       :`<p>${esc(q.genErr)}</p><div class="row"><button class="btn primary" data-act="quiz-regen">Réessayer</button>${q.rep.some(r=>r&&!r.pending)?`<button class="btn" data-act="quiz-finir">Terminer ici</button>`:''}</div>`;
     return `<div class="quiz stack">
     <div class="sec-title"><div><p class="eyebrow">${esc(NIVEAU_QUIZ[q.niveau].label)} · ${esc(M(q.matiere).nom)}</p><h2>${esc(q.titre)}</h2></div><button class="btn ghost" data-act="quit-quiz">Arrêter</button></div>
     <div class="dots" aria-label="Question ${q.i+1} sur ${q.n}">${dots}</div>
-    <section class="card stack"><span class="small muted">Question ${q.i+1} / ${q.n}</span>${attente}</section></div>`;
+    <section class="card stack"><span class="small muted">Question ${q.i+1} / ${q.n}</span>${bloc}</section></div>`;
   }
   let body='';
   if(x.type==='qcm')body=`<div class="choices">${x.choix.map((c,i)=>`<button class="choice ${r&&!r.pending?(i===x.bonne?'right':(r.v===i?'wrong':'')):''}" data-act="rep" data-v="${i}" ${r?'disabled':''}>${esc(c)}</button>`).join('')}</div>`;
   else if(x.type==='vf')body=`<div class="choices" style="grid-template-columns:1fr 1fr">${[true,false].map(v=>`<button class="choice ${r&&!r.pending?(v===x.bonne?'right':(r.v===v?'wrong':'')):''}" data-act="rep" data-v="${v}" ${r?'disabled':''}>${v?'Vrai':'Faux'}</button>`).join('')}</div>`;
   else body=r?`<div class="answer">Ta réponse : <strong>${esc(r.v)}</strong></div>`:`<form class="row" data-form="courte"><input type="text" id="courte-${q.i}" name="v" autocomplete="off" placeholder="Écris ta réponse" style="flex:1;min-width:180px" required><button class="btn primary">Valider</button></form>`;
   let fb='';
-  if(r&&r.pending)fb=`<div class="thinking">${PENCIL}<span>Je vérifie ta réponse…</span></div>`;
+  if(r&&r.pending)fb=attente('Je vérifie ta réponse…');
   else if(r){
     const bonne=x.type==='qcm'?x.choix[x.bonne]:x.type==='vf'?(x.bonne?'Vrai':'Faux'):x.reponses[0];
     const ex=q.extra[q.i];
@@ -2193,8 +2247,9 @@ function vScan(){
     <input type="file" id="scan-in" accept="image/*" multiple hidden>
     ${sc.images.length?`<div class="thumbs">${sc.images.map((im,i)=>`<div class="stack" style="gap:4px;align-items:center"><img src="${esc(im.thumb||'')}" alt="Photo ${i+1}"><button class="btn ghost small" data-act="scan-rm" data-v="${i}">Retirer</button></div>`).join('')}</div>
     <label class="f">Une précision (facultatif)<input type="text" id="scan-indice" value="${esc(sc.indice)}" placeholder="ex : c'est la semaine du 2 novembre"></label>
-    <div class="row"><button class="btn primary big" data-act="scan-lire" ${sc.busy?'disabled':''}>Lire mes devoirs</button></div>`:''}
-    ${sc.busy?`<div class="thinking">${PENCIL}<span data-progress>Je lis ton agenda…</span></div>`:''}
+    <div class="row"><button class="btn primary big" data-act="scan-lire" ${sc.busy||sc.charge?'disabled':''}>Lire mes devoirs</button></div>`:''}
+    ${sc.charge?attente(`Je charge la photo ${sc.charge.i} sur ${sc.charge.n}…`,{charge:sc.charge}):''}
+    ${sc.busy?attente('Je lis ton agenda…',{debut:sc.debut}):''}
     ${sc.err?`<p style="color:var(--bad)">${esc(sc.err)}</p>`:''}
   </section>`;
 }
@@ -2372,12 +2427,12 @@ document.addEventListener('click',async e=>{
       if(state.quiz===q)render();break}
     case 'rm-img':state.add.images.splice(Number(v),1);render();break;
     case 'reset-add':state.add={images:[],indice:'',date:TODAY(),busy:false,res:null,err:'',sujet:''};render();break;
-    case 'analyser':{const a=state.add;a.indice=(document.getElementById('add-indice')||{}).value||'';a.date=(document.getElementById('add-date')||{}).value||TODAY();a.busy=true;a.err='';render();
+    case 'analyser':{const a=state.add;a.indice=(document.getElementById('add-indice')||{}).value||'';a.date=(document.getElementById('add-date')||{}).value||TODAY();a.busy=true;a.debut=Date.now();a.err='';render();
       try{const r=await analyserPhotos(a.images.map(i=>i.blob),a.indice,a.date);r.devoirs.forEach(x=>{x.deja=dejaNote(x)});a.res=r}catch(err){console.warn('analyser',err);a.err=errMsg(err);a.errSrc='photo'}
       a.busy=false;render();break}
     case 'scan-rm':state.scan.images.splice(Number(v),1);render();break;
     case 'scan-reset':state.scan={images:[],indice:'',busy:false,res:null,err:''};render();break;
-    case 'scan-lire':{const sc=state.scan;sc.indice=(document.getElementById('scan-indice')||{}).value||'';sc.busy=true;sc.err='';render();
+    case 'scan-lire':{const sc=state.scan;sc.indice=(document.getElementById('scan-indice')||{}).value||'';sc.busy=true;sc.debut=Date.now();sc.err='';render();
       try{const r=await lireAgenda(sc.images.map(i=>i.blob),sc.indice);if(!r||typeof r!=='object')throw {code:'invalid_json'};
         const t=TODAY(),okDate=s=>/^\d{4}-\d{2}-\d{2}$/.test(s||'');
         r.devoirs=(Array.isArray(r.devoirs)?r.devoirs:[]).filter(x=>x&&x.titre).map(x=>{
@@ -2422,7 +2477,7 @@ document.addEventListener('submit',async e=>{
   if(kind==='courte'){repondre(fd.v||'');return}
   if(kind==='defi'){repDefi(fd.v||'');return}
   if(kind==='save-res'){enregistrerRes(fd);return}
-  if(kind==='sujet'){const a=state.add;a.sujet=fd.sujet;a.busy=true;a.err='';a.images=[];render();try{const r=await coursDepuisSujet(fd.sujet);if(!r||typeof r!=='object')throw {code:'invalid_json'};a.res=normRes({lisible:true,genre:'lecon',description:r.resume,lecon:r})}catch(err){console.warn('sujet',err);a.err=errMsg(err);a.errSrc='sujet'}a.busy=false;render();return}
+  if(kind==='sujet'){const a=state.add;a.sujet=fd.sujet;a.busy=true;a.debut=Date.now();a.err='';a.images=[];render();try{const r=await coursDepuisSujet(fd.sujet);if(!r||typeof r!=='object')throw {code:'invalid_json'};a.res=normRes({lisible:true,genre:'lecon',description:r.resume,lecon:r})}catch(err){console.warn('sujet',err);a.err=errMsg(err);a.errSrc='sujet'}a.busy=false;render();return}
   if(kind==='manuel'){const lignes=(fd.txt||'').split('\n').map(s=>s.trim()).filter(Boolean);const id=nouvelleLecon({cours:{aRetenir:lignes}},{titre:fd.titre,matiere:fd.matiere,date:fd.date});go('lecon',id);return}
   if(kind==='edit-lecon'){const l=S.lecons.get(f.dataset.id);if(l){put('lecons',l.id,{...l,titre:fd.titre||l.titre,matiere:fd.matiere,date:fd.date||l.date});toast('Leçon modifiée.')}return}
   if(kind==='ask'){const l=S.lecons.get(f.dataset.id);if(!l||!sample)return;const q=fd.q;state.ask[l.id]={busy:true,text:''};render();
