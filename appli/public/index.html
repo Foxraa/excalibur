@@ -647,7 +647,7 @@ async function put(col,id,data){
 async function del(col,id){S[col].delete(id);requestRender(true);if(db){try{await db.collection(col).doc(id).delete()}catch(e){console.warn(e)}}else saveLocal()}
 const all=c=>[...S[c].values()];
 const cfg=()=>S.config.get('main')||{};
-/* Prénom de l'enfant, réglé dans l'espace parents. deP()/queP() font l'élision : « de l'enfant », « de Léa ». */
+/* Prénom de l'enfant, réglé dans l'espace parents. deP()/queP() font l'élision : « d'Emma », « de Léa ». */
 const prenom=()=>(cfg().prenom||'').trim()||"l'élève";
 const voyelle=p=>/^[aeiouyhàâäéèêëîïôöûüœ]/i.test(p);
 const deP=()=>(voyelle(prenom())?"d'":'de ')+prenom();

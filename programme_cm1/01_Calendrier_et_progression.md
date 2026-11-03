@@ -25,7 +25,6 @@
 | Sciences | Démarche scientifique, états de la matière (S1) |
 | Anglais | Consignes de classe, se présenter |
 
-
 ## Période 2 — nov. → déc.
 
 | Matière | Thèmes |

@@ -1,6 +1,7 @@
 # CALC1 — Calcul mental et tables de multiplication
 <!-- objectifs : maths-4-1 maths-4-5 maths-4-7 maths-4-9 maths-4-10 maths-4-11 -->
 
+💡 **Objectif** : répondre aux tables de multiplication en moins de 3 secondes.
 
 ## La table de Pythagore
 

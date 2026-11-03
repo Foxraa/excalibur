@@ -1,6 +1,6 @@
 # Programme de CM1 — année 2026-2027
 
-Le programme officiel de CM1, matière par matière et thème par thème, avec une proposition de répartition sur les 5 périodes de l'année (zone B, Marseille).
+Le programme officiel de CM1, matière par matière et thème par thème, avec une proposition de répartition sur les 5 périodes de l'année.
 
 ## Contenu du dossier
 

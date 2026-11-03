@@ -13,6 +13,7 @@ legende: Les **retenues** (en orange) sont écrites en haut de la colonne suivan
 ```
 8 + 5 = 13 → j'écris 3, je retiens 1 · 1 + 7 + 4 = 12 → j'écris 2, je retiens 1 · 1 + 5 + 6 = 12 → 2, je retiens 1 · 1 + 4 = 5.
 
+💡 **Astuce** : pour bien aligner les colonnes, poser l'opération sur le quadrillage, **un chiffre par carreau**, et écrire **c d u** au-dessus des colonnes.
 
 ## La soustraction posée (avec retenues)
 
@@ -27,7 +28,6 @@ legende: Méthode **par compensation** : j'ajoute **1** dizaine en haut (le peti
 3 − 7 impossible → 13 − 7 = 6, je mets une retenue sous le 8 → 9 · 2 − 9 impossible → 12 − 9 = 3, retenue sous le 1 → 2 · 5 − 2 = 3.
 
 (Certaines classes utilisent la méthode « en cassant une dizaine ». Les deux sont justes : utiliser celle du classeur.)
-
 
 ## Vérifier son résultat
 

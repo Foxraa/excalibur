@@ -1,6 +1,7 @@
 # PROB1 — Résoudre un problème
 <!-- objectifs : maths-6-1 maths-6-2 maths-6-3 maths-6-4 maths-6-5 -->
 
+💡 **Méthode** : « solution / calcul », à reprendre à chaque problème.
 
 ## La méthode en 5 étapes
 

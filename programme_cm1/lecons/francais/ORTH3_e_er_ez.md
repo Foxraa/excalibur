@@ -1,7 +1,6 @@
 # ORTH3 — Le son [é] à la fin d'un verbe : é, er, ez, ai
 <!-- objectifs : francais-8-4 francais-8-5 -->
 
-
 ## À retenir
 
 À la fin d'un verbe, le son **[é]** peut s'écrire de plusieurs façons. On le trouve avec **des astuces de remplacement**.

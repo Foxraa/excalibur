@@ -52,6 +52,7 @@ legende: Les règles du **pluriel** en un coup d'œil.
 - Adjectif placé loin du nom : *des pommes bien mûr**es***.
 - Un adjectif pour deux noms : *une jupe et un pull bleu**s*** (masculin + féminin = **masculin pluriel**).
 
+💡 **Conseil** : à chaque nom, se demander : *« Combien ? Masculin ou féminin ? »* et vérifier chaque mot du groupe.
 
 ## Exercices
 

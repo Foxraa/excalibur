@@ -1,4 +1,4 @@
-# Excalibur (le cartable de l'enfant) — version locale
+# Excalibur — version locale
 
 L'appli tourne sur ce PC, avec une IA installée elle aussi sur ce PC (Ollama) : rien ne part sur internet. Les données sont dans `data/cartable.duckdb`.
 
@@ -46,7 +46,7 @@ Windows demandera d'autoriser Node.js sur le réseau privé.
 
 ## Sur une clé USB (autre PC, sans rien installer)
 
-Fermer le cartable, brancher une clé en **exFAT ou NTFS** (le modèle fait 5,5 Go, trop gros pour FAT32) avec au moins 10 Go libres, puis double-cliquer sur `cle-usb\Preparer la cle USB.bat`. La clé reçoit un dossier `Excalibur` avec le cartable, les leçons, Node, Ollama et gemma. Sur l'autre PC (Windows 64 bits), double-cliquer sur `Excalibur\Demarrer Excalibur.bat`. L'Ollama de la clé utilise le port 11435 et ses propres fichiers, donc il ne gêne pas un Ollama déjà installé. Les données de l'enfant sont copiées, mais ensuite les deux cartables vivent chacun de leur côté. Pour une clé avec un cartable vide, lancer `preparer-cle.ps1 -SansDonnees`.
+Fermer le cartable, brancher une clé en **exFAT ou NTFS** (le modèle fait 5,5 Go, trop gros pour FAT32) avec au moins 10 Go libres, puis double-cliquer sur `cle-usb\Preparer la cle USB.bat`. La clé reçoit un dossier `Excalibur` avec le cartable, les leçons, Node, Ollama et gemma. Sur l'autre PC (Windows 64 bits), double-cliquer sur `Excalibur\Demarrer Excalibur.bat`. L'Ollama de la clé utilise le port 11435 et ses propres fichiers, donc il ne gêne pas un Ollama déjà installé. Les données du cartable sont copiées, mais ensuite les deux cartables vivent chacun de leur côté. Pour une clé avec un cartable vide, lancer `preparer-cle.ps1 -SansDonnees`.
 
 ## Sauvegarde
 
@@ -56,6 +56,6 @@ Tout est dans `data/cartable.duckdb`. Le serveur y recopie chaque modification a
 
 Fermer le cartable, puis double-cliquer sur **Reinitialiser le cartable.bat** et taper `OUI`. Rien n'est effacé : le dossier `data` est renommé en `data-avant-reinitialisation-<date>`, et le cartable démarre vide au lancement suivant, sur l'accueil (code parent, prénom, récompenses, étoiles). Pour revenir en arrière, supprimer le nouveau dossier `data` et redonner son nom `data` à l'ancien.
 
-Le code est suivi par git (dossier `excalibur`). Les données, les photos et le fichier `.env` n'y sont pas.
+Le code est suivi par git. Les données, les photos et le fichier `.env` n'y sont pas.
 
 Sources du programme : français et maths, BO n°16 du 17 avril 2025 ; histoire-géographie, BO n°22 du 28 mai 2026. Pour les sciences et l'EMC, la liste est indicative, car le programme officiel n'est pas découpé par année.

@@ -1,4 +1,4 @@
-// Excalibur (Excalibur) — serveur local.
+// Excalibur — serveur local.
 // Sert l'appli (public/), garde les données dans data/cartable.duckdb et appelle Claude
 // avec la clé API, qui reste sur ce PC et n'est jamais envoyée au navigateur.
 import http from "node:http";

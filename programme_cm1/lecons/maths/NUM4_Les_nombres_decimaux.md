@@ -168,6 +168,7 @@ legende: Sur la droite, **3,47 est avant 3,5** : 3,47 < 3,5.
 - **Prix** : *19,95 €* = 19 euros et 95 centimes (1 € = 100 centimes).
 - **Mesures** : *1,25 m* = 1 mètre et 25 centimètres (1 m = 100 cm).
 
+💡 **Astuce** : partir des prix est le plus parlant : *19,95 € c'est presque 20 €*.
 
 ## Additionner et soustraire des décimaux
 

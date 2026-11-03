@@ -52,7 +52,6 @@ legende: Le sujet **commande** : la flèche part du sujet et va vers la terminai
 legende: Les deux pièges : un **mot au milieu** (*le ciel*) ou un **pronom** juste avant le verbe (*les*). Je remonte toujours jusqu'au vrai sujet.
 ```
 
-
 ## Exercices
 
 Accorde le verbe au présent :

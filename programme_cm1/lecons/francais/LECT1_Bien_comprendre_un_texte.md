@@ -67,3 +67,4 @@ legende: Toutes les **reprises** renvoient au même personnage.
 - Je mets le **ton** : questions, exclamations, voix des personnages.
 - Je lis ni trop vite ni trop lentement, en **groupes de mots**.
 
+💡 **Conseil** : s'entraîner à la **lecture à voix haute**, 5 minutes par jour sur un texte qu'on relit 2-3 fois.

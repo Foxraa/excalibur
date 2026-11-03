@@ -42,6 +42,7 @@ legende: Le **radical** (gris) ne bouge pas ; la **terminaison** (rouge) change 
 legende: Pour trouver le groupe, je regarde la **fin de l'infinitif**, puis je fais le **test du « nous »** pour les verbes en -ir.
 ```
 
+💡 **Piège** : *offrir* et *sourire* sont du **3e groupe** (pas de -issons).
 
 *Être* et *avoir* sont à part : ce sont des **auxiliaires** (ils aident à former les temps composés).
 

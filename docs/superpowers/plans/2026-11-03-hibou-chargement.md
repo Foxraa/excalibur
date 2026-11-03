@@ -21,7 +21,7 @@
 
 ## Review Focus
 
-- l'enfant tape une précision pendant que les photos se chargent : le texte tapé ne doit pas disparaître (pas de `render()` entre deux photos, et la précision déjà tapée est gardée au `render()` final).
+- L'enfant tape une précision pendant que les photos se chargent : le texte tapé ne doit pas disparaître (pas de `render()` entre deux photos, et la précision déjà tapée est gardée au `render()` final).
 - Un re-rendu pendant l'attente (mise à jour de la base) : le compteur repart de l'heure de début, jamais de 0:00.
 - De nouvelles photos ajoutées pendant un chargement : ignorées, on ne dépasse jamais `maxImages`.
 - Une photo illisible par le navigateur (HEIC) : `prepImage` retombe sur le fichier brut, le compteur avance quand même et le bloc d'attente disparaît.

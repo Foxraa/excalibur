@@ -41,7 +41,6 @@ Programme de français du cycle 3, année de CM1 (en vigueur depuis la rentrée 
 - [ ] Imaginer, dire et célébrer le monde (poésie)
 - [ ] Se découvrir, s'affirmer dans le rapport aux autres
 
-
 ## 3. Écriture
 
 - [ ] Copier sans erreur et lisiblement un texte de plusieurs lignes (écriture cursive soignée).
@@ -49,7 +48,6 @@ Programme de français du cycle 3, année de CM1 (en vigueur depuis la rentrée 
 - [ ] Écrire différents types de textes : récit, suite d'histoire, portrait, description, lettre, poème, compte rendu, texte explicatif.
 - [ ] Préparer son écrit (idées, plan, mots utiles).
 - [ ] Relire et améliorer son texte à l'aide d'une grille (accords, ponctuation, répétitions).
-
 
 ## 4. Étude de la langue
 
@@ -92,6 +90,7 @@ Programme de français du cycle 3, année de CM1 (en vigueur depuis la rentrée 
 - [ ] Impératif présent (verbes fréquents)
 - [ ] Repérer le radical et la terminaison ; utiliser les tableaux de conjugaison
 
+💡 **Piège** : *offrir* et *sourire* finissent en -ir mais sont du 3e groupe. Rappel : 2e groupe = -ir avec **-issons** (*nous finissons*) ; sinon 3e groupe.
 
 ### 4.3 Orthographe
 
@@ -113,7 +112,6 @@ Programme de français du cycle 3, année de CM1 (en vigueur depuis la rentrée 
 - [ ] Lettres muettes finales (trouver un mot de la même famille)
 - [ ] Valeur des lettres : c/ç, g/ge, s/ss, m devant m, b, p
 - [ ] Doubler les consonnes, accents
-
 
 ### 4.4 Vocabulaire (VOC)
 

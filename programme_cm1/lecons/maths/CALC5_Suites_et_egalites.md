@@ -53,6 +53,7 @@ On enlève **la même chose des deux côtés** : on enlève une boule de chaque 
 
 ⚠️ **Règle importante** : dans un exercice, **des objets identiques ont la même masse**.
 
+💡 **Rappel** : sur une balance, même dessin = même masse.
 
 ## Exercices
 

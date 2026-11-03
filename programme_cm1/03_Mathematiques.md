@@ -15,7 +15,6 @@ Cinq domaines : **nombres**, **calcul**, **problèmes**, **grandeurs et mesures*
 - [ ] Comparer, ranger, encadrer, placer sur une droite graduée
 - [ ] Arrondir à la dizaine, centaine, millier près
 
-
 ## 2. Fractions
 
 - [ ] Comprendre une fraction comme un partage : ½, ⅓, ¼, ⅕, ⅒… d'une unité
@@ -33,7 +32,6 @@ Cinq domaines : **nombres**, **calcul**, **problèmes**, **grandeurs et mesures*
 - [ ] Comparer, ranger, encadrer, placer sur une droite graduée
 - [ ] Décimaux dans la vie courante : prix (€, centimes), mesures (m, cm)
 
-
 ## 4. Calcul
 
 ### Calcul mental et automatismes
@@ -50,11 +48,11 @@ Cinq domaines : **nombres**, **calcul**, **problèmes**, **grandeurs et mesures*
 - [ ] Division euclidienne (quotient et reste) : par un nombre à 1 chiffre
 - [ ] Addition et soustraction de nombres décimaux posées (aligner les virgules)
 
-
 ### Pensée algébrique
 - [ ] Trouver la règle d'une suite de nombres ou d'un motif et la continuer
 - [ ] Égalités à trous, balances (*? + 7 = 15*)
 
+💡 **Piège** : sur une balance, des boules identiques ont la même masse.
 
 ## 5. Résolution de problèmes
 
@@ -64,7 +62,6 @@ Cinq domaines : **nombres**, **calcul**, **problèmes**, **grandeurs et mesures*
 - [ ] Problèmes de proportionnalité simples (*3 cahiers coûtent 6 €, combien coûtent 9 cahiers ?*)
 - [ ] Problèmes de durées et de mesures
 - [ ] Rédiger : schéma, calcul, phrase réponse ; vérifier la vraisemblance
-
 
 ## 6. Grandeurs et mesures
 

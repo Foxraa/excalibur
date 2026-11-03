@@ -58,6 +58,7 @@ legende: Le **chiffre** des centaines, c'est **un seul chiffre**. Le **nombre** 
 - Les **zéros** comptent : *30 050* = trente mille cinquante (pas « trois mille cinq cents »).
 - Bien placer le nombre dans le tableau **en partant de la droite** (unités).
 
+💡 **Astuce** : pour ne pas confondre les unités m/c/d/u, toujours faire le **tableau de numération**.
 
 ## Exercices
 

@@ -1,7 +1,7 @@
 EXCALIBUR SUR CLE USB
 =====================
 
-Tout est dans ce dossier : le cartable de l'enfant, les lecons du programme,
+Tout est dans ce dossier : le cartable, les lecons du programme,
 Node, Ollama et le modele d'IA (gemma). Rien a installer, pas d'internet.
 
 Demarrer

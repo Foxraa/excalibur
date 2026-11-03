@@ -54,6 +54,7 @@ Je relis **plusieurs fois**, à chaque fois avec **une seule chose à vérifier*
 - [ ] J'ai vérifié les mots dont je doutais (dictionnaire).
 - [ ] Mon écriture est lisible.
 
+💡 **Conseil** : quand l'écriture devient moins lisible, **écrire moins vite, laisser un espace d'un doigt entre les mots**, et garder du temps pour la relecture.
 
 ## 4. Je recopie au propre
 

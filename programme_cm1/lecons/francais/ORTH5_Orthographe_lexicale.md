@@ -1,6 +1,7 @@
 # ORTH5 — L'orthographe des mots (orthographe lexicale)
 <!-- objectifs : francais-4-6 francais-4-7 francais-1-3 -->
 
+💡 **Conseil** : ces règles et la liste de mots invariables sont à revoir souvent, un peu chaque jour.
 
 ## 1. Les lettres muettes à la fin des mots
 

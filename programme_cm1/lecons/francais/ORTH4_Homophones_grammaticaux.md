@@ -3,7 +3,6 @@
 
 Des **homophones** sont des mots qui **se prononcent pareil** mais **s'écrivent différemment** et n'ont pas le même sens. Pour choisir, on utilise un **mot de remplacement**.
 
-
 | Homophones | Astuce | Exemples |
 |---|---|---|
 | **a** / **à** | **a** = verbe avoir → je peux dire **avait** | Il **a** faim (avait ✅). Il va **à** l'école (avait ❌). |
