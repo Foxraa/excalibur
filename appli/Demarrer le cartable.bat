@@ -1,5 +1,10 @@
 @echo off
 cd /d "%~dp0"
+where node >nul 2>&1 || (
+  echo Node.js n'est pas installe. Installe la version LTS depuis https://nodejs.org puis relance ce fichier.
+  pause
+  exit /b 1
+)
 set "OLLAMA=%LOCALAPPDATA%\Programs\Ollama\ollama.exe"
 if not exist "%OLLAMA%" (
   echo Ollama n'est pas installe. Installe-le depuis https://ollama.com/download puis relance ce fichier.
