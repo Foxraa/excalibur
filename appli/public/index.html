@@ -162,6 +162,12 @@ main{padding-block:24px 110px}
 #fab{position:fixed;top:auto;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:40;border-radius:999px;
   --accent:#c2255c;--press:#8a1a42;--accent-ink:#fff;box-shadow:0 4px 0 var(--press),0 12px 24px -8px rgba(0,0,0,.4)}
 #fab[hidden]{display:none}
+/* Accueil d'un cartable neuf : ni onglets ni bouton photo tant qu'il n'est pas terminé */
+[data-accueil] .tabs,[data-accueil] #fab{display:none}
+.accueil{max-width:640px;margin:0 auto}
+.accueil .regles{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.accueil .regles li{display:flex;gap:10px;align-items:baseline}
+.accueil .regles b{flex:none;min-width:2.2em;color:var(--accent)}
 @media (max-width:560px){#fab{padding:12px 18px;min-height:56px;font-size:1rem}}
 main .wrap{display:flex;flex-direction:column;gap:22px}
 main .wrap > h2,main .wrap > .sec-title h2{font-size:1.9rem}
@@ -1505,7 +1511,10 @@ function lierAuto(){
   }));
 }
 function render(){
-  dirty=false;preuvesCache=null;idxLien=null;lierAuto();renderHeader();
+  dirty=false;preuvesCache=null;idxLien=null;
+  const acc=besoinAccueil();document.documentElement.toggleAttribute('data-accueil',acc);
+  if(acc){renderHeader();app.innerHTML=vAccueil();const af=app.querySelector('[data-autofocus]');if(af)af.focus({preventScroll:true});return}
+  lierAuto();renderHeader();
   const v={jour:modeVac()?vVacances:vJour,defi:vDefi,matieres:vMatieres,matiere:vMatiere,lecon:vLecon,ajouter:vAjouter,quiz:vQuiz,devoirs:vDevoirs,notes:vNotes,recompenses:vRecompenses,programme:vProgramme,annee:vAnnee,cours:vCours,parents:vParents}[state.view]||vJour;
   app.innerHTML=(storeMode==='local'?`<div class="offline small">Le serveur du cartable ne répond pas : les données restent pour l'instant dans ce navigateur. Lance « Démarrer le cartable » sur l'ordinateur, puis recharge la page.</div>`:'')+sousOnglets()+v();
   const af=app.querySelector('[data-autofocus]');if(af)af.focus({preventScroll:true});
@@ -2381,6 +2390,44 @@ function vParents(){
   </section>`;
 }
 
+/* ---- Accueil d'un cartable neuf ----
+   Le parent crée le code, donne le prénom, choisit les récompenses, puis un écran explique les étoiles à l'enfant.
+   config/main.accueil vaut « en-cours » jusqu'au bout : recharger la page reprend l'accueil, code parent d'abord. */
+const besoinAccueil=()=>!loading()&&storeMode==='db'&&(cfg().accueil==='en-cours'||!pinDefini()||!(cfg().prenom||'').trim());
+function vAccueil(){
+  const e=(state.acc||(state.acc={etape:1})).etape;
+  const tete=(titre,txt)=>`<p class="eyebrow">Étape ${e} sur 4</p><h2>${titre}</h2>${txt?`<p class="muted">${txt}</p>`:''}`;
+  let corps;
+  if(e===1)corps=pinDefini()
+    ?`${tete('Code parent','Un cartable est en cours de préparation. Entrez le code parent pour continuer.')}
+      <form class="form-grid" data-form="acc-pin"><label class="f">Code parent<input type="password" name="pin" inputmode="numeric" autocomplete="off" required data-autofocus></label><div><button class="btn primary">Continuer</button></div></form>`
+    :`${tete('Bienvenue au château !','Pour commencer, choisissez un code parent de 4 à 8 chiffres. Il protège l\'espace parents : les récompenses, les demandes à valider et le suivi du programme. Gardez-le pour vous.')}
+      <form class="form-grid" data-form="acc-pin"><label class="f">Code parent<input type="password" name="pin" inputmode="numeric" autocomplete="new-password" pattern="\\d{4,8}" required data-autofocus></label><label class="f">Le même code, encore une fois<input type="password" name="pin2" inputmode="numeric" autocomplete="new-password" required></label><div><button class="btn primary">Créer le code</button></div></form>`;
+  else if(e===2){const z=cfg().zone||ZONE_DEFAUT;corps=`${tete('Le chevalier','Le prénom apparaît partout dans le cartable. La zone sert au calendrier des vacances scolaires.')}
+      <form class="form-grid" data-form="acc-prenom"><label class="f">Prénom de l'enfant<input type="text" name="prenom" value="${esc(cfg().prenom||'')}" autocomplete="off" required data-autofocus></label><label class="f">Zone de vacances<select name="zone">${['A','B','C'].map(x=>`<option value="${x}" ${x===z?'selected':''}>Zone ${x}</option>`).join('')}</select></label><div><button class="btn primary">Continuer</button></div></form>`}
+  else if(e===3){const deja=all('recompenses').sort((a,b)=>a.cout-b.cout),titres=new Set(deja.map(r=>r.titre));
+    corps=`${tete('Les récompenses',`${esc(prenom())} gagne des étoiles en travaillant et les échange contre des récompenses, que vous validez. Cochez celles que vous proposez et ajustez leur prix. Vous pourrez tout changer plus tard dans l'espace parents.`)}
+      <form class="stack" data-form="acc-rec">
+        ${deja.map(r=>`<div class="item"><span class="grow">${esc(r.titre)}</span><span class="cost">${STAR} ${r.cout}</span></div>`).join('')}
+        ${SUGGESTIONS.map(([t,c],i)=>titres.has(t)?'':`<label class="item"><input type="checkbox" class="chk" name="s${i}" ${deja.length?'':'checked'}><span class="grow">${esc(t)}</span><input type="number" name="c${i}" value="${c}" min="1" style="width:6em" aria-label="Prix en étoiles : ${esc(t)}"></label>`).join('')}
+        <div class="form-grid"><label class="f">Une autre récompense<input type="text" name="t" placeholder="Facultatif"></label><label class="f">Prix en étoiles<input type="number" name="c" min="1" value="50"></label></div>
+        <p class="small muted">Repère : un quiz de 10 questions rapporte 13 étoiles avec 8 bonnes réponses, 30 sans faute. Une bonne journée complète rapporte 30 à 50 étoiles.</p>
+        <div><button class="btn primary">Continuer</button></div>
+      </form>`}
+  else{const rec=all('recompenses').sort((a,b)=>a.cout-b.cout);
+    corps=`${tete(`${esc(prenom())}, voici tes étoiles ${STAR}`,'Chaque fois que tu travailles, tu gagnes des étoiles.')}
+      <ul class="regles">
+        <li><b>+1</b><span>par bonne réponse à un quiz</span></li>
+        <li><b>+5</b><span>quand tu finis un quiz, un devoir, ta routine du soir ou quand tu ajoutes une leçon</span></li>
+        <li><b>×2</b><span>les étoiles d'un quiz réussi sans faute</span></li>
+      </ul>
+      <p>Toutes les 100 étoiles, tu montes d'un niveau : ${NIVEAUX.slice(0,3).map(esc).join(', ')}… jusqu'à ${esc(NIVEAUX[NIVEAUX.length-1])} !</p>
+      <p>Dans <b>Mon trésor</b>, tu échanges tes étoiles contre une récompense : tu la demandes, et tes parents la valident.${rec.length?' Pour l\'instant :':''}</p>
+      ${rec.length?`<div class="stack">${rec.map(r=>`<div class="item"><span class="grow">${esc(r.titre)}</span><span class="cost">${STAR} ${r.cout}</span></div>`).join('')}</div>`:''}
+      <div><button class="btn primary" data-act="acc-fin" data-autofocus>C'est parti !</button></div>`}
+  return `<section class="card stack accueil">${corps}</section>`;
+}
+
 /* ============ Événements ============ */
 function marquerDevoir(id,fait){const d=S.devoirs.get(id);if(!d)return;const nd={...d,fait,faitLe:fait?TODAY():null};put('devoirs',d.id,nd);if(fait)gagne(ptsDevoir(nd),TODAY()<=d.pour?'Fait à temps, bravo !':'Mieux vaut tard que jamais.')}
 /* Les plis restent ouverts quand la page se redessine (après une case cochée, un défi…). */
@@ -2444,6 +2491,7 @@ document.addEventListener('click',async e=>{
     case 'valider':{const a=S.achats.get(id);if(a)put('achats',id,{...a,statut:'validé'});break}
     case 'refuser':{const a=S.achats.get(id);if(a)put('achats',id,{...a,statut:'refusé'});break}
     case 'del-rec':del('recompenses',id);break;
+    case 'acc-fin':put('config','main',{...cfg(),accueil:'fait'});state.acc=null;state.parent=false;confettis();go('jour');break;
     case 'suggestions':SUGGESTIONS.forEach(([t,c])=>put('recompenses',uid(),{titre:t,cout:c}));break;
     case 'parent-off':state.parent=false;render();break;
     case 'prog-mat':go('programme',v);break;
@@ -2501,6 +2549,18 @@ document.addEventListener('submit',async e=>{
     let r;try{r=await fetch('/api/pin',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({pin:fd.pin,creer})}).then(x=>x.json())}catch(e){toast("Le serveur du cartable ne répond pas.");return}
     if(r.ok){if(creer){S.config.set('pin',{id:'pin',defini:true});toast('Code parent créé.')}state.parent=true;render()}else toast(r.code==='deja'?'Un code existe déjà.':'Code incorrect.');return}
   if(kind==='rec'){put('recompenses',uid(),{titre:fd.titre,cout:Math.max(1,Number(fd.cout)||1)});f.reset();return}
+  if(kind==='acc-pin'){const creer=!pinDefini();
+    if(creer&&!/^\d{4,8}$/.test(fd.pin)){toast('Choisissez un code de 4 à 8 chiffres.');return}
+    if(creer&&fd.pin!==fd.pin2){toast('Les deux codes ne sont pas pareils.');return}
+    let r;try{r=await fetch('/api/pin',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({pin:fd.pin,creer})}).then(x=>x.json())}catch(e){toast("Le serveur du cartable ne répond pas.");return}
+    if(!r.ok){toast('Code incorrect.');return}
+    if(creer){S.config.set('pin',{id:'pin',defini:true});put('config','main',{...cfg(),accueil:'en-cours'})}
+    state.parent=true;state.acc={etape:(cfg().prenom||'').trim()&&!creer?3:2};render();return}
+  if(kind==='acc-prenom'){const p=(fd.prenom||'').trim();if(!p)return;put('config','main',{...cfg(),prenom:p,zone:fd.zone||ZONE_DEFAUT,accueil:'en-cours'});state.acc={etape:3};render();return}
+  if(kind==='acc-rec'){
+    SUGGESTIONS.forEach(([t,c],i)=>{if(fd['s'+i])put('recompenses',uid(),{titre:t,cout:Math.max(1,Number(fd['c'+i])||c)})});
+    const t=(fd.t||'').trim();if(t)put('recompenses',uid(),{titre:t,cout:Math.max(1,Number(fd.c)||1)});
+    state.acc={etape:4};render();return}
   if(kind==='prenom'){put('config','main',{...cfg(),prenom:(fd.prenom||'').trim()});toast('Enregistré.');return}
 });
 const h=(location.hash||'').slice(1);if(TABS.some(t=>t[0]===h))state.view=h;

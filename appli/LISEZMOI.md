@@ -6,6 +6,8 @@ L'appli tourne sur ce PC, avec une IA installée elle aussi sur ce PC (Ollama) :
 
 Rien à faire : au premier lancement, **Demarrer le cartable.bat** installe Node.js et Ollama s'ils manquent (avec winget ; Windows demande d'accepter l'installation de Node.js), puis télécharge le modèle (`gemma4:e4b`, plusieurs Go). Sans clé API dans `.env`, le cartable utilise Ollama.
 
+Un cartable vide s'ouvre sur un accueil en quatre étapes : le code parent, puis le prénom et la zone de vacances, les récompenses, et enfin un écran qui explique les étoiles à l'enfant. Les onglets n'apparaissent qu'à la fin. Si la page est rechargée en cours de route, l'accueil reprend après le code parent.
+
 ## Lancer le cartable
 
 Double-cliquer sur **Demarrer le cartable.bat**. Il démarre Ollama si besoin, puis le navigateur s'ouvre sur http://localhost:3000.
@@ -52,7 +54,7 @@ Tout est dans `data/cartable.duckdb`. Le serveur y recopie chaque modification a
 
 ## Repartir de zéro
 
-Fermer le cartable, puis double-cliquer sur **Reinitialiser le cartable.bat** et taper `OUI`. Rien n'est effacé : le dossier `data` est renommé en `data-avant-reinitialisation-<date>`, et le cartable démarre vide au lancement suivant (prénom et code parent à choisir de nouveau). Pour revenir en arrière, supprimer le nouveau dossier `data` et redonner son nom `data` à l'ancien.
+Fermer le cartable, puis double-cliquer sur **Reinitialiser le cartable.bat** et taper `OUI`. Rien n'est effacé : le dossier `data` est renommé en `data-avant-reinitialisation-<date>`, et le cartable démarre vide au lancement suivant, sur l'accueil (code parent, prénom, récompenses, étoiles). Pour revenir en arrière, supprimer le nouveau dossier `data` et redonner son nom `data` à l'ancien.
 
 Le code est suivi par git (dossier `excalibur`). Les données, les photos et le fichier `.env` n'y sont pas.
 
