@@ -6,14 +6,12 @@ L'enfant photographie son cahier ou son agenda : Excalibur en tire une fiche de 
 
 ## Installer et lancer
 
-Il faut un PC Windows 64 bits avec au moins 10 Go libres.
+Il faut un PC Windows 10 ou 11 (64 bits) avec au moins 10 Go libres.
 
-1. Installer **Node.js** (version LTS) depuis https://nodejs.org.
-2. Installer **Ollama** depuis https://ollama.com/download.
-3. Sur cette page GitHub, cliquer sur **Code → Download ZIP**, puis décompresser le fichier où vous voulez. Gardez les dossiers `appli` et `programme_cm1` côte à côte.
-4. Double-cliquer sur **`appli\Demarrer le cartable.bat`**.
+1. Sur cette page GitHub, cliquer sur **Code → Download ZIP**, puis décompresser le fichier où vous voulez. Gardez les dossiers `appli` et `programme_cm1` côte à côte.
+2. Double-cliquer sur **`appli\Demarrer le cartable.bat`**.
 
-Au premier lancement, les modules et le modèle d'IA (`gemma4:e4b`, plusieurs Go) se téléchargent : comptez plusieurs minutes. Le navigateur s'ouvre ensuite sur http://localhost:3000. Le prénom de l'enfant et le code parent se choisissent dans l'appli.
+Au premier lancement, le lanceur installe tout seul Node.js et Ollama s'ils manquent (Windows demande d'accepter l'installation de Node.js), puis télécharge les modules et le modèle d'IA (`gemma4:e4b`, plusieurs Go) : comptez plusieurs minutes. Si l'installation automatique échoue, la fenêtre indique où télécharger ce qui manque. Le navigateur s'ouvre ensuite sur http://localhost:3000. Le prénom de l'enfant et le code parent se choisissent dans l'appli.
 
 Pour arrêter Excalibur, fermer la fenêtre noire.
 

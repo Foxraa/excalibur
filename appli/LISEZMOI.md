@@ -4,10 +4,7 @@ L'appli tourne sur ce PC, avec une IA installée elle aussi sur ce PC (Ollama) :
 
 ## Première installation (une seule fois)
 
-1. Installer Ollama depuis https://ollama.com/download.
-2. Dans ce dossier, copier `.env.example` en `.env` et y mettre `IA=ollama`.
-
-Au premier lancement, le modèle (`gemma4:e4b`, plusieurs Go) se télécharge tout seul.
+Rien à faire : au premier lancement, **Demarrer le cartable.bat** installe Node.js et Ollama s'ils manquent (avec winget ; Windows demande d'accepter l'installation de Node.js), puis télécharge le modèle (`gemma4:e4b`, plusieurs Go). Sans clé API dans `.env`, le cartable utilise Ollama.
 
 ## Lancer le cartable
 
