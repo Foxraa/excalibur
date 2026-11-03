@@ -13,7 +13,7 @@ Il faut un PC Windows 10 ou 11 (64 bits) avec au moins 10 Go libres.
 
 Au premier lancement, le lanceur installe tout seul Node.js et Ollama s'ils manquent (Windows demande d'accepter l'installation de Node.js), puis télécharge les modules et le modèle d'IA (`gemma4:e4b`, plusieurs Go) : comptez plusieurs minutes. Si l'installation automatique échoue, la fenêtre indique où télécharger ce qui manque. Le navigateur s'ouvre ensuite sur http://localhost:3000. Le prénom de l'enfant et le code parent se choisissent dans l'appli.
 
-Pour arrêter Excalibur, fermer la fenêtre noire.
+Pour arrêter Excalibur, fermer la fenêtre noire. Pour repartir d'un cartable vide, double-cliquer sur **`appli\Reinitialiser le cartable.bat`** : l'ancien cartable est mis de côté, pas effacé.
 
 Aucun réglage n'est obligatoire. Pour les options (tablette, chiffrement de la base…), copier `appli\.env.example` en `appli\.env` et suivre les commentaires.
 

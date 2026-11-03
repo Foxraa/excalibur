@@ -1,5 +1,6 @@
 # Données de l'enfant, photos du cahier et clés : jamais dans git
 appli/data/
+appli/data-avant-reinitialisation-*/
 appli/.env
 photos/
 node_modules/

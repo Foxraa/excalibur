@@ -50,6 +50,10 @@ Fermer le cartable, brancher une clé en **exFAT ou NTFS** (le modèle fait 5,5 
 
 Tout est dans `data/cartable.duckdb`. Le serveur y recopie chaque modification au bout de 3 secondes, ainsi qu'au démarrage et à la fermeture. Si un fichier `cartable.duckdb.wal` traîne à côté, c'est seulement que la dernière modification a moins de 3 secondes : il sera vidé au prochain lancement. Pour une copie à la main, fermer le cartable, puis copier `data/cartable.duckdb`. Le dossier est dans OneDrive, donc il est déjà sauvegardé.
 
+## Repartir de zéro
+
+Fermer le cartable, puis double-cliquer sur **Reinitialiser le cartable.bat** et taper `OUI`. Rien n'est effacé : le dossier `data` est renommé en `data-avant-reinitialisation-<date>`, et le cartable démarre vide au lancement suivant (prénom et code parent à choisir de nouveau). Pour revenir en arrière, supprimer le nouveau dossier `data` et redonner son nom `data` à l'ancien.
+
 Le code est suivi par git (dossier `excalibur`). Les données, les photos et le fichier `.env` n'y sont pas.
 
 Sources du programme : français et maths, BO n°16 du 17 avril 2025 ; histoire-géographie, BO n°22 du 28 mai 2026. Pour les sciences et l'EMC, la liste est indicative, car le programme officiel n'est pas découpé par année.
