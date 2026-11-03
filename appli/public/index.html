@@ -545,12 +545,38 @@ table.t tr:last-child td{border-bottom:0}
 .semaine.passee{opacity:.8}
 .semaine .sec-title{margin-bottom:8px}
 .tag{font-size:.78rem;font-weight:700;padding:2px 9px;border-radius:999px;border:2px solid var(--line);color:var(--ink-soft);white-space:nowrap}
+
+/* Skin manga (choisi dans l'espace parents) : une planche de BD. Trame de points, cases au trait noir épais,
+   ombres pleines décalées, lignes de vitesse, bulles pour les réponses. Les couleurs des onglets ne bougent pas :
+   elles restent le repère pour se retrouver. */
+html[data-skin="manga"]{--bg:#fbfaf6;--bg-dot:#dedad0;--surface:#fff;--surface-2:#f4f3ef;--ink:#151417;--ink-soft:#4f4c58;--line:#15141733;
+  --trait:#151417;--shadow:4px 4px 0 var(--trait);--lift:6px 6px 0 var(--trait);--r:12px;--r-s:10px}
+@media (prefers-color-scheme: dark){html[data-skin="manga"]:not([data-theme="light"]){--bg:#111114;--bg-dot:#2b2b33;--surface:#1c1c21;--surface-2:#26262d;--ink:#f5f5f7;--ink-soft:#b7b5c2;--line:#ffffff2e;--trait:#e8e8ee}}
+html[data-skin="manga"][data-theme="dark"]{--bg:#111114;--bg-dot:#2b2b33;--surface:#1c1c21;--surface-2:#26262d;--ink:#f5f5f7;--ink-soft:#b7b5c2;--line:#ffffff2e;--trait:#e8e8ee}
+html[data-skin="manga"] body{background-image:radial-gradient(var(--bg-dot) 1.4px,transparent 1.6px),radial-gradient(var(--bg-dot) 1.4px,transparent 1.6px);background-size:14px 14px;background-position:0 0,7px 7px}
+html[data-skin="manga"] .top{border-bottom:3px solid var(--trait);box-shadow:none}
+html[data-skin="manga"] .top::after{height:8px;background:repeating-linear-gradient(-55deg,var(--trait) 0 3px,transparent 3px 9px)}
+html[data-skin="manga"] h2{letter-spacing:.01em;text-shadow:2px 2px 0 color-mix(in srgb,var(--trait) 22%,transparent)}
+html[data-skin="manga"] .card{border:3px solid var(--trait);box-shadow:var(--shadow)}
+html[data-skin="manga"] .card > h3::before,html[data-skin="manga"] .card .sec-title > h3::before{border-radius:2px;transform:skewX(-18deg)}
+html[data-skin="manga"] .btn:not(.ghost){border:2.5px solid var(--trait);box-shadow:3px 3px 0 var(--trait);border-radius:10px}
+html[data-skin="manga"] .btn:not(.ghost):active:not([disabled]){box-shadow:0 0 0 var(--trait);transform:translate(3px,3px)}
+html[data-skin="manga"] .tab{border:2.5px solid var(--trait);box-shadow:3px 3px 0 var(--trait);border-radius:10px}
+html[data-skin="manga"] .tab[aria-current="page"]{border-color:var(--trait);box-shadow:3px 3px 0 var(--trait)}
+html[data-skin="manga"] .tab:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--trait)}
+html[data-skin="manga"] .pill{border-color:var(--trait)}
+html[data-skin="manga"] :is(input[type=text],input[type=number],input[type=date],input[type=password],select,textarea){border:2.5px solid var(--trait);border-radius:10px}
+html[data-skin="manga"] .badge{border:3px solid var(--trait);box-shadow:3px 3px 0 var(--trait)}
+html[data-skin="manga"] .hello::after{width:520px;height:520px;right:-260px;top:-260px;background:repeating-conic-gradient(color-mix(in srgb,var(--trait) 13%,transparent) 0 3deg,transparent 3deg 10deg)}
+/* Les réponses du quiz deviennent des bulles, avec leur pointe. */
+html[data-skin="manga"] .fb{position:relative;border-radius:26px;border-color:var(--trait);box-shadow:4px 4px 0 var(--trait);margin-bottom:14px}
+html[data-skin="manga"] .fb::after{content:"";position:absolute;left:34px;bottom:-13px;width:20px;height:20px;background:inherit;border:solid var(--trait);border-width:0 3px 3px 0;transform:rotate(45deg) skew(12deg,12deg)}
 </style>
 
 <div class="strip" id="strip" aria-label="Mon année et mon travail"></div>
 <header class="top">
   <div class="wrap">
-    <div class="brand">
+    <div class="brand" id="brand">
       <svg width="52" height="52" viewBox="0 0 40 40" aria-hidden="true"><path d="M17.5 14.5h5v15h-5z" fill="#e9ecef" stroke="#868e96" stroke-width="1"/><path d="M20 15v14" stroke="#adb5bd" stroke-width="1"/><rect x="18.5" y="5" width="3" height="6.5" rx="1" fill="#8d5524"/><circle cx="20" cy="3.5" r="2.5" fill="#ffd43b" stroke="#f08c00" stroke-width="1"/><rect x="11" y="11" width="18" height="3.5" rx="1.75" fill="#ffd43b" stroke="#f08c00" stroke-width="1"/><path d="M4 37q0-11 9-12 4-3 9-1 8-1 11 4 4 3 3 9z" fill="var(--accent)"/><path d="M10 31q3-2 6-1M25 30q3-1 5 1" stroke="#fff" stroke-width="1.5" fill="none" opacity=".5" stroke-linecap="round"/><path d="M6 8l1 2 2 1-2 1-1 2-1-2-2-1 2-1zM33 5l.8 1.6 1.6.8-1.6.8-.8 1.6-.8-1.6-1.6-.8 1.6-.8z" fill="#ffd43b"/></svg>
       <h1><span class="nom">Excalibur</span><small id="devise">L'épée du savoir, chevalier de CM1</small></h1>
     </div>
@@ -585,7 +611,40 @@ const ROUTINE=[
   {id:'relire',t:"J'ai relu la leçon du jour"},
   {id:'cartable',t:"J'ai préparé mon cartable pour demain"},
 ];
-const NIVEAUX=['Page','Écuyer','Écuyer d\'honneur','Chevalier','Chevalier d\'argent','Chevalier d\'or','Chevalier de la Table ronde','Gardien d\'Excalibur','Légende de Camelot'];
+/* Les skins, choisis dans l'espace parents : le vocabulaire, le logo et la mascotte d'attente changent avec l'habillage.
+   Excalibur (chevaliers) est celui par défaut ; le manga ajoute son style dans la feuille de style (html[data-skin="manga"]). */
+const SKINS={
+  excalibur:{nom:'Excalibur · chevaliers',
+    devise:()=>`L'épée du savoir ${deP()}, chevalier de CM1`,
+    niveaux:['Page','Écuyer','Écuyer d\'honneur','Chevalier','Chevalier d\'argent','Chevalier d\'or','Chevalier de la Table ronde','Gardien d\'Excalibur','Légende de Camelot'],
+  bravo:{
+    top:["Sans faute ! Tu as tout compris.","Victoire totale, chevalier ! Rien ne t'a résisté.","Champion ! Même Merlin est impressionné."],
+    bien:["Très bien ! Encore un petit effort et c'est parfait.","Belle bataille ! Tu maîtrises presque tout.","Beau travail ! Revois juste tes erreurs pour affûter ton épée."],
+    moyen:["C'est un bon début. Relis les explications et refais le quiz demain.","Tu progresses. Les erreurs, c'est comme ça qu'un écuyer devient chevalier.","Pas mal ! Revois la fiche, tu feras mieux à la prochaine quête."],
+    bas:["Ce n'est pas grave, cette leçon est un vrai dragon. On la revoit ensemble ?","Courage, chevalier ! Relis la fiche tranquillement, puis réessaie en mode facile.","Chaque essai te rend plus fort. Recommence demain, tu verras la différence."],
+},
+    touche:['Touché, chevalier !',"Coup d'épée parfait !"],
+    matin:"Une belle journée commence, chevalier. Quelle quête aujourd'hui ?",aprem:"Pas encore d'étoile aujourd'hui. Un quiz de 5 minutes pour sortir l'épée ?",
+    serie:n=>`${n} jours de suite, bravo ! Un vrai chevalier de la Table ronde.`,fier:'Bravo, Camelot est fier de toi !',
+    code:'code du chevalier',tresor:'Le trésor du château',accueil:'Bienvenue au château !',heros:'Le chevalier',
+    role:'comme un jeune chevalier (quête, épée, dragon à vaincre)',badges:{}},
+  manga:{nom:'Manga · héros',
+    devise:()=>`Le pouvoir du savoir ${deP()}, héros de CM1`,
+    niveaux:['Débutant','Apprenti','Disciple','Héros','Héros d\'argent','Héros d\'or','Senpai','Sensei','Légende du dojo'],
+    bravo:{
+      top:["Sans faute ! Tu as tout compris.","Attaque parfaite ! Rien ne t'a résisté.","Incroyable ! Ton sensei est bluffé."],
+      bien:["Très bien ! Encore un petit effort et c'est parfait.","Beau combat ! Tu maîtrises presque tout.","Beau travail ! Revois juste tes erreurs pour monter en puissance."],
+      moyen:["C'est un bon début. Relis les explications et refais le quiz demain.","Tu progresses. Chaque héros s'entraîne avant de gagner.","Pas mal ! Revois la fiche, le prochain épisode sera le tien."],
+      bas:["Ce n'est pas grave, cette leçon est un vrai boss de fin. On la revoit ensemble ?","Courage, héros ! Relis la fiche tranquillement, puis réessaie en mode facile.","Chaque essai te rend plus fort. Recommence demain, tu verras la différence."]},
+    touche:['Super attaque !','Coup critique !'],
+    matin:"Un nouvel épisode commence, héros. Quelle mission aujourd'hui ?",aprem:"Pas encore d'étoile aujourd'hui. Un quiz de 5 minutes pour charger ton pouvoir ?",
+    serie:n=>`${n} jours de suite, bravo ! Ton entraînement paie.`,fier:'Bravo, tout le dojo est fier de toi !',
+    code:'code du héros',tresor:'Le trésor du dojo',accueil:'Bienvenue au dojo !',heros:'Le héros',
+    role:'comme le héros d\'un manga (mission, entraînement, pouvoir, boss à battre)',
+    badges:{b1:'Premier chapitre',b2:'Premier combat',b3:'Coup parfait',b4:'Attaque précise',b5:'Entraînement de 3 jours',b6:'Semaine de héros',b7:'Disciple fidèle',b8:'Grand voyageur',b9:'Bibliothèque du sensei',b10:'Code du héros',b11:'Le retour du héros',b12:'Médaille d\'or'}},
+};
+const SK=()=>SKINS[cfg().skin]||SKINS.excalibur;
+const nomBadge=x=>SK().badges[x.id]||x.nom;
 const TIPS=[
   {t:"Apprendre une leçon en 3 tours",d:"1. Je lis la leçon en entier. 2. Je cache et je redis ce que j'ai retenu. 3. Je relis ce que j'avais oublié. Le lendemain, je recommence le tour 2."},
   {t:"Découper un gros travail",d:"Un exposé ou un contrôle, ça se coupe en petits morceaux : un morceau par jour. Note chaque morceau dans tes devoirs."},
@@ -595,12 +654,6 @@ const TIPS=[
   {t:"Le minuteur des 15 minutes",d:"Travaille 15 minutes sans t'arrêter, puis fais une pause de 5 minutes. Deux tours suffisent souvent."},
   {t:"Expliquer pour comprendre",d:"Explique la leçon à quelqu'un de ta famille comme si tu étais le maître. Si tu bloques, c'est le passage à revoir."},
 ];
-const BRAVO={
-  top:["Sans faute ! Tu as tout compris.","Victoire totale, chevalier ! Rien ne t'a résisté.","Champion ! Même Merlin est impressionné."],
-  bien:["Très bien ! Encore un petit effort et c'est parfait.","Belle bataille ! Tu maîtrises presque tout.","Beau travail ! Revois juste tes erreurs pour affûter ton épée."],
-  moyen:["C'est un bon début. Relis les explications et refais le quiz demain.","Tu progresses. Les erreurs, c'est comme ça qu'un écuyer devient chevalier.","Pas mal ! Revois la fiche, tu feras mieux à la prochaine quête."],
-  bas:["Ce n'est pas grave, cette leçon est un vrai dragon. On la revoit ensemble ?","Courage, chevalier ! Relis la fiche tranquillement, puis réessaie en mode facile.","Chaque essai te rend plus fort. Recommence demain, tu verras la différence."],
-};
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 
 /* ============ Outils ============ */
@@ -672,7 +725,7 @@ async function askJSON(prompt,opts={},onProgress){
 function progressAdd(n){const el=app.querySelector('[data-progress]');if(el)el.textContent=`J'écris ta fiche… (${n} caractères)`}
 function errMsg(e){return({no_ollama:"Ollama ne répond pas. Lance l'application Ollama sur ce PC, puis réessaie.",no_model:"Le modèle d'Ollama n'est pas installé (voir la fenêtre du cartable).",no_key:"Il manque la clé API dans le fichier .env du cartable.",bad_key:"La clé API est refusée. Vérifie-la dans le fichier .env.",network:"Je n'arrive pas à joindre Claude. Vérifie la connexion internet et que le cartable est bien lancé.",bad_request:"Claude n'a pas compris la demande. Réessaie.",api_error:"Claude a eu un petit souci. Réessaie dans un instant.",save_failed:"Je n'ai pas pu enregistrer.",rate_limited:"Claude est très occupé. Réessaie dans quelques minutes.",image_rejected:"Cette photo n'a pas pu être lue. Prends-en une autre, bien éclairée et nette.",images_unavailable:"L'envoi de photos n'est pas possible ici. Ouvre la page dans l'application Claude.",invalid_json:"La réponse est arrivée en désordre. Appuie sur Réessayer.",refused:"Claude n'a pas pu traiter cette demande. Essaie avec une autre photo ou une autre question.",session_expired:"Reconnecte-toi à Claude puis réessaie.",prompt_too_large:"C'est trop long d'un coup. Envoie moins de photos.",empty_completion:"Claude n'a rien répondu. Réessaie."}[e&&e.code])||`Petit souci de connexion. Réessaie dans un instant. (code : ${(e&&(e.code||e.message))||'inconnu'})`}
 const MAT_LIST=MATIERES.map(m=>`"${m.id}" (${m.nom})`).join(', ');
-const ROLE=()=>`Tu es un professeur des écoles expérimenté, spécialiste du programme officiel de CM1 (cycle 3, Éducation nationale, France), et le compagnon de travail bienveillant ${deP()}, 9 ans, élève de CM1. L'appli s'appelle Excalibur : de temps en temps, tu peux encourager ${prenom()} comme un jeune chevalier (quête, épée, dragon à vaincre), sans que cela gêne l'explication. Tu écris en français, avec des phrases courtes, un vocabulaire simple mais exact, et des exemples tirés de la vie d'un enfant.
+const ROLE=()=>`Tu es un professeur des écoles expérimenté, spécialiste du programme officiel de CM1 (cycle 3, Éducation nationale, France), et le compagnon de travail bienveillant ${deP()}, 9 ans, élève de CM1. L'appli s'appelle Excalibur${cfg().skin==='manga'?", habillée en manga":''} : de temps en temps, tu peux encourager ${prenom()} ${SK().role}, sans que cela gêne l'explication. Tu écris en français, avec des phrases courtes, un vocabulaire simple mais exact, et des exemples tirés de la vie d'un enfant.
 
 Ta priorité est la PÉDAGOGIE : ${prenom()} doit vraiment comprendre, pas seulement retenir. Quand tu expliques :
 - Pars de ce qu'il connaît déjà (sa vie, ce qu'il a vu avant), puis avance par petites marches, une idée à la fois.
@@ -1125,7 +1178,7 @@ function bilan(){
   const total=g.reduce((s,x)=>s+x.pts,0);
   const spent=all('achats').filter(a=>a.statut!=='refusé').reduce((s,a)=>s+(Number(a.cout)||0),0);
   const lvl=Math.floor(total/100);
-  return {gains:g,total,spent,solde:total-spent,niveau:Math.min(lvl,NIVEAUX.length-1),nomNiveau:NIVEAUX[Math.min(lvl,NIVEAUX.length-1)],dansNiveau:total%100};
+  return {gains:g,total,spent,solde:total-spent,niveau:Math.min(lvl,SK().niveaux.length-1),nomNiveau:SK().niveaux[Math.min(lvl,SK().niveaux.length-1)],dansNiveau:total%100};
 }
 /* Leçon du jour : une leçon à revoir, choisie une fois par jour (gardée dans config). */
 function etoileDuJour(){
@@ -1342,7 +1395,7 @@ function vDefi(){
   const titre=d.type==='tables'?`Défi éclair : table de ${d.n}`:'Défi éclair : orthographe';
   if(d.fini){const pct=d.score/d.total;
     return `<div class="quiz defi stack"><section class="card stack" style="text-align:center;align-items:center">
-      <p class="eyebrow">${esc(titre)}</p><div class="score">${d.score}/${d.total}</div><p style="font-size:1.15rem">${esc(pct===1?pick(BRAVO.top):pct>=.75?pick(BRAVO.bien):pct>=.5?pick(BRAVO.moyen):pick(BRAVO.bas))}</p>
+      <p class="eyebrow">${esc(titre)}</p><div class="score">${d.score}/${d.total}</div><p style="font-size:1.15rem">${esc(pct===1?pick(SK().bravo.top):pct>=.75?pick(SK().bravo.bien):pct>=.5?pick(SK().bravo.moyen):pick(SK().bravo.bas))}</p>
       <p class="muted">En ${Math.floor(d.duree/60)?Math.floor(d.duree/60)+' min ':''}${d.duree%60} s</p><span class="pill">${STAR} +${d.etoiles} étoiles</span>${detailEtoiles(d)}
       <div class="row" style="justify-content:center"><button class="btn primary" data-act="tab" data-v="jour">Retour à mes vacances</button></div></section>
       ${d.fautes.length?`<section class="card stack"><h3>Je revois mes erreurs</h3>${d.fautes.map(x=>`<div class="answer"><strong>${x.type==='courte'?esc(x.question)+' = '+esc(x.reponses[0]):esc(x.question.replace('___',x.choix[x.bonne]))}</strong>${x.explication?`<p class="small">${rich(x.explication)}</p>`:''}</div>`).join('')}</section>`:''}</div>`}
@@ -1353,7 +1406,7 @@ function vDefi(){
     ${r?'':`<form class="row" data-form="defi" style="justify-content:center"><input class="rep" type="text" inputmode="numeric" name="v" autocomplete="off" aria-label="Ta réponse" data-autofocus required><button class="btn primary big">OK</button></form>`}`;
   else body=`<p class="phrase">${esc(x.question).replace('___',`<span class="trou">${r?esc(x.choix[r.v]):'?'}</span>`)}</p>
     <div class="choices" style="grid-template-columns:repeat(${x.choix.length},1fr)">${x.choix.map((c,i)=>`<button class="choice ${r?(i===x.bonne?'right':(r.v===i?'wrong':'')):''}" data-act="defi-rep" data-v="${i}" ${r?'disabled':''}>${esc(c)}</button>`).join('')}</div>`;
-  const fb=r?`<div class="fb ${r.ok?'ok':'ko'}"><span class="h">${r.ok?pick(['Bravo !','Exact !','Touché, chevalier !',"Coup d'épée parfait !"]):'Pas tout à fait…'}</span>${!r.ok?`<p>La bonne réponse : <strong>${esc(x.type==='courte'?x.reponses[0]:x.choix[x.bonne])}</strong></p>`:''}${x.explication?`<p>${rich(x.explication)}</p>`:''}
+  const fb=r?`<div class="fb ${r.ok?'ok':'ko'}"><span class="h">${r.ok?pick(['Bravo !','Exact !',...SK().touche]):'Pas tout à fait…'}</span>${!r.ok?`<p>La bonne réponse : <strong>${esc(x.type==='courte'?x.reponses[0]:x.choix[x.bonne])}</strong></p>`:''}${x.explication?`<p>${rich(x.explication)}</p>`:''}
     <div class="row"><button class="btn primary" data-act="defi-suite" data-autofocus>${d.i<d.questions.length-1?'Suivant':'Voir mon résultat'}</button></div></div>`:'';
   return `<div class="quiz defi stack">
     <div class="sec-title"><div><p class="eyebrow">${d.type==='tables'?`8 calculs de la table de ${d.n}, 4 d'autres tables`:'Rien qu’avec ta tête'}</p><h2>${esc(titre)}</h2></div><button class="btn ghost" data-act="tab" data-v="jour">Arrêter</button></div>
@@ -1484,17 +1537,19 @@ function checkBadges(){
   if(!doc){put('config','badges',{vus:now});return}
   const vus=doc.vus||[];const neufs=now.filter(id=>!vus.includes(id));if(!neufs.length)return;
   put('config','badges',{vus:[...vus,...neufs]});
-  const noms=neufs.map(id=>BADGES.find(x=>x.id===id).nom);
+  const noms=neufs.map(id=>nomBadge(BADGES.find(x=>x.id===id)));
   toast((noms.length>1?'Nouveaux badges : ':'Nouveau badge : ')+noms.join(', ')+' !');confettis();
 }
 
 /* ============ Rendu ============ */
 function renderHeader(){
   renderStrip();
-  document.getElementById('devise').textContent=`L'épée du savoir ${deP()}, chevalier de CM1`;
+  document.getElementById('devise').textContent=SK().devise();
+  const skin=cfg().skin==='manga'?'manga':'excalibur';
+  if(document.documentElement.dataset.skin!==skin){document.documentElement.dataset.skin=skin;document.querySelector('#brand svg').outerHTML=LOGO[skin]}
   const b=bilan();
-  const maxi=b.niveau>=NIVEAUX.length-1,pct=maxi?100:b.dansNiveau;
-  document.getElementById('wallet').innerHTML=`<span class="pill or" title="Étoiles disponibles">${STAR}<span>${b.solde}</span></span><span class="pill niv" title="${maxi?'Niveau maximum atteint !':`Encore ${100-b.dansNiveau} étoiles pour devenir ${esc(NIVEAUX[b.niveau+1])}`}"><span>Niv. ${b.niveau+1}<span class="nom"> · ${esc(b.nomNiveau)}</span></span><span class="mini-bar" role="progressbar" aria-label="Vers le niveau suivant" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></span><span class="small muted">${maxi?'max':`${b.dansNiveau}/100`}</span></span>`;
+  const maxi=b.niveau>=SK().niveaux.length-1,pct=maxi?100:b.dansNiveau;
+  document.getElementById('wallet').innerHTML=`<span class="pill or" title="Étoiles disponibles">${STAR}<span>${b.solde}</span></span><span class="pill niv" title="${maxi?'Niveau maximum atteint !':`Encore ${100-b.dansNiveau} étoiles pour devenir ${esc(SK().niveaux[b.niveau+1])}`}"><span>Niv. ${b.niveau+1}<span class="nom"> · ${esc(b.nomNiveau)}</span></span><span class="mini-bar" role="progressbar" aria-label="Vers le niveau suivant" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></span><span class="small muted">${maxi?'max':`${b.dansNiveau}/100`}</span></span>`;
   const cur=state.view in GROUPE?GROUPE[state.view]:state.view;
   document.getElementById('fab').hidden=['quiz','defi','ajouter'].includes(state.view);
   const vac=modeVac();if(vac)document.documentElement.dataset.vac='1';else delete document.documentElement.dataset.vac;
@@ -1533,9 +1588,9 @@ function nudge(){
   if(auj.length)return `Tu as ${auj.length} chose${auj.length>1?'s':''} à faire pour aujourd'hui. Coche-les dès que c'est fait !`;
   if(demain.length&&h>=15)return `Pour demain : ${demain.map(d=>d.titre).join(', ')}. C'est le bon moment pour le faire.`;
   if(!s.aujourdhui&&s.n>=2)return `Tu as travaillé ${s.n} jours de suite. Ne casse pas ta série : un petit quiz et c'est gagné !`;
-  if(!s.aujourdhui)return h<12?"Une belle journée commence, chevalier. Quelle quête aujourd'hui ?":"Pas encore d'étoile aujourd'hui. Un quiz de 5 minutes pour sortir l'épée ?";
-  if(s.n>=3)return `${s.n} jours de suite, bravo ! Un vrai chevalier de la Table ronde.`;
-  return "Tu as déjà travaillé aujourd'hui. Bravo, Camelot est fier de toi !";
+  if(!s.aujourdhui)return h<12?SK().matin:SK().aprem;
+  if(s.n>=3)return SK().serie(s.n);
+  return "Tu as déjà travaillé aujourd'hui. "+SK().fier;
 }
 function itemDevoir(d){
   const t=TODAY(),late=!d.fait&&d.pour<t;
@@ -1577,12 +1632,12 @@ function vJour(){
   </section>
   <section class="card mission-jour"><p class="eyebrow">Ma mission du jour</p>
     ${!m?`<p class="muted">J'ouvre ton cartable…</p>`
-    :fini?`<div class="mj-ico" aria-hidden="true">✅</div><h2>Mission accomplie !</h2><p class="muted">Tu as déjà travaillé aujourd'hui. Bravo, Camelot est fier de toi !</p><button class="btn ghost" data-act="encore">J'en veux encore une</button>`
+    :fini?`<div class="mj-ico" aria-hidden="true">✅</div><h2>Mission accomplie !</h2><p class="muted">Tu as déjà travaillé aujourd'hui. ${SK().fier}</p><button class="btn ghost" data-act="encore">J'en veux encore une</button>`
     :`<div class="mj-ico" aria-hidden="true">${m.ico}</div><h2>${esc(m.titre)}</h2><p class="muted">${esc(m.detail)}</p>
       ${state.special&&state.special.busy?attente("J'écris ta leçon spéciale…",{debut:state.special.debut,sous:'Cela prend environ une minute.'}):''}${state.special&&state.special.err?`<p class="small" style="color:var(--bad)">${esc(state.special.err)}</p>`:''}
       <div class="row mj-btns">${m.btn}</div>`}
   </section>
-  <section class="card"><details id="routine-d" ${ouvert('routine-d')}><summary>Mon code du chevalier · ${nbR}/${ROUTINE.length}</summary>
+  <section class="card"><details id="routine-d" ${ouvert('routine-d')}><summary>Mon ${SK().code} · ${nbR}/${ROUTINE.length}</summary>
     <p class="small muted" style="margin:4px 0 8px">+5 étoiles quand tout est coché</p>
     <div class="stack">${ROUTINE.map(it=>`<label class="item ${r.items&&r.items[it.id]?'done':''}"><input type="checkbox" class="chk" data-act="routine" data-v="${it.id}" ${r.items&&r.items[it.id]?'checked':''}><span class="grow t">${esc(it.t)}</span></label>`).join('')}</div></details></section>
   <section class="tip"><p class="eyebrow">Astuce d'organisation</p><p><strong>${esc(tip.t)}.</strong> ${esc(tip.d)}</p></section>`;
@@ -1977,13 +2032,15 @@ function vLecon(){
 }
 /* Pendant que l'IA travaille : la mascotte, sourcils froncés, tranche les mauvaises notes avec son épée. */
 const HIBOU=`<svg class="hibou-attente" viewBox="0 0 150 100" aria-hidden="true"><g class="corps"><g transform="translate(0 6) scale(.78)"><path d="M28 30l8 14M92 30l-8 14" stroke="#7048e8" stroke-width="8" stroke-linecap="round"/><ellipse cx="60" cy="68" rx="38" ry="42" fill="#845ef7"/><ellipse cx="60" cy="80" rx="24" ry="26" fill="#e5dbff"/><path d="M44 78q4 3 8 0M56 86q4 3 8 0M68 78q4 3 8 0M50 94q4 3 8 0M62 94q4 3 8 0" stroke="#b197fc" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="44" cy="52" r="15" fill="#fff"/><circle cx="76" cy="52" r="15" fill="#fff"/><circle cx="47" cy="55" r="7" fill="#22184a"/><circle cx="73" cy="55" r="7" fill="#22184a"/><path d="M31 39l16 8M89 39l-16 8" stroke="#22184a" stroke-width="4" stroke-linecap="round"/><path d="M55 64l5 7 5-7z" fill="#ffa94d"/><path d="M38 31l-2-19 12 10 12-16 12 16 12-10-2 19z" fill="#ffd43b" stroke="#f08c00" stroke-width="2" stroke-linejoin="round"/><circle cx="60" cy="24" r="3" fill="#e03131"/><path d="M2 70h20v11q0 12-10 17-10-5-10-17z" fill="#2f6fd8" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/><path d="M12 73v21M5 81h14" stroke="#fff" stroke-width="3"/></g></g><g class="epee"><path d="M76 66V20" stroke="#adb5bd" stroke-width="7" stroke-linecap="round"/><path d="M76 63V23" stroke="#f1f3f5" stroke-width="2"/><path d="M66 67h20" stroke="#f08c00" stroke-width="5" stroke-linecap="round"/><path d="M76 69v9" stroke="#7048e8" stroke-width="5" stroke-linecap="round"/></g>${['3/20','5/20','2/10'].map((n,i)=>`<g class="mauvaise n${i+1}"><rect x="102" y="34" width="44" height="24" rx="6" fill="#fff5f5" stroke="#e03131" stroke-width="2"/><text x="124" y="51" text-anchor="middle" font-size="15" font-weight="700" fill="#c92a2a">${n}</text></g>`).join('')}</svg>`;
+const HIBOU_MANGA=`<svg class="hibou-attente" viewBox="0 0 150 100" aria-hidden="true"><g class="corps"><g transform="translate(0 6) scale(.78)"><path d="M28 30l8 14M92 30l-8 14" stroke="#7048e8" stroke-width="8" stroke-linecap="round"/><ellipse cx="60" cy="68" rx="38" ry="42" fill="#845ef7"/><ellipse cx="60" cy="80" rx="24" ry="26" fill="#e5dbff"/><path d="M44 78q4 3 8 0M56 86q4 3 8 0M68 78q4 3 8 0M50 94q4 3 8 0M62 94q4 3 8 0" stroke="#b197fc" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="44" cy="52" r="15" fill="#fff"/><circle cx="76" cy="52" r="15" fill="#fff"/><circle cx="47" cy="55" r="9" fill="#22184a"/><circle cx="73" cy="55" r="9" fill="#22184a"/><circle cx="50" cy="51" r="3.2" fill="#fff"/><circle cx="76" cy="51" r="3.2" fill="#fff"/><circle cx="44" cy="58" r="1.6" fill="#fff"/><circle cx="70" cy="58" r="1.6" fill="#fff"/><path d="M31 39l16 8M89 39l-16 8" stroke="#22184a" stroke-width="4" stroke-linecap="round"/><path d="M55 64l5 7 5-7z" fill="#ffa94d"/><path d="M24 36q36-12 72 0v9q-36-12-72 0z" fill="#e03131" stroke="#151417" stroke-width="2.5" stroke-linejoin="round"/><circle cx="60" cy="34" r="5" fill="#fff" stroke="#151417" stroke-width="2"/><path d="M96 38q10-2 18-10M96 42q12 2 20-4" stroke="#e03131" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M0 60h16M2 72h12M0 84h16" stroke="#151417" stroke-width="2.5" stroke-linecap="round" opacity=".55"/></g></g><g class="epee"><path d="M76 65V24q0-5 3-9" stroke="#151417" stroke-width="6.5" stroke-linecap="round" fill="none"/><path d="M76 64V24q0-5 3-9" stroke="#e9ecef" stroke-width="3.5" stroke-linecap="round" fill="none"/><ellipse cx="76" cy="67" rx="7" ry="2.6" fill="#151417"/><path d="M76 69v10" stroke="#e03131" stroke-width="5" stroke-linecap="round"/><path d="M74 71l4 2M74 75l4 2" stroke="#151417" stroke-width="1.3"/></g>${['3/20','5/20','2/10'].map((n,i)=>`<g class="mauvaise n${i+1}"><rect x="102" y="34" width="44" height="24" rx="6" fill="#fff5f5" stroke="#e03131" stroke-width="2"/><text x="124" y="51" text-anchor="middle" font-size="15" font-weight="700" fill="#c92a2a">${n}</text></g>`).join('')}</svg>`;
+const LOGO={excalibur:`<svg width="52" height="52" viewBox="0 0 40 40" aria-hidden="true"><path d="M17.5 14.5h5v15h-5z" fill="#e9ecef" stroke="#868e96" stroke-width="1"/><path d="M20 15v14" stroke="#adb5bd" stroke-width="1"/><rect x="18.5" y="5" width="3" height="6.5" rx="1" fill="#8d5524"/><circle cx="20" cy="3.5" r="2.5" fill="#ffd43b" stroke="#f08c00" stroke-width="1"/><rect x="11" y="11" width="18" height="3.5" rx="1.75" fill="#ffd43b" stroke="#f08c00" stroke-width="1"/><path d="M4 37q0-11 9-12 4-3 9-1 8-1 11 4 4 3 3 9z" fill="var(--accent)"/><path d="M10 31q3-2 6-1M25 30q3-1 5 1" stroke="#fff" stroke-width="1.5" fill="none" opacity=".5" stroke-linecap="round"/><path d="M6 8l1 2 2 1-2 1-1 2-1-2-2-1 2-1zM33 5l.8 1.6 1.6.8-1.6.8-.8 1.6-.8-1.6-1.6-.8 1.6-.8z" fill="#ffd43b"/></svg>`,manga:`<svg width="52" height="52" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 1l3.4 7.6 7.8-3.2-2.6 8 8.2 1.6-6.4 5.4 6.2 5.6-8.3 1.3 2.4 8.1-7.7-3.4L20 39l-3-7.7-7.7 3.4 2.4-8.1-8.3-1.3 6.2-5.6L3.2 15l8.2-1.6-2.6-8 7.8 3.2z" fill="#ffd43b" stroke="#151417" stroke-width="1.6" stroke-linejoin="round"/><g transform="rotate(35 20 20)"><path d="M18 7h4v17h-4z" fill="#e03131" stroke="#151417" stroke-width="1.3"/><path d="M18 24h4l-2 6z" fill="#ffe8cc" stroke="#151417" stroke-width="1.3" stroke-linejoin="round"/><path d="M19.3 28h1.4l-.7 2z" fill="#151417"/><path d="M18 7h4v3h-4z" fill="var(--accent)" stroke="#151417" stroke-width="1.3"/></g></svg>`};
 /* Durée écoulée au format m:ss (0:00, 1:05, 10:00). */
 function duree(ms){const s=Math.max(0,Math.floor(ms/1000));return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`}
 const casesPhotos=c=>Array.from({length:c.n},(_,k)=>`<span class="case${k<c.i-1?' faite':k===c.i-1?' en-cours':''}"></span>`).join('');
 /* Bloc d'attente. o.debut : affiche le temps écoulé depuis cet instant, mis à jour chaque seconde ;
    o.charge {i,n} : une case par photo (la i-ième en cours) ; o.sous : une petite ligne sous le texte. */
 function attente(texte,o={}){
-  return `<div class="thinking"${o.charge?' data-charge':''}>${HIBOU}<div class="attente-txt"><span data-progress>${texte}${o.debut?` <span data-chrono="${o.debut}">${duree(Date.now()-o.debut)}</span>`:''}</span>${o.charge?`<span class="cases">${casesPhotos(o.charge)}</span>`:''}${o.sous?`<span class="small muted">${o.sous}</span>`:''}</div></div>`;
+  return `<div class="thinking"${o.charge?' data-charge':''}>${cfg().skin==='manga'?HIBOU_MANGA:HIBOU}<div class="attente-txt"><span data-progress>${texte}${o.debut?` <span data-chrono="${o.debut}">${duree(Date.now()-o.debut)}</span>`:''}</span>${o.charge?`<span class="cases">${casesPhotos(o.charge)}</span>`:''}${o.sous?`<span class="small muted">${o.sous}</span>`:''}</div></div>`;
 }
 setInterval(()=>app.querySelectorAll('[data-chrono]').forEach(el=>{el.textContent=duree(Date.now()-Number(el.dataset.chrono))}),1000);
 
@@ -2172,7 +2229,7 @@ function vQuiz(){
   else if(r){
     const bonne=x.type==='qcm'?x.choix[x.bonne]:x.type==='vf'?(x.bonne?'Vrai':'Faux'):x.reponses[0];
     const ex=q.extra[q.i];
-    fb=`<div class="fb ${r.ok?'ok':'ko'}"><span class="h">${r.ok?pick(['Bravo !','Exact !','Touché, chevalier !',"Coup d'épée parfait !"]):'Pas tout à fait…'}</span>${!r.ok?`<p>La bonne réponse : <strong>${esc(bonne)}</strong></p>`:''}${r.commentaire?`<p>${rich(r.commentaire)}</p>`:''}<p>${rich(x.explication||'')}</p>
+    fb=`<div class="fb ${r.ok?'ok':'ko'}"><span class="h">${r.ok?pick(['Bravo !','Exact !',...SK().touche]):'Pas tout à fait…'}</span>${!r.ok?`<p>La bonne réponse : <strong>${esc(bonne)}</strong></p>`:''}${r.commentaire?`<p>${rich(r.commentaire)}</p>`:''}<p>${rich(x.explication||'')}</p>
       ${ex&&ex.text?`<div class="answer">${rich(ex.text)}</div>`:''}
       <div class="row">${sample&&!(ex&&ex.text)?`<button class="btn" data-act="explique" ${ex&&ex.busy?'disabled':''}>${ex&&ex.busy?'Je cherche une autre façon…':'Explique-moi autrement'}</button>`:''}<button class="btn primary" data-act="suivant">${q.i<q.n-1?'Question suivante':'Voir mon résultat'}</button></div></div>`;
   }
@@ -2193,7 +2250,7 @@ function vQuiz(){
     </section></div>`;
 }
 function vFinQuiz(){
-  const q=state.quiz;const pct=q.score/q.total;const msg=pct===1?pick(BRAVO.top):pct>=.75?pick(BRAVO.bien):pct>=.5?pick(BRAVO.moyen):pick(BRAVO.bas);q.msg=q.msg||msg;
+  const q=state.quiz;const pct=q.score/q.total;const msg=pct===1?pick(SK().bravo.top):pct>=.75?pick(SK().bravo.bien):pct>=.5?pick(SK().bravo.moyen):pick(SK().bravo.bas);q.msg=q.msg||msg;
   const fautes=q.questions.map((x,i)=>({x,r:q.rep[i],b:(q.brouillons||{})[i]})).filter(o=>!o.r.ok);
   return `<div class="quiz stack"><section class="card stack" style="text-align:center;align-items:center">
     <p class="eyebrow">${esc(q.titre)}</p><div class="score">${q.score}/${q.total}</div><p style="font-size:1.15rem">${esc(q.msg)}</p>
@@ -2319,15 +2376,15 @@ const SUGGESTIONS=[['30 minutes de jeu vidéo',40],['Choisir le dessert du diman
 function vRecompenses(){
   const b=bilan();const rec=all('recompenses').sort((a,c)=>a.cout-c.cout);const ach=all('achats').sort((a,c)=>c.createdAt-a.createdAt);
   return `<h2>Mes récompenses</h2>
-  <section class="card hello"><div><p class="eyebrow">Le trésor du château</p><h2 class="row">${STAR.replace('width="16" height="16"','width="34" height="34"')} ${b.solde} étoiles</h2><p class="muted small">${b.total} gagnées depuis le début, ${b.spent} échangées.</p></div>
-    <div style="min-width:230px"><div class="row small" style="justify-content:space-between"><span>Niveau ${b.niveau+1} · ${esc(b.nomNiveau)}</span><span class="muted">${b.dansNiveau}/100</span></div><div class="bar"><i style="width:${b.dansNiveau}%"></i></div><p class="small muted" style="margin-top:6px">${b.niveau<NIVEAUX.length-1?`Prochain niveau : ${esc(NIVEAUX[b.niveau+1])}`:'Niveau maximum atteint !'}</p></div></section>
+  <section class="card hello"><div><p class="eyebrow">${SK().tresor}</p><h2 class="row">${STAR.replace('width="16" height="16"','width="34" height="34"')} ${b.solde} étoiles</h2><p class="muted small">${b.total} gagnées depuis le début, ${b.spent} échangées.</p></div>
+    <div style="min-width:230px"><div class="row small" style="justify-content:space-between"><span>Niveau ${b.niveau+1} · ${esc(b.nomNiveau)}</span><span class="muted">${b.dansNiveau}/100</span></div><div class="bar"><i style="width:${b.dansNiveau}%"></i></div><p class="small muted" style="margin-top:6px">${b.niveau<SK().niveaux.length-1?`Prochain niveau : ${esc(SK().niveaux[b.niveau+1])}`:'Niveau maximum atteint !'}</p></div></section>
   <section class="card stack"><h3>Échanger mes étoiles</h3>
     ${rec.length?rec.map(r=>`<div class="reward"><span class="t">${esc(r.titre)}</span><span class="row"><span class="cost">${STAR} ${r.cout}</span><button class="btn ${b.solde>=r.cout?'primary':''}" data-act="demander" data-id="${r.id}" ${b.solde>=r.cout?'':'disabled'}>${b.solde>=r.cout?'Je la demande':`Encore ${r.cout-b.solde}`}</button></span></div>`).join(''):`<div class="empty">Pas encore de récompense. Demande à tes parents d'en ajouter dans l'espace parents.</div>`}
     ${ach.length?`<p class="eyebrow" style="margin-top:6px">Mes demandes</p>${ach.slice(0,8).map(a=>`<div class="item small"><span class="grow">${esc(a.titre)} · ${esc(shortDate(a.date))}</span><span class="status ${a.statut==='validé'?'ok':a.statut==='refusé'?'no':'wait'}">${a.statut==='demandé'?'En attente des parents':a.statut==='validé'?'Accordée':'Refusée (étoiles rendues)'}</span></div>`).join('')}`:''}</section>
-  <section class="card"><h3>Mes badges</h3><div class="badges">${BADGES.map(x=>{const on=x.test();return `<div class="badge ${on?'':'lock'}">${BADGE_SVG(on)}<b>${esc(x.nom)}</b><span>${esc(x.desc)}</span></div>`}).join('')}</div></section>
+  <section class="card"><h3>Mes badges</h3><div class="badges">${BADGES.map(x=>{const on=x.test();return `<div class="badge ${on?'':'lock'}">${BADGE_SVG(on)}<b>${esc(nomBadge(x))}</b><span>${esc(x.desc)}</span></div>`}).join('')}</div></section>
   <section class="card"><h3>Comment gagner des étoiles</h3><div class="regles">
     <div class="regle"><b>+1</b><span>pour chaque bonne réponse, dans un quiz ou un défi éclair</span></div>
-    <div class="regle"><b>+5</b><span>pour chaque chose finie : un quiz, un défi, un devoir coché, une leçon rangée, une note rentrée, ton code du chevalier complet, une tâche de vacances</span></div>
+    <div class="regle"><b>+5</b><span>pour chaque chose finie : un quiz, un défi, un devoir coché, une leçon rangée, une note rentrée, ton ${SK().code} complet, une tâche de vacances</span></div>
     <div class="regle"><b>×2</b><span>sans faute : les étoiles du quiz sont doublées</span></div>
     <div class="regle"><b>÷2</b><span>quiz Facile, tables de 2, 5 ou 10, ou quiz déjà réussi cette semaine (le quart si déjà réussi 2 fois)</span></div></div></section>
   <section class="card"><h3>Dernières étoiles gagnées</h3><div class="stack">${b.gains.slice(0,10).map(g=>`<div class="item small"><span class="grow">${esc(g.why)}</span><span class="muted">${esc(shortDate(g.date))}</span><span class="cost">+${g.pts}</span></div>`).join('')||'<div class="empty">Ton premier quiz te rapportera tes premières étoiles.</div>'}</div></section>
@@ -2386,6 +2443,7 @@ function vParents(){
     <form class="form-grid" data-form="rec"><label class="f">Nouvelle récompense<input type="text" id="rec-t" name="titre" required></label><label class="f">Prix en étoiles<input type="number" id="rec-c" name="cout" min="1" value="50" required></label><div><button class="btn">Ajouter</button></div></form>
     ${!rec.length?`<div><button class="btn" data-act="suggestions">Ajouter des récompenses suggérées</button></div>`:''}
     <p class="small muted">Repère : un quiz de 10 questions rapporte 13 étoiles avec 8 bonnes réponses, 30 sans faute. Une bonne journée complète rapporte 30 à 50 étoiles.</p>
+    <p class="eyebrow">Habillage du cartable</p><div class="row">${Object.entries(SKINS).map(([id,k])=>`<button class="btn ${(c.skin||'excalibur')===id?'primary':''}" data-act="skin" data-v="${id}" aria-pressed="${(c.skin||'excalibur')===id}">${id==='manga'?'💥':'⚔️'} ${esc(k.nom)}</button>`).join('')}</div>
     <form class="form-grid" data-form="prenom"><label class="f">Prénom affiché<input type="text" id="cfg-prenom" name="prenom" value="${esc(c.prenom||'')}" required></label><div><button class="btn">Enregistrer</button></div></form>
   </section>`;
 }
@@ -2401,9 +2459,9 @@ function vAccueil(){
   if(e===1)corps=pinDefini()
     ?`${tete('Code parent','Un cartable est en cours de préparation. Entrez le code parent pour continuer.')}
       <form class="form-grid" data-form="acc-pin"><label class="f">Code parent<input type="password" name="pin" inputmode="numeric" autocomplete="off" required data-autofocus></label><div><button class="btn primary">Continuer</button></div></form>`
-    :`${tete('Bienvenue au château !','Pour commencer, choisissez un code parent de 4 à 8 chiffres. Il protège l\'espace parents : les récompenses, les demandes à valider et le suivi du programme. Gardez-le pour vous.')}
+    :`${tete(SK().accueil,'Pour commencer, choisissez un code parent de 4 à 8 chiffres. Il protège l\'espace parents : les récompenses, les demandes à valider et le suivi du programme. Gardez-le pour vous.')}
       <form class="form-grid" data-form="acc-pin"><label class="f">Code parent<input type="password" name="pin" inputmode="numeric" autocomplete="new-password" pattern="\\d{4,8}" required data-autofocus></label><label class="f">Le même code, encore une fois<input type="password" name="pin2" inputmode="numeric" autocomplete="new-password" required></label><div><button class="btn primary">Créer le code</button></div></form>`;
-  else if(e===2){const z=cfg().zone||ZONE_DEFAUT;corps=`${tete('Le chevalier','Le prénom apparaît partout dans le cartable. La zone sert au calendrier des vacances scolaires.')}
+  else if(e===2){const z=cfg().zone||ZONE_DEFAUT;corps=`${tete(SK().heros,'Le prénom apparaît partout dans le cartable. La zone sert au calendrier des vacances scolaires.')}
       <form class="form-grid" data-form="acc-prenom"><label class="f">Prénom de l'enfant<input type="text" name="prenom" value="${esc(cfg().prenom||'')}" autocomplete="off" required data-autofocus></label><label class="f">Zone de vacances<select name="zone">${['A','B','C'].map(x=>`<option value="${x}" ${x===z?'selected':''}>Zone ${x}</option>`).join('')}</select></label><div><button class="btn primary">Continuer</button></div></form>`}
   else if(e===3){const deja=all('recompenses').sort((a,b)=>a.cout-b.cout),titres=new Set(deja.map(r=>r.titre));
     corps=`${tete('Les récompenses',`${esc(prenom())} gagne des étoiles en travaillant et les échange contre des récompenses, que vous validez. Cochez celles que vous proposez et ajustez leur prix. Vous pourrez tout changer plus tard dans l'espace parents.`)}
@@ -2421,7 +2479,7 @@ function vAccueil(){
         <li><b>+5</b><span>quand tu finis un quiz, un devoir, ta routine du soir ou quand tu ajoutes une leçon</span></li>
         <li><b>×2</b><span>les étoiles d'un quiz réussi sans faute</span></li>
       </ul>
-      <p>Toutes les 100 étoiles, tu montes d'un niveau : ${NIVEAUX.slice(0,3).map(esc).join(', ')}… jusqu'à ${esc(NIVEAUX[NIVEAUX.length-1])} !</p>
+      <p>Toutes les 100 étoiles, tu montes d'un niveau : ${SK().niveaux.slice(0,3).map(esc).join(', ')}… jusqu'à ${esc(SK().niveaux[SK().niveaux.length-1])} !</p>
       <p>Dans <b>Mon trésor</b>, tu échanges tes étoiles contre une récompense : tu la demandes, et tes parents la valident.${rec.length?' Pour l\'instant :':''}</p>
       ${rec.length?`<div class="stack">${rec.map(r=>`<div class="item"><span class="grow">${esc(r.titre)}</span><span class="cost">${STAR} ${r.cout}</span></div>`).join('')}</div>`:''}
       <div><button class="btn primary" data-act="acc-fin" data-autofocus>C'est parti !</button></div>`}
@@ -2494,6 +2552,7 @@ document.addEventListener('click',async e=>{
     case 'acc-fin':put('config','main',{...cfg(),accueil:'fait'});state.acc=null;state.parent=false;confettis();go('jour');break;
     case 'suggestions':SUGGESTIONS.forEach(([t,c])=>put('recompenses',uid(),{titre:t,cout:c}));break;
     case 'parent-off':state.parent=false;render();break;
+    case 'skin':put('config','main',{...cfg(),skin:el.dataset.v});toast(`Habillage ${SKINS[el.dataset.v].nom.split(' ·')[0]} choisi.`);break;
     case 'prog-mat':go('programme',v);break;
     case 'comp-etat':{const c=COMP(id);if(!c)break;const cur=etatComp(c).etat;const next={avenir:'vu',vu:'fragile',fragile:'progres',progres:'acquis',acquis:'avenir'}[cur];put('programme',id,{etat:next,date:TODAY(),ts:Date.now()});break}
     case 'speciale':leconSpeciale(id);break;
@@ -2513,7 +2572,7 @@ document.addEventListener('change',e=>{
     const avant=p.jours.find(j=>j.date===el.dataset.id),complet=avant&&missionFaite(p,avant);
     const np={...p,[k]:{...(p[k]||{}),[el.dataset.id]:el.checked}};put('config',p.id,np);
     if(el.checked){const fini=avant&&!complet&&missionFaite(np,avant);const n=ptsVac(k,el.dataset.id)+(fini?bonusMission(el.dataset.id):0);gagne(n,fini?'Mission du jour complète !':k==='lu'?'Bonne lecture !':'')}return}
-  if(el.dataset.act==='routine'){const t=TODAY();const r=S.routine.get(t)||{items:{}};const items={...(r.items||{}),[el.dataset.v]:el.checked};put('routine',t,{items});const nb=o=>ROUTINE.filter(it=>o&&o[it.id]).length,n=ptsRoutine(t,nb(items))-ptsRoutine(t,nb(r.items));if(n>0)gagne(n,nb(items)===ROUTINE.length?'Code du chevalier complet !':'');return}
+  if(el.dataset.act==='routine'){const t=TODAY();const r=S.routine.get(t)||{items:{}};const items={...(r.items||{}),[el.dataset.v]:el.checked};put('routine',t,{items});const nb=o=>ROUTINE.filter(it=>o&&o[it.id]).length,n=ptsRoutine(t,nb(items))-ptsRoutine(t,nb(r.items));if(n>0)gagne(n,nb(items)===ROUTINE.length?`${SK().code[0].toUpperCase()+SK().code.slice(1)} complet !`:'');return}
 });
 document.addEventListener('dragover',e=>{const d=e.target.closest&&e.target.closest('#drop,#scan-drop');if(d){e.preventDefault();d.classList.add('over')}});
 document.addEventListener('dragleave',e=>{const d=e.target.closest&&e.target.closest('#drop,#scan-drop');if(d)d.classList.remove('over')});
