@@ -17,7 +17,7 @@ L'IA de ce PC est lente : une question de quiz prend 30 à 40 secondes, la lectu
 
 ## Les quatre onglets
 
-- **Aujourd'hui** (ou **Mes vacances** pendant les vacances) : une seule mission du jour. C'est d'abord un devoir qui presse, sinon une leçon à réviser, un point à retravailler ou la leçon de la semaine. On trouve aussi le « code du chevalier », c'est-à-dire la routine du soir.
+- **Aujourd'hui** (ou **Mes vacances** pendant les vacances) : une seule mission du jour. C'est d'abord un devoir qui presse, sinon une leçon à réviser, un point à retravailler ou la leçon de la semaine. On trouve aussi le « code du chevalier » (son nom suit l'habillage), c'est-à-dire la routine du soir.
 - **Apprendre** :
   - *Mes leçons* : ce qu'il a fait en classe, rangé par matière. Le bouton « 📷 Ajouter une photo », en bas à droite, transforme une photo du cahier en fiche reliée aux objectifs du programme.
   - *Mon année* : les 88 leçons du dossier `programme_cm1`, semaine par semaine selon `programme_cm1/10_Progression_annuelle.md`. Pour déplacer une leçon, déplacer sa ligne dans ce fichier, puis recharger la page.
@@ -25,7 +25,18 @@ L'IA de ce PC est lente : une question de quiz prend 30 à 40 secondes, la lectu
 - **Mon trésor** :
   - *Mes étoiles* : les récompenses et les badges ;
   - *Mes notes* ;
-  - *Espace parents* (avec un code) : valider les récompenses, et le **programme officiel de CM1** avec ce qui est su, en bonne voie ou à retravailler.
+  - *Espace parents* (avec un code) : valider les récompenses, choisir l'habillage du cartable, et le **programme officiel de CM1** avec ce qui est su, en bonne voie ou à retravailler.
+
+## Les habillages
+
+Dans l'espace parents, « Habillage du cartable » propose quatre skins :
+
+- **Excalibur · chevaliers** (par défaut) : couronne, bouclier et épée, niveaux de Page à Légende de Camelot ;
+- **Manga · héros** : planche de BD (trame de points, traits noirs épais, bulles), torii et shuriken, hibou au bandeau et au katana, niveaux de Débutant à Légende du dojo ;
+- **Fée · magie** : pastels et étincelles, baguette étoilée, hibou couronné de fleurs avec des ailes, niveaux de Petite graine à Légende enchantée ;
+- **Préhisto · dinosaures** : sable et dalles de pierre, petit dinosaure, hibou des cavernes avec sa massue, niveaux d'Œuf de dino à Légende de la préhistoire. L'IA rappelle si besoin que les humains n'ont pas connu les dinosaures.
+
+Le skin change les couleurs et les formes, le logo et l'icône de l'onglet, les hiboux, le nom des niveaux et des badges, les encouragements et le ton de l'IA. Les étoiles, les niveaux atteints et les données restent les mêmes. Les couleurs des onglets ne changent pas, pour que l'enfant se repère toujours.
 
 ## Les étoiles
 
