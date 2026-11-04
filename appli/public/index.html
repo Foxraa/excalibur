@@ -1109,11 +1109,32 @@ function verifierCalcul(q){
   }
   return q;
 }
+/* ---- Questions orales : seulement les voix installées sur l'ordinateur, rien ne sort sur Internet ---- */
+const parleOK='speechSynthesis' in window;
+if(parleOK)speechSynthesis.getVoices(); // Chrome charge ses voix au premier appel
+const voixPour=langue=>parleOK?speechSynthesis.getVoices().find(v=>v.localService&&v.lang.toLowerCase().startsWith(langue.slice(0,2))):null;
+const voixQuiz=matiere=>!!(LANGUES_ORAL[matiere]&&voixPour(LANGUES_ORAL[matiere]));
+const texteQuestion=x=>x.oral?`${x.question} (texte lu : ${x.oral})`:x.question;
+function lireOral(x){
+  if(!parleOK)return;
+  speechSynthesis.cancel();
+  const v=voixPour(x.langue);if(!v)return;
+  const u=new SpeechSynthesisUtterance(x.oral);u.voice=v;u.lang=v.lang;u.rate=.85;
+  speechSynthesis.speak(u);
+}
+/* Lit la question orale qui vient de s'afficher, une seule fois ; se tait dès qu'on quitte la question. */
+function oralApresRendu(){
+  const b=app.querySelector('[data-act="reecouter"]');
+  if(!b){if(parleOK)speechSynthesis.cancel();return}
+  const q=state.quiz;
+  if(b.hasAttribute('data-oral-auto')){q.lus={...q.lus,[q.i]:true};lireOral(q.questions[q.i])}
+}
 async function genererQuestions(q,diffs){
+  const oralOK=voixQuiz(q.matiere);
   const nv=NIVEAU_QUIZ[q.niveau],{erreurs,contenu,faibles,comps,plusieurs}=q.ctx;
   const faites=q.questions.map((x,i)=>({x,r:q.rep[i]}));
-  const historique=faites.map((o,i)=>`  ${i+1}. ${o.r&&!o.r.pending?(o.r.ok?'[réussie]':'[ratée]'):'[en cours]'} (difficulte ${o.x.difficulte}) ${o.x.question}`).join('\n');
-  const ratees=faites.filter(o=>o.r&&!o.r.pending&&!o.r.ok).slice(-2).map(o=>o.x.question);
+  const historique=faites.map((o,i)=>`  ${i+1}. ${o.r&&!o.r.pending?(o.r.ok?'[réussie]':'[ratée]'):'[en cours]'} (difficulte ${o.x.difficulte}) ${texteQuestion(o.x)}`).join('\n');
+  const ratees=faites.filter(o=>o.r&&!o.r.pending&&!o.r.ok).slice(-2).map(o=>texteQuestion(o.x));
   // Partie fixe d'abord (consignes + leçon), partie variable à la fin : Ollama garde en mémoire
   // la lecture du début de la demande et n'a pas à relire la leçon à chaque question.
   const prompt=`${ROLE()}
@@ -1124,7 +1145,7 @@ Règles :
 - Chaque question se suffit à elle-même : ${prenom()} ne voit ni la leçon ni les questions d'avant. Ne parle jamais de « la solution », « le problème », « l'exercice » ou « le texte » sans les écrire en entier dans la question : un problème de mathématiques donne tout son énoncé (la situation, les nombres, ce qu'on cherche) avant de poser la question.
 - La question ne doit jamais contenir ni laisser voir sa réponse. En français surtout : pour faire conjuguer, accorder ou transformer, donne la forme de départ et la consigne, mais pas le résultat attendu (par exemple « Conjugue le verbe chanter au futur avec nous », et non « Conjugue : nous chanterons »).
 - Écris comme une fiche d'exercices : une consigne courte et directe, en 1 ou 2 phrases. Pas de « Imagine que », pas de bavardage, n'annonce jamais de piège et ne parle pas de ses réponses d'avant.
-- Tout est écrit à l'écran : ${prenom()} lit et n'entend rien. Pas de dictée, jamais « écoute », « tu entends » ou « je vais te lire ». Pour l'orthographe, propose une phrase à trou ou un mot mal écrit à corriger ; ne demande jamais comment s'écrit un mot qui est déjà affiché dans la question.
+${oralOK?`- Presque tout se lit à l'écran. Une question est lue à voix haute seulement quand c'est vraiment utile : ${q.matiere==='anglais'?"pour faire reconnaître un mot ou une petite phrase en anglais":"pour faire écrire un mot, un verbe conjugué ou une petite phrase sans les montrer"}. Pour cela : type "courte", le texte à lire dans "oral" (15 mots au plus), une consigne dans "question" (${q.matiere==='anglais'?"« Écoute et écris le mot en français. »":"« Écoute et écris le verbe. »"}) qui ne montre jamais ce texte, et ce qu'il faut écrire dans "reponses". ${q.matiere==='anglais'?'':"À l'oreille, « ils mangent » et « il mange » se confondent : fais lire une phrase où l'on entend le nombre (« Les enfants mangent une pomme. ») ou précise-le dans la consigne. "}Sans champ "oral", jamais de dictée ni « écoute ». Pour le reste, propose une phrase à trou ou un mot mal écrit à corriger ; ne demande jamais comment s'écrit un mot qui est déjà affiché dans la question.`:`- Tout est écrit à l'écran : ${prenom()} lit et n'entend rien. Pas de dictée, jamais « écoute », « tu entends » ou « je vais te lire ». Pour l'orthographe, propose une phrase à trou ou un mot mal écrit à corriger ; ne demande jamais comment s'écrit un mot qui est déjà affiché dans la question.`}
 - Le type dépend de ce qu'on demande, et les boutons affichés en dépendent. Varie les types d'une question à l'autre :
   * "vf" (boutons Vrai et Faux) : une phrase affirmative à juger, sans « Vrai ou faux : », sans point d'interrogation, sans choix entre deux mots. Bien : « Dans "Nous allons à la plage", le mot "à" est une préposition. » Interdit : « Le mot "à" est-il un verbe ou une préposition ? »
   * "qcm" (boutons à choisir) : dès qu'il faut choisir entre des mots ou des nombres, même deux seulement. Les choix vont seulement dans "choix", 4 si possible, tous différents : ne les recopie pas dans le texte de la question. Bien : question « Le chat ___ faim. », choix ["a","à","as","ont"].
@@ -1145,7 +1166,8 @@ Forme JSON de chaque type de question :
 {"questions":[
  {"type":"qcm","question":"...","choix":["...","...","...","..."],"bonne":0,"explication":"...","indice":"...","difficulte":1${comps.length>1?',"competence":"identifiant"':''}},
  {"type":"vf","question":"affirmation à juger","bonne":true,"explication":"...","indice":"...","difficulte":2},
- {"type":"courte","question":"...","reponses":["réponse attendue","variante"],"calcul":"opération si c'est un calcul","explication":"...","indice":"...","difficulte":3}
+ {"type":"courte","question":"...","reponses":["réponse attendue","variante"],"calcul":"opération si c'est un calcul","explication":"...","indice":"...","difficulte":3}${oralOK?`,
+ {"type":"courte","question":"consigne","oral":"texte lu à voix haute","reponses":["réponse attendue"],"explication":"...","indice":"...","difficulte":2}`:''}
 ]}
 
 ${historique?`Questions déjà posées (ne les répète pas, change de notion ou d'angle) :
@@ -1156,10 +1178,10 @@ ${q.refus.map(e=>'  * « '+e.question+' » : '+e.refus).join('\n')}
 `:''}Crée maintenant ${diffs.length===1?'la question suivante':`les ${diffs.length} questions suivantes`} (n° ${q.questions.length+1}${diffs.length>1?' à '+(q.questions.length+diffs.length):''}), de difficulte : ${diffs.join(', ')}.
 Réponds uniquement avec un objet JSON {"questions":[...]} contenant exactement ${diffs.length} question(s).`;
   const r=await askJSON(prompt,{modelTier:'default',cache:false});
-  const deja=new Set(q.questions.map(x=>norm(x.question)));
-  const controles=(r&&Array.isArray(r.questions)?r.questions:[]).filter(q=>q&&q.question&&['qcm','vf','courte'].includes(q.type)&&!deja.has(norm(q.question))).map(x=>({x,...controlerQuestion(x)}));
+  const deja=new Set(q.questions.map(x=>norm(x.oral||x.question)));
+  const controles=(r&&Array.isArray(r.questions)?r.questions:[]).filter(q=>q&&q.question&&['qcm','vf','courte'].includes(q.type)&&!deja.has(norm(q.oral||q.question))).map(x=>({x,...controlerQuestion(x,{matiere:q.matiere,voix:oralOK})}));
   controles.filter(c=>c.refus).forEach(c=>{console.warn('Question refusée',c.x.question,'→',c.refus);q.refus=[...(q.refus||[]),{question:String(c.x.question),refus:c.refus}].slice(-3)});
-  const qs=controles.filter(c=>c.question).map(c=>c.question);
+  const qs=controles.filter(c=>c.question&&!(c.question.oral&&deja.has(norm(c.question.oral)))).map(c=>c.question);
   qs.forEach(q=>{
     if(q.type==='qcm'){
       const ch=(q.choix||[]).map((t,i)=>({t:String(t),ok:i===Number(q.bonne)}));
@@ -1214,7 +1236,7 @@ function procheOrtho(v,a){
 async function verifierCourte(q,rep,francais){
   const r=await askJSON(`${ROLE()}
 
-Question posée à ${prenom()} : « ${q.question} »
+Question posée à ${prenom()} : « ${texteQuestion(q)} »
 Réponses attendues : ${q.reponses.join(' / ')}
 Réponse ${deP()} : « ${rep} »
 La réponse ${deP()} est-elle juste sur le fond ? Compte-la juste si elle contient ce qui est attendu : avec ou sans le pronom ou le déterminant (« as » ou « tu as », « chat » ou « le chat »), en un mot ou en phrase. ${francais?"Sois bienveillant sur l'orthographe si le sens est bon, mais exigeant sur la notion.":"Ce n'est pas une question de français : ne tiens AUCUN compte de l'orthographe, de la grammaire, de la conjugaison, des accents ni de la ponctuation. Un mot mal écrit mais reconnaissable compte comme juste ; seul le sens compte, et ne parle pas de l'orthographe dans le commentaire."}
@@ -1675,6 +1697,7 @@ function render(){
   const v={jour:modeVac()?vVacances:vJour,defi:vDefi,matieres:vMatieres,matiere:vMatiere,lecon:vLecon,ajouter:vAjouter,quiz:vQuiz,devoirs:vDevoirs,notes:vNotes,recompenses:vRecompenses,programme:vProgramme,annee:vAnnee,cours:vCours,parents:vParents}[state.view]||vJour;
   app.innerHTML=(storeMode==='local'?`<div class="offline small">Le serveur du cartable ne répond pas : les données restent pour l'instant dans ce navigateur. Lance « Démarrer le cartable » sur l'ordinateur, puis recharge la page.</div>`:'')+sousOnglets()+v();
   const af=app.querySelector('[data-autofocus]');if(af)af.focus({preventScroll:true});
+  oralApresRendu();
   setTimeout(checkBadges,0);
 }
 const mchip=id=>`<span class="mchip" style="--m:${M(id).c}">${esc(M(id).nom)}</span>`;
@@ -2335,13 +2358,13 @@ function vQuiz(){
   let body='';
   if(x.type==='qcm')body=`<div class="choices">${x.choix.map((c,i)=>`<button class="choice ${r&&!r.pending?(i===x.bonne?'right':(r.v===i?'wrong':'')):''}" data-act="rep" data-v="${i}" ${r?'disabled':''}>${esc(c)}</button>`).join('')}</div>`;
   else if(x.type==='vf')body=`<div class="choices" style="grid-template-columns:1fr 1fr">${[true,false].map(v=>`<button class="choice ${r&&!r.pending?(v===x.bonne?'right':(r.v===v?'wrong':'')):''}" data-act="rep" data-v="${v}" ${r?'disabled':''}>${v?'Vrai':'Faux'}</button>`).join('')}</div>`;
-  else body=r?`<div class="answer">Ta réponse : <strong>${esc(r.v)}</strong></div>`:`<form class="row" data-form="courte"><input type="text" id="courte-${q.i}" name="v" autocomplete="off" placeholder="Écris ta réponse" style="flex:1;min-width:180px" required><button class="btn primary">Valider</button></form>`;
+  else body=r?`<div class="answer">Ta réponse : <strong>${esc(r.v)}</strong></div>`:`<form class="row" data-form="courte"><input type="text" id="courte-${q.i}" name="v" autocomplete="off" ${x.oral?'spellcheck="false" autocapitalize="off" autocorrect="off"':''} placeholder="Écris ta réponse" style="flex:1;min-width:180px" required><button class="btn primary">Valider</button></form>`;
   let fb='';
   if(r&&r.pending)fb=attente('Je vérifie ta réponse…');
   else if(r){
     const bonne=x.type==='qcm'?x.choix[x.bonne]:x.type==='vf'?(x.bonne?'Vrai':'Faux'):x.reponses[0];
     const ex=q.extra[q.i];
-    fb=`<div class="fb ${r.ok?'ok':'ko'}"><span class="h">${r.ok?pick(['Bravo !','Exact !',...SK().touche]):'Pas tout à fait…'}</span>${!r.ok?`<p>La bonne réponse : <strong>${esc(bonne)}</strong></p>`:''}${r.commentaire?`<p>${rich(r.commentaire)}</p>`:''}<p>${rich(x.explication||'')}</p>
+    fb=`<div class="fb ${r.ok?'ok':'ko'}"><span class="h">${r.ok?pick(['Bravo !','Exact !',...SK().touche]):'Pas tout à fait…'}</span>${!r.ok?`<p>La bonne réponse : <strong>${esc(bonne)}</strong></p>`:''}${x.oral?`<p>J'ai lu : <strong>${esc(x.oral)}</strong></p>`:''}${r.commentaire?`<p>${rich(r.commentaire)}</p>`:''}<p>${rich(x.explication||'')}</p>
       ${ex&&ex.text?`<div class="answer">${rich(ex.text)}</div>`:''}
       <div class="row">${sample&&!(ex&&ex.text)?`<button class="btn" data-act="explique" ${ex&&ex.busy?'disabled':''}>${ex&&ex.busy?'Je cherche une autre façon…':'Explique-moi autrement'}</button>`:''}<button class="btn primary" data-act="suivant">${q.i<q.n-1?'Question suivante':'Voir mon résultat'}</button></div></div>`;
   }
@@ -2351,6 +2374,7 @@ function vQuiz(){
     <section class="card stack">
       <div class="row"><span class="small muted">Question ${q.i+1} / ${q.n}</span>${x.difficulte>=3?'<span class="tag-hard">Question pointue</span>':''}</div>
       <p class="qtext">${rich(x.question)}</p>
+      ${x.oral?`<div><button class="btn" data-act="reecouter" ${!r&&!(q.lus||{})[q.i]?'data-oral-auto':''}>🔊 Réécouter</button></div>`:''}
       ${body}
       ${!r&&x.indice?(q.indices[q.i]?`<p class="tip small"><strong>Indice :</strong> ${rich(x.indice)}</p>`:`<div><button class="btn ghost" data-act="indice">J'ai besoin d'un indice</button></div>`):''}
       ${fb}
@@ -2368,7 +2392,7 @@ function vFinQuiz(){
     <p class="eyebrow">${esc(q.titre)}</p><div class="score">${q.score}/${q.total}</div><p style="font-size:1.15rem">${esc(q.msg)}</p>
     <span class="pill">${STAR} +${q.etoiles} étoiles</span>${detailEtoiles(q)}
     <div class="row" style="justify-content:center">${q.leconIds.length===1&&!String(q.leconIds[0]).startsWith('prog:')?(String(q.leconIds[0]).startsWith('ref:')?`<button class="btn" data-act="cours" data-id="${esc(String(q.leconIds[0]).slice(4))}">Relire la leçon</button>`:`<button class="btn" data-act="lecon" data-id="${q.leconIds[0]}">Relire la fiche</button>`):''}<button class="btn primary" data-act="retry-quiz">Nouveau quiz</button><button class="btn" data-act="tab" data-v="jour">Retour à aujourd'hui</button></div></section>
-    ${fautes.length?`<section class="card stack"><h3>Je revois mes erreurs</h3>${fautes.map(({x,r,b})=>`<div class="answer"><p><strong>${rich(x.question)}</strong></p><p class="small">Bonne réponse : <strong>${esc(x.type==='qcm'?x.choix[x.bonne]:x.type==='vf'?(x.bonne?'Vrai':'Faux'):x.reponses[0])}</strong></p><p class="small">${rich(x.explication||'')}</p>${b&&b.trim()?`<p class="small muted" style="margin-top:6px">Mon brouillon :</p><div class="brouillon-vu">${esc(b)}</div>`:''}</div>`).join('')}</section>`:''}</div>`;
+    ${fautes.length?`<section class="card stack"><h3>Je revois mes erreurs</h3>${fautes.map(({x,r,b})=>`<div class="answer"><p><strong>${rich(x.question)}</strong></p>${x.oral?`<p class="small">J'ai lu : <strong>${esc(x.oral)}</strong></p>`:''}<p class="small">Bonne réponse : <strong>${esc(x.type==='qcm'?x.choix[x.bonne]:x.type==='vf'?(x.bonne?'Vrai':'Faux'):x.reponses[0])}</strong></p><p class="small">${rich(x.explication||'')}</p>${b&&b.trim()?`<p class="small muted" style="margin-top:6px">Mon brouillon :</p><div class="brouillon-vu">${esc(b)}</div>`:''}</div>`).join('')}</section>`:''}</div>`;
 }
 async function repondre(v){
   const q=state.quiz,x=q.questions[q.i];if(q.rep[q.i])return;
@@ -2376,8 +2400,9 @@ async function repondre(v){
   else if(x.type==='vf'){v=v==='true';q.rep[q.i]={v,ok:v===x.bonne}}
   else{
     const fr=q.matiere==='francais';
-    const n=norm(v);const ok=x.reponses.some(a=>{const b=norm(a);return b&&(memeReponse(n,b)||(b.length>3&&n.includes(b))||(!fr&&procheOrtho(v,a)))});
-    if(ok||!sample)q.rep[q.i]={v,ok};
+    const dictee=x.oral&&fr; // l'orthographe est ce qu'on vérifie : ni tolérance, ni correction par l'IA
+    const n=norm(v);const ok=dictee?x.reponses.some(a=>memeEcriture(v,a)):x.reponses.some(a=>{const b=norm(a);return b&&(memeReponse(n,b)||(b.length>3&&n.includes(b))||(!fr&&procheOrtho(v,a)))});
+    if(ok||!sample||dictee)q.rep[q.i]={v,ok};
     else{q.rep[q.i]={v,pending:true};render();const idx=q.i;try{const r=await verifierCourte(x,v,fr);q.rep[idx]={v,ok:r.ok,commentaire:r.commentaire}}catch(e){q.rep[idx]={v,ok:false,commentaire:"Je n'ai pas pu vérifier en détail, compare avec la bonne réponse."}}}
   }
   render();
@@ -2689,12 +2714,13 @@ document.addEventListener('click',async e=>{
     case 'quit-quiz':{const q=state.quiz;state.quiz=null;if(q&&String(q.leconIds[0]).startsWith('prog:')){if(state.parent)go('programme',q.matiere);else go('jour');break}if(q&&String(q.leconIds[0]).startsWith('ref:')){go('cours',String(q.leconIds[0]).slice(4));break}go(q&&q.leconIds.length===1&&S.lecons.has(q.leconIds[0])?'lecon':'jour',q&&q.leconIds[0]);break}
     case 'rep':repondre(v);break;
     case 'indice':state.quiz.indices[state.quiz.i]=true;render();break;
+    case 'reecouter':lireOral(state.quiz.questions[state.quiz.i]);break;
     case 'brouillon-effacer':{const q=state.quiz;if(q&&q.brouillons)delete q.brouillons[q.i];const t=app.querySelector('[data-brouillon]');if(t){t.value='';t.focus()}break}
     case 'suivant':{const q=state.quiz;if(q.i<q.n-1){q.i++;render();prefetchQuiz()}else{finirQuiz();render()}window.scrollTo({top:0});break}
     case 'quiz-regen':{const q=state.quiz;if(q){q.genErr=null;render();prepareQuestions(q,q.i+1)}break}
     case 'quiz-finir':{const q=state.quiz;if(q){finirQuiz();render()}break}
     case 'explique':{const q=state.quiz,x=q.questions[q.i],r=q.rep[q.i],idx=q.i;q.extra[idx]={busy:true};render();
-      try{const {text}=await sample(`${ROLE()}\n\n${prenom()} n'a pas bien compris cette question de quiz.\nQuestion : « ${x.question} »\nSa réponse : « ${x.type==='qcm'?x.choix[r.v]:x.type==='vf'?(r.v?'Vrai':'Faux'):r.v} »\nExplication déjà donnée : « ${x.explication} »\nRéexplique autrement, en 120 à 180 mots, avec une autre approche que l'explication déjà donnée : commence par comprendre pourquoi sa réponse lui a semblé juste, puis utilise une image ou un exemple de la vie de tous les jours, déroule le raisonnement pas à pas sur la question, et finis par une astuce pour ne plus se tromper. Pas de titre, pas de liste à puces.`,{modelTier:'quick'});q.extra[idx]={text}}catch(err){q.extra[idx]={};toast(errMsg(err))}
+      try{const {text}=await sample(`${ROLE()}\n\n${prenom()} n'a pas bien compris cette question de quiz.\nQuestion : « ${texteQuestion(x)} »\nSa réponse : « ${x.type==='qcm'?x.choix[r.v]:x.type==='vf'?(r.v?'Vrai':'Faux'):r.v} »\nExplication déjà donnée : « ${x.explication} »\nRéexplique autrement, en 120 à 180 mots, avec une autre approche que l'explication déjà donnée : commence par comprendre pourquoi sa réponse lui a semblé juste, puis utilise une image ou un exemple de la vie de tous les jours, déroule le raisonnement pas à pas sur la question, et finis par une astuce pour ne plus se tromper. Pas de titre, pas de liste à puces.`,{modelTier:'quick'});q.extra[idx]={text}}catch(err){q.extra[idx]={};toast(errMsg(err))}
       if(state.quiz===q)render();break}
     case 'rm-img':state.add.images.splice(Number(v),1);render();break;
     case 'reset-add':state.add={images:[],indice:'',date:TODAY(),busy:false,res:null,err:'',sujet:''};render();break;

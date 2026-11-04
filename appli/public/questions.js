@@ -1,20 +1,21 @@
 /* Contrôle des questions écrites par l'IA, avant de les montrer à l'enfant.
    Le modèle local ne suit pas toujours ses consignes : ce qui se répare est réparé
    (une réponse courte « a ou à ? » devient un QCM), le reste est refusé et l'IA recommence.
-   controlerQuestion(x) renvoie {question} ou {refus:"la raison"}. */
+   controlerQuestion(x,{matiere,voix}) renvoie {question} ou {refus:"la raison"}.
+   Une question orale porte le texte à lire dans x.oral, jamais affiché : voix dit si le navigateur sait le lire. */
 (function(global){
   const propre=s=>String(s??'').toLowerCase().replace(/[’]/g,"'").replace(/^[\s.,;:!?«»"“”]+|[\s.,;:!?«»"“”]+$/g,'').replace(/\s+/g,' ');
   const sansDetail=s=>String(s??'').replace(/\s*\(.*$/,'');
 
-  // Tout est écrit à l'écran : rien à écouter, rien à dicter.
-  const ORAL=/(?<!\p{L})(dict[ée]e|dicte|je (te |vais (te )?)?(dicte|lis|lire|dire)|tu entends|tu as entendu|à voix haute|à l['’]oral)(?!\p{L})|(?<!\p{L})[ée]coute (bien|attentivement|la |le |les |ce |cette |ces )/iu;
+  // Sans texte à lire dans x.oral, la question ne peut rien faire écouter.
+  const ORAL=/(?<!\p{L})(dict[ée]e|dicte|je (te |vais (te )?)?(dicte|lis|lire|dire)|tu entends|tu as entendu|à voix haute|à l['’]oral)(?!\p{L})|(?<!\p{L})[ée]coute (bien|attentivement|et |la |le |les |ce |cette |ces )/iu;
   // L'enfant ne voit pas les questions d'avant.
   const BAVARDAGE=/(?<!\p{L})(tu t['’]es tromp[ée]|tu as vu l['’]erreur|tu as dit que|on travaille sur|nous avons travaill[ée]|comme tout à l['’]heure|question pr[ée]c[ée]dente)(?!\p{L})/iu;
   const PIEGE=/\s*\(?\b(?:attention|pense bien)\b[^.!?)]*\bpi[èe]ge\b[^.!?)]*[.!?]?\)?/gi;
   const JUSTIFIER=/\s*\(?\b(?:explique|justifie)\b[^.!?)]*\b(?:choix|réponse|pourquoi)\b[^.!?)]*[.!?]?\)?/gi;
   const OUVERTE=/^(quels?|quelles?|combien|comment|pourquoi|où|ou\b|qui\b|que\b|qu['’]|à quoi|de quoi|dans quel|avec quoi|lequel|laquelle|lesquels|lesquelles)/i;
   const CONSIGNE=/^(trouve|donne|cite|écris|ecris|choisis|complète|complete|conjugue|indique|nomme|souligne|recopie|entoure|classe|transforme|mets|calcule|range|relie|corrige)\b/i;
-  const ORTHOGRAPHE=/s['’][ée]cri|[ée]crire|orthographe/i;
+  const ORTHOGRAPHE=/s['’][ée]cri|[ée]crire|[ée]crit[- ]on|on [ée]crit|orthographe|conjugue/i;
   const NOMS='mots?|noms?|verbes?|adjectifs?|pronoms?|exemples?|[ée]l[ée]ments?|choses?|r[ée]ponses?|multiples?|diviseurs?|nombres?|fractions?|villes?|pays|animaux';
   const PLUSIEURS=new RegExp(`(?:^|[.!?,]\\s+)(?:donne|cite|trouve|[ée]cris|nomme|indique)\\b[^.?!]{0,40}\\b(?:deux|trois|quatre|cinq|[2-5])\\s+(?:[a-zéèê]+\\s+)?(?:${NOMS})\\b|\\bquels? sont les (?:deux|trois|quatre|cinq|[2-5])\\b`,'i');
 
@@ -30,6 +31,32 @@
   const contient=(t,mot)=>{const m=propre(mot).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');return !!m&&new RegExp(`(?<![\\p{L}\\p{N}])${m}(?![\\p{L}\\p{N}])`,'iu').test(propre(t))};
   const ouiNon=(texte,oui,x)=>({...x,type:'qcm',question:texte,choix:['Oui','Non'],bonne:oui?0:1,reponses:undefined,calcul:undefined});
 
+  // La voix ne sert qu'à faire écrire ce qu'on entend : en français, et en anglais.
+  const LANGUES={francais:'fr-FR',anglais:'en-US'};
+  const MOTS_MAX_ORAL=15;
+  const CONSIGNE_ORALE='Écoute et écris ce que tu entends.';
+  // Ces mots seuls se confondent à l'oreille avec un autre : il faut une phrase pour les distinguer.
+  const HOMOPHONES=new Set("a à as et est es ai on ont son sont ou où ce se ces ses sais sait c'est s'est sa ça la là mes mais mets met leur leurs peu peut peux dans dent mer mère maire ver vert verre vers pain pin sang cent sans vingt vin fin faim sel selle cour cours court pair père paire voix voie foie fois foi toi toit".split(' '));
+  // « ils mangent » s'entend comme « il mange » devant une consonne : l'écran doit préciser le nombre.
+  const PRONOM_MUET=/(?<!\p{L})(ils|elles|il|elle)\s+(?=[bcdfgjklmnpqrstvwxz])/iu;
+  function controlerOral(x,t,{matiere,voix}={}){
+    const o=String(x.oral).trim(),langue=LANGUES[matiere];
+    if(!voix)return {refus:"pas de voix pour lire : la question doit être écrite"};
+    if(!langue)return {refus:"l'oral ne sert qu'en français et en anglais : la question doit être écrite"};
+    if(x.type!=='courte')return {refus:"une question à écouter attend une réponse à écrire : type courte"};
+    const reps=(Array.isArray(x.reponses)?x.reponses:[]).map(String).filter(Boolean);
+    if(!reps.length)return {refus:'aucune réponse attendue'};
+    if(o.split(/\s+/).length>MOTS_MAX_ORAL)return {refus:'le texte à lire est trop long : un mot ou une courte phrase'};
+    const francais=langue==='fr-FR';
+    if(francais&&!reps.some(r=>contient(o,sansDetail(r))))return {refus:"la réponse attendue n'est pas dans le texte lu"};
+    if(francais&&HOMOPHONES.has(propre(o)))return {refus:"ce mot seul s'entend comme un autre : lire une petite phrase"};
+    const montre=s=>contient(s,o)||reps.some(r=>propre(sansDetail(r)).length>1&&contient(s,sansDetail(r)));
+    if(montre(t))t=CONSIGNE_ORALE;
+    const pronom=francais&&o.match(PRONOM_MUET);
+    if(pronom&&!/pluriel|singulier/i.test(t))t=`${t.replace(/[.?!\s]+$/,'')}, au ${/s$/i.test(pronom[1])?'pluriel':'singulier'}.`;
+    return {question:{...x,question:t,oral:o,langue,reponses:reps,indice:x.indice&&!montre(x.indice)?x.indice:undefined}};
+  }
+
   function controlerVf(x,t){
     const bonne=x.bonne===true||x.bonne==='true'||x.bonne==='vrai';
     if(CONSIGNE.test(t))return {refus:"c'est une consigne, pas une affirmation à juger vrai ou faux"};
@@ -37,7 +64,7 @@
     if(OUVERTE.test(t)||/\bou\b/.test(t))return {refus:"une question à choix entre deux mots a été mise en vrai/faux : il fallait un qcm"};
     return {question:ouiNon(t,bonne,x)};
   }
-  function controlerCourte(x,t){
+  function controlerCourte(x,t,ctx){
     t=t.replace(PIEGE,'').replace(JUSTIFIER,'').replace(/\?\s*\.$/,'?').trim();
     const reps=(Array.isArray(x.reponses)?x.reponses:[]).map(String).filter(Boolean);
     if(!reps.length)return {refus:'aucune réponse attendue'};
@@ -51,7 +78,11 @@
       const j=[...new Set(reps.map(r=>opts.indexOf(propre(sansDetail(r)))).filter(i=>i>=0))];
       if(j.length===1)return {question:{...x,type:'qcm',question:t,choix:[...new Set(opts)],bonne:[...new Set(opts)].indexOf(opts[j[0]]),reponses:undefined,calcul:undefined}};
     }
-    if(ORTHOGRAPHE.test(t)&&reps.some(r=>propre(sansDetail(r)).length>1&&contient(t,sansDetail(r))))return {refus:"le mot à écrire est déjà affiché dans la question : proposer plutôt une phrase à trou en qcm"};
+    const affichees=reps.map(sansDetail).filter(r=>propre(r).length>1&&contient(t,r)).sort((a,b)=>b.length-a.length);
+    if(ORTHOGRAPHE.test(t)&&affichees.length){
+      if(ctx.voix&&LANGUES[ctx.matiere])return controlerOral({...x,oral:affichees[0]},t,ctx);
+      return {refus:"le mot à écrire est déjà affiché dans la question : proposer plutôt une phrase à trou en qcm"};
+    }
     if(PLUSIEURS.test(t))return {refus:'la question demande plusieurs réponses : une seule chose à la fois'};
     return {question:{...x,question:t,reponses:reps}};
   }
@@ -62,17 +93,20 @@
     if(ch.length<2||b<0)return {refus:'les choix du qcm sont incomplets'};
     return {question:{...x,question:t,choix:ch.map(c=>c.t),bonne:b}};
   }
-  function controlerQuestion(x){
+  function controlerQuestion(x,ctx={}){
     let t=String(x.question??'').trim();
     if(!t)return {refus:'question vide'};
     t=t.replace(/^(?:vrai ou faux|vrai\/faux)\s*[:?.]\s*/i,'').replace(PIEGE,'').trim();
-    if(ORAL.test(t))return {refus:"tout est écrit à l'écran : rien à écouter, pas de dictée"};
+    const oral=String(x.oral??'').trim();
+    if(!oral&&ORAL.test(t))return {refus:"rien n'est lu à voix haute : il faut le texte à lire dans \"oral\", ou une question écrite"};
     if(BAVARDAGE.test(t))return {refus:'la question parle de ce qui a été fait avant'};
     if(/soulign/i.test(t)&&!/<u>/i.test(t))return {refus:'il est question d\'un mot souligné, mais rien n\'est souligné'};
     const cite=t.match(/phrase\s*:?\s*[«"“]([^»"”]+)[»"”][^«»"“”]{0,30}\bmot\s+[«"“'‘]\s*([^»"”'’]+?)\s*[»"”'’]/i);
     if(cite&&!contient(cite[1],cite[2]))return {refus:'le mot dont parle la question n\'est pas dans la phrase citée'};
+    if(oral)return controlerOral(x,t,ctx);
+    x={...x,oral:undefined};
     if(x.type==='vf')return controlerVf(x,t);
-    if(x.type==='courte')return controlerCourte(x,t);
+    if(x.type==='courte')return controlerCourte(x,t,ctx);
     if(x.type==='qcm')return controlerQcm(x,t);
     return {refus:'type de question inconnu'};
   }
@@ -81,4 +115,7 @@
   const memeReponse=(rep,attendu)=>!!rep&&!!attendu&&(rep===attendu||rep===sansPronom(attendu)||sansPronom(rep)===attendu);
   global.controlerQuestion=controlerQuestion;
   global.memeReponse=memeReponse;
+  // Pour une dictée, l'orthographe est ce qu'on vérifie : les accents comptent, pas la majuscule ni le point.
+  global.memeEcriture=(rep,attendu)=>memeReponse(propre(rep),propre(sansDetail(attendu)));
+  global.LANGUES_ORAL=LANGUES;
 })(globalThis);
