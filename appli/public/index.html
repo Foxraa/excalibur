@@ -771,7 +771,14 @@ const queP=()=>(voyelle(prenom())?"qu'":'que ')+prenom();
 
 /* ============ Claude ============ */
 let sample=null,imagesOK=false,maxImages=4;
-use('sample').then(async s=>{sample=s;if(s){try{const l=await s.limits();imagesOK=!!l.images;if(l.images)maxImages=l.images.maxCount}catch(e){}}requestRender()});
+let iaInfo=null; // ce que le serveur dit de l'IA choisie (jamais la clé)
+async function brancherIA(){
+  if(window.claude&&window.claude.rafraichir)iaInfo=await window.claude.rafraichir();
+  const s=await use('sample');sample=s;imagesOK=false;
+  if(s){try{const l=await s.limits();imagesOK=!!l.images;if(l.images)maxImages=l.images.maxCount}catch(e){}}
+  requestRender();
+}
+brancherIA();
 /* Demande du JSON via sample() puis lit la réponse nous-mêmes : marche aussi là où sample.json manque, et permet d'afficher l'avancement. */
 function lireJSON(t){
   t=String(t||'').trim();const f=t.match(/```(?:json)?\s*([\s\S]*?)```/);if(f)t=f[1].trim();
@@ -786,7 +793,7 @@ async function askJSON(prompt,opts={},onProgress){
   return lireJSON(text);
 }
 function progressAdd(n){const el=app.querySelector('[data-progress]');if(el)el.textContent=`J'écris ta fiche… (${n} caractères)`}
-function errMsg(e){return({no_ollama:"Ollama ne répond pas. Lance l'application Ollama sur ce PC, puis réessaie.",no_model:"Le modèle d'Ollama n'est pas installé (voir la fenêtre du cartable).",no_key:"Il manque la clé API dans le fichier .env du cartable.",bad_key:"La clé API est refusée. Vérifie-la dans le fichier .env.",network:"Je n'arrive pas à joindre Claude. Vérifie la connexion internet et que le cartable est bien lancé.",bad_request:"Claude n'a pas compris la demande. Réessaie.",api_error:"Claude a eu un petit souci. Réessaie dans un instant.",save_failed:"Je n'ai pas pu enregistrer.",rate_limited:"Claude est très occupé. Réessaie dans quelques minutes.",image_rejected:"Cette photo n'a pas pu être lue. Prends-en une autre, bien éclairée et nette.",images_unavailable:"L'envoi de photos n'est pas possible ici. Ouvre la page dans l'application Claude.",invalid_json:"La réponse est arrivée en désordre. Appuie sur Réessayer.",refused:"Claude n'a pas pu traiter cette demande. Essaie avec une autre photo ou une autre question.",session_expired:"Reconnecte-toi à Claude puis réessaie.",prompt_too_large:"C'est trop long d'un coup. Envoie moins de photos.",empty_completion:"Claude n'a rien répondu. Réessaie."}[e&&e.code])||`Petit souci de connexion. Réessaie dans un instant. (code : ${(e&&(e.code||e.message))||'inconnu'})`}
+function errMsg(e){return({no_ollama:"Ollama ne répond pas. Vérifie qu'il est lancé, ou demande à un parent de regarder le réglage de l'IA.",no_model:"Le modèle d'Ollama n'est pas installé (voir la fenêtre du cartable).",no_key:"Il manque la clé API de Claude : elle se règle dans l'espace parents.",bad_key:"La clé API est refusée. Vérifiez-la dans l'espace parents.",network:"Je n'arrive pas à joindre l'IA. Vérifie la connexion et que le cartable est bien lancé.",bad_request:"L'IA n'a pas compris la demande. Réessaie.",api_error:"L'IA a eu un petit souci. Réessaie dans un instant.",save_failed:"Je n'ai pas pu enregistrer.",rate_limited:"L'IA est très occupée. Réessaie dans quelques minutes.",image_rejected:"Cette photo n'a pas pu être lue. Prends-en une autre, bien éclairée et nette.",images_unavailable:"L'envoi de photos n'est pas possible ici. Ouvre la page dans l'application Claude.",invalid_json:"La réponse est arrivée en désordre. Appuie sur Réessayer.",refused:"L'IA n'a pas pu traiter cette demande. Essaie avec une autre photo ou une autre question.",session_expired:"Reconnecte-toi à Claude puis réessaie.",prompt_too_large:"C'est trop long d'un coup. Envoie moins de photos.",empty_completion:"L'IA n'a rien répondu. Réessaie."}[e&&e.code])||`Petit souci de connexion. Réessaie dans un instant. (code : ${(e&&(e.code||e.message))||'inconnu'})`}
 const MAT_LIST=MATIERES.map(m=>`"${m.id}" (${m.nom})`).join(', ');
 const ROLE=()=>`Tu es un professeur des écoles expérimenté, spécialiste du programme officiel de CM1 (cycle 3, Éducation nationale, France), et le compagnon de travail bienveillant ${deP()}, 9 ans, élève de CM1. L'appli s'appelle Excalibur${SK().theme?', habillée '+SK().theme:''} : de temps en temps, tu peux encourager ${prenom()} ${SK().role}, sans que cela gêne l'explication. Tu écris en français, avec des phrases courtes, un vocabulaire simple mais exact, et des exemples tirés de la vie d'un enfant.
 
@@ -1224,13 +1231,6 @@ const ptsNote=n=>{const p=n.valeur/n.sur;return neuf(jourDe(n))?5:p>=.8?10:p>=.6
 const ptsLecon=l=>neuf(jourDe(l))?5:3;
 const ptsVac=(k,date)=>neuf(date)?5:{lu:2,rentree:2,bonus:1}[k];
 const bonusMission=date=>neuf(date)?0:5;
-function bilan(){
-  const g=[];
-  all('quiz').filter(q=>q.termine&&!q.valide).forEach(q=>g.push({pts:q.etoiles||0,date:q.date,why:'Quiz : '+q.titre}));
-  all('devoirs').filter(d=>d.fait&&d.faitLe).forEach(d=>g.push({pts:ptsDevoir(d),date:d.faitLe,why:'Devoir fait : '+d.titre}));
-  all('routine').forEach(r=>{const n=ROUTINE.filter(it=>r.items&&r.items[it.id]).length;const pts=ptsRoutine(r.id,n);if(pts)g.push({pts,date:r.id,why:n===ROUTINE.length?'Routine complète':'Routine du jour'})});
-  all('notes').forEach(n=>{g.push({pts:ptsNote(n),date:n.date,why:'Note : '+n.intitule})});
-  all('lecons').filter(l=>!l.importe&&!l.special).forEach(l=>g.push({pts:ptsLecon(l),date:l.date,why:'Leçon ajoutée : '+l.titre}));
 /* Monter du niveau n au suivant (n compté depuis 0) coûte 150 étoiles, puis 25 de plus à chaque niveau.
    Le niveau 50 demande 36 750 étoiles au total : plusieurs années de travail. */
 const coutNiveau=n=>150+25*n;
@@ -1240,16 +1240,35 @@ function niveauDe(total){
   while(niveau<max&&reste>=coutNiveau(niveau)){reste-=coutNiveau(niveau);niveau++}
   return {niveau,nomNiveau:SK().niveaux[niveau],maxi:niveau===max,dansNiveau:reste,coutSuivant:coutNiveau(niveau)};
 }
+/* Atteindre le niveau N rapporte N étoiles. Ce bonus ne compte pas pour monter de niveau. */
+function bonusNiveaux(g,niveau){
+  const bonus=[];
+  let cumul=0,n=0,palier=coutNiveau(0);
+  for(const x of [...g].sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0)){
+    cumul+=x.pts;
+    while(n<niveau&&cumul>=palier){n++;bonus.push({pts:n+1,date:x.date,why:`Niveau ${n+1} atteint : ${SK().niveaux[n]}`});palier+=coutNiveau(n)}
+  }
+  return bonus;
+}
+function bilan(){
+  const g=[];
+  all('quiz').filter(q=>q.termine&&!q.valide).forEach(q=>g.push({pts:q.etoiles||0,date:q.date,why:'Quiz : '+q.titre}));
+  all('devoirs').filter(d=>d.fait&&d.faitLe).forEach(d=>g.push({pts:ptsDevoir(d),date:d.faitLe,why:'Devoir fait : '+d.titre}));
+  all('routine').forEach(r=>{const n=ROUTINE.filter(it=>r.items&&r.items[it.id]).length;const pts=ptsRoutine(r.id,n);if(pts)g.push({pts,date:r.id,why:n===ROUTINE.length?'Routine complète':'Routine du jour'})});
+  all('notes').forEach(n=>{g.push({pts:ptsNote(n),date:n.date,why:'Note : '+n.intitule})});
+  all('lecons').filter(l=>!l.importe&&!l.special).forEach(l=>g.push({pts:ptsLecon(l),date:l.date,why:'Leçon ajoutée : '+l.titre}));
   plansVac().forEach(p=>{
     Object.keys(p.lu||{}).filter(d=>p.lu[d]).forEach(d=>g.push({pts:ptsVac('lu',d),date:d,why:'Lecture de vacances'}));
     Object.keys(p.rentree||{}).filter(d=>p.rentree[d]).forEach(d=>g.push({pts:ptsVac('rentree',d),date:d,why:'Rentrée préparée'}));
     Object.keys(p.bonus||{}).filter(d=>p.bonus[d]).forEach(d=>g.push({pts:ptsVac('bonus',d),date:d,why:'Idée bonus des vacances'}));
     p.jours.filter(j=>missionFaite(p,j)&&bonusMission(j.date)).forEach(j=>g.push({pts:bonusMission(j.date),date:j.date,why:'Mission de vacances complète'}));
   });
+  const niv=niveauDe(g.reduce((s,x)=>s+x.pts,0));
+  g.push(...bonusNiveaux(g,niv.niveau));
   g.sort((a,b)=>a.date<b.date?1:-1);
   const total=g.reduce((s,x)=>s+x.pts,0);
   const spent=all('achats').filter(a=>a.statut!=='refusé').reduce((s,a)=>s+(Number(a.cout)||0),0);
-  return {gains:g,total,spent,solde:total-spent,...niveauDe(total)};
+  return {gains:g,total,spent,solde:total-spent,...niv};
 }
 /* Leçon du jour : une leçon à revoir, choisie une fois par jour (gardée dans config). */
 function etoileDuJour(){
@@ -1982,7 +2001,7 @@ function vProgramme(){
   ${plan.length?`<section class="card"><div class="sec-title"><h3>Mon plan de travail en ${esc(M(m).nom)}</h3><span class="small muted">D'abord ce qui est à retravailler, puis ce qu'il faut vérifier</span></div>
     ${sp.busy?attente("J'écris ta leçon spéciale…",{debut:sp.debut,sous:'Cela prend environ une minute.'}):''}${sp.err?`<p class="small" style="color:var(--bad)">${esc(sp.err)}</p>`:''}
     <div class="stack">${plan.map(x=>itemPlan(x)).join('')}</div>
-    ${!sample?`<p class="small muted" style="margin-top:8px">Les leçons spéciales et les quiz arrivent quand la clé API est installée (fichier .env).</p>`:''}</section>`:''}
+    ${!sample?`<p class="small muted" style="margin-top:8px">Les leçons spéciales et les quiz arrivent quand l'IA est réglée (plus bas dans l'espace parents).</p>`:''}</section>`:''}
   ${doms.map(d=>{const nd=compteurs(d.items);
     return `<section class="card"><div class="sec-title"><h3>${esc(d.d)}</h3><span class="small muted">${nd.acquis}/${nd.total} sus</span></div>
     ${d.p?`<p class="small muted" style="margin:4px 0 6px">${esc(d.p)}</p>`:''}
@@ -2134,7 +2153,7 @@ function vAjouter(){
   if(a.res)return vApercu();
   const noAI=!sample;
   return `<h2>Ajouter ce que j'ai fait en classe</h2>
-  ${noAI?`<div class="offline">L'aide de Claude n'est pas encore branchée (il manque la clé API dans le fichier .env). Tu peux quand même enregistrer une leçon à la main plus bas.</div>`:''}
+  ${noAI?`<div class="offline">L'IA n'est pas encore réglée (demande à un parent : espace parents). Tu peux quand même enregistrer une leçon à la main plus bas.</div>`:''}
   ${!noAI&&imagesOK?`<section class="card stack">
     <h3>1. Prends en photo ce que tu veux ranger</h3>
     <label class="drop" id="drop" for="photo-in">
@@ -2258,7 +2277,7 @@ function nouvelleLecon(r,base){
 
 /* ---- Quiz ---- */
 async function lancerQuiz(lecons,niveau,titre,matiere){
-  if(!sample){toast("Les quiz ont besoin de Claude : ajoute la clé API dans le fichier .env.");return}
+  if(!sample){toast("Les quiz ont besoin de l'IA : elle se règle dans l'espace parents.");return}
   const q=state.quiz={loading:true,attente:true,titre,matiere,niveau,n:NIVEAU_QUIZ[niveau].n,ctx:contexteQuiz(lecons),leconIds:lecons.map(l=>l.id),competences:[...new Set(lecons.flatMap(l=>l.competences||[]))],questions:[],i:0,rep:[],indices:{},extra:{},brouillons:{}};go('quiz');
   await prepareQuestions(q,1);
 }
@@ -2516,6 +2535,58 @@ function vSemaine(){
   </section>`;
 }
 const pinDefini=()=>!!(S.config.get('pin')||{}).defini;
+/* ---- Réglage de l'IA (espace parents et accueil) ----
+   Le code parent reste en mémoire le temps que l'espace est ouvert : le serveur le redemande à chaque changement. */
+const IA_MODES={
+  local:{ico:'💻',nom:'Ollama sur ce PC',txt:"Gratuit, et rien ne sort de la maison. Lent sur un petit PC : 30 secondes par question de quiz environ."},
+  reseau:{ico:'🌐',nom:'Ollama sur le réseau',txt:"Un ordinateur plus puissant de la maison fait le travail. Gratuit, et rien ne sort de la maison."},
+  claude:{ico:'✨',nom:'Claude (clé API)',txt:"Rapide et plus fiable, surtout pour lire les photos. Payant selon les jetons utilisés. Les photos, les leçons et le prénom sont envoyés à Anthropic."},
+};
+function vIA(){
+  if(!iaInfo)return '';
+  const f=state.iaf||(state.iaf={mode:iaInfo.ia==='claude'?'claude':iaInfo.ollamaLocal?'local':'reseau'}),m=IA_MODES[f.mode];
+  const liste=f.modeles||[],voulu=f.modele||iaInfo.ollamaModel,modele=liste.includes(voulu+':latest')?voulu+':latest':voulu;
+  return `<form class="stack" data-form="ia">
+    <div class="row">${Object.entries(IA_MODES).map(([id,x])=>`<button type="button" class="btn ${f.mode===id?'primary':''}" data-act="ia-mode" data-v="${id}" aria-pressed="${f.mode===id}">${x.ico} ${x.nom}</button>`).join('')}</div>
+    <p class="small muted">${m.txt}</p>
+    ${f.mode==='reseau'?`<label class="f">Adresse de cet ordinateur<input type="text" id="ia-url" name="ollamaUrl" value="${esc(f.url||(iaInfo.ollamaLocal?'':iaInfo.ollamaUrl))}" placeholder="192.168.1.20 ou PC-SALON" autocomplete="off" spellcheck="false" required></label>
+    <p class="small muted">Sur cet ordinateur, Ollama doit accepter le réseau : mettre la variable d'environnement <code>OLLAMA_HOST=0.0.0.0</code>, puis relancer Ollama.</p>`:''}
+    ${f.mode!=='claude'?`<label class="f">Modèle${liste.length?`<select name="ollamaModel">${(liste.includes(modele)?liste:[modele,...liste]).map(n=>`<option ${n===modele?'selected':''}>${esc(n)}</option>`).join('')}</select>`:`<input type="text" id="ia-modele" name="ollamaModel" value="${esc(modele)}" autocomplete="off" spellcheck="false" required>`}</label>`
+    :`<label class="f">Clé API (créée sur platform.claude.com)<input type="password" id="ia-cle" name="cle" autocomplete="off" placeholder="${iaInfo.cle?'Une clé est déjà enregistrée sur ce PC':'sk-ant-…'}" ${iaInfo.cle?'':'required'}></label>`}
+    ${f.msg?`<p class="small" role="status">${f.ok?'✅':'⚠️'} ${esc(f.msg)}</p>`:''}
+    <div class="row"><button class="btn primary" ${f.busy?'disabled':''}>${f.busy?'Un instant…':state.acc?'Enregistrer et continuer':'Enregistrer'}</button><button type="button" class="btn" data-act="ia-tester" ${f.busy?'disabled':''}>Tester</button>${f.mode==='claude'&&iaInfo.cle?`<button type="button" class="btn ghost danger" data-act="ia-oublier" ${f.busy?'disabled':''}>Oublier la clé</button>`:''}${state.acc?`<button type="button" class="btn ghost" data-act="acc-ia-plus-tard">Régler plus tard</button>`:''}</div>
+  </form>`;
+}
+function iaRetour(f,r){
+  const adr=f.mode==='reseau'?'cet ordinateur':'ce PC';
+  if(r.ok)return f.mode==='claude'?'Claude répond, la clé est bonne.':`Ollama répond sur ${adr}.`;
+  if(r.code==='no_ollama')return f.mode==='reseau'?"Personne ne répond à cette adresse. Vérifiez que l'ordinateur est allumé, qu'Ollama y tourne et qu'il accepte le réseau.":"Ollama ne répond pas sur ce PC. S'il vient d'être choisi, fermez la fenêtre noire et relancez le cartable : il sera installé et démarré.";
+  if(r.code==='no_model')return r.modeles&&r.modeles.length?`Ce modèle n'est pas sur ${adr} : choisissez-en un dans la liste.`:`Aucun modèle sur ${adr}. Il faut en télécharger un avec « ollama pull ».`;
+  if(r.code==='bad_url')return "Cette adresse n'est pas valable. Exemple : 192.168.1.20";
+  if(r.code==='bad_key_format')return "Cette clé n'a pas la bonne forme. Copiez-la de nouveau, en entier.";
+  if(r.code==='bad_model')return "Ce nom de modèle n'est pas valable.";
+  if(r.code==='pin')return "Le code parent a changé : fermez puis rouvrez l'espace parents.";
+  if(r.code==='no_key')return "Il faut coller une clé API.";
+  if(r.code==='bad_key')return "Cette clé est refusée.";
+  if(r.code==='network')return "Impossible de joindre Claude. Vérifiez la connexion internet.";
+  return errMsg(r);
+}
+async function envoyerIA({essai=false,oublierCle=false}={}){
+  const f=state.iaf,form=document.querySelector('[data-form="ia"]');if(!f||!form)return;
+  const fd=Object.fromEntries(new FormData(form));
+  f.url=fd.ollamaUrl||f.url;f.modele=fd.ollamaModel||f.modele;f.busy=true;f.msg='';render();
+  let r;
+  try{r=await fetch('/api/ia',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({pin:state.pinParent,essai,oublierCle,ia:f.mode==='claude'?'claude':'ollama',ollamaUrl:f.mode==='reseau'?fd.ollamaUrl:'',ollamaModel:fd.ollamaModel||'',cle:fd.cle||''})}).then(x=>x.json())}
+  catch(e){r={ok:false,code:'network'}}
+  f.busy=false;f.ok=!!r.ok;f.msg=oublierCle?'':iaRetour(f,r);if(r.modeles)f.modeles=r.modeles;
+  if(r.enregistre){
+    await brancherIA();
+    if(oublierCle){f.msg='Clé oubliée.';f.ok=true}
+    else if(r.ok){if(state.acc){state.iaf=null;state.acc={etape:4}}else{f.msg='Enregistré. '+f.msg}toast("Réglage de l'IA enregistré.")}
+    else f.msg='Enregistré, mais : '+f.msg;
+  }
+  render();
+}
 function vParents(){
   const c=cfg();
   if(!state.parent)return `<section class="card"><h3>Espace parents</h3><p class="small muted" style="margin-bottom:8px">Pour suivre le programme de CM1, gérer les récompenses et valider les demandes ${esc(deP())}.</p><form class="row" data-form="pin"><input type="password" id="pin" name="pin" inputmode="numeric" placeholder="${pinDefini()?'Code parent':'Choisissez un code (4 chiffres)'}" style="max-width:240px" required><button class="btn">${pinDefini()?'Ouvrir':'Créer le code'}</button></form></section>`;
@@ -2529,6 +2600,7 @@ function vParents(){
     <p class="small muted">Repère : un quiz de 10 questions rapporte 13 étoiles avec 8 bonnes réponses, 30 sans faute. Une bonne journée complète rapporte 30 à 50 étoiles.</p>
     <p class="eyebrow">Habillage du cartable</p><div class="row">${Object.entries(SKINS).map(([id,k])=>`<button class="btn ${skinId()===id?'primary':''}" data-act="skin" data-v="${id}" aria-pressed="${skinId()===id}">${k.ico} ${esc(k.nom)}</button>`).join('')}</div>
     <form class="form-grid" data-form="prenom"><label class="f">Prénom affiché<input type="text" id="cfg-prenom" name="prenom" value="${esc(c.prenom||'')}" required></label><div><button class="btn">Enregistrer</button></div></form>
+    <p class="eyebrow">L'IA du cartable</p>${vIA()}
   </section>`;
 }
 
@@ -2538,7 +2610,7 @@ function vParents(){
 const besoinAccueil=()=>!loading()&&storeMode==='db'&&(cfg().accueil==='en-cours'||!pinDefini()||!(cfg().prenom||'').trim());
 function vAccueil(){
   const e=(state.acc||(state.acc={etape:1})).etape;
-  const tete=(titre,txt)=>`<p class="eyebrow">Étape ${e} sur 4</p><h2>${titre}</h2>${txt?`<p class="muted">${txt}</p>`:''}`;
+  const tete=(titre,txt)=>`<p class="eyebrow">Étape ${e} sur 5</p><h2>${titre}</h2>${txt?`<p class="muted">${txt}</p>`:''}`;
   let corps;
   if(e===1)corps=pinDefini()
     ?`${tete('Code parent','Un cartable est en cours de préparation. Entrez le code parent pour continuer.')}
@@ -2547,7 +2619,8 @@ function vAccueil(){
       <form class="form-grid" data-form="acc-pin"><label class="f">Code parent<input type="password" name="pin" inputmode="numeric" autocomplete="new-password" pattern="\\d{4,8}" required data-autofocus></label><label class="f">Le même code, encore une fois<input type="password" name="pin2" inputmode="numeric" autocomplete="new-password" required></label><div><button class="btn primary">Créer le code</button></div></form>`;
   else if(e===2){const z=cfg().zone||ZONE_DEFAUT;corps=`${tete(SK().heros,'Le prénom apparaît partout dans le cartable. La zone sert au calendrier des vacances scolaires.')}
       <form class="form-grid" data-form="acc-prenom"><label class="f">Prénom de l'enfant<input type="text" name="prenom" value="${esc(cfg().prenom||'')}" autocomplete="off" required data-autofocus></label><label class="f">Zone de vacances<select name="zone">${['A','B','C'].map(x=>`<option value="${x}" ${x===z?'selected':''}>Zone ${x}</option>`).join('')}</select></label><div><button class="btn primary">Continuer</button></div></form>`}
-  else if(e===3){const deja=all('recompenses').sort((a,b)=>a.cout-b.cout),titres=new Set(deja.map(r=>r.titre));
+  else if(e===3)corps=`${tete("L'IA du cartable",`Elle lit les photos, prépare les quiz et explique les erreurs. Choisissez où elle tourne. Vous pourrez changer plus tard dans l'espace parents.`)}${vIA()}`;
+  else if(e===4){const deja=all('recompenses').sort((a,b)=>a.cout-b.cout),titres=new Set(deja.map(r=>r.titre));
     corps=`${tete('Les récompenses',`${esc(prenom())} gagne des étoiles en travaillant et les échange contre des récompenses, que vous validez. Cochez celles que vous proposez et ajustez leur prix. Vous pourrez tout changer plus tard dans l'espace parents.`)}
       <form class="stack" data-form="acc-rec">
         ${deja.map(r=>`<div class="item"><span class="grow">${esc(r.titre)}</span><span class="cost">${STAR} ${r.cout}</span></div>`).join('')}
@@ -2563,7 +2636,7 @@ function vAccueil(){
         <li><b>+5</b><span>quand tu finis un quiz, un devoir, ta routine du soir ou quand tu ajoutes une leçon</span></li>
         <li><b>×2</b><span>les étoiles d'un quiz réussi sans faute</span></li>
       </ul>
-      <p>Il faut ${coutNiveau(0)} étoiles pour monter d'un niveau, puis un peu plus à chaque fois : ${SK().niveaux.slice(0,3).map(esc).join(', ')}… jusqu'au niveau ${SK().niveaux.length}, ${esc(SK().niveaux[SK().niveaux.length-1])} !</p>
+      <p>Il faut ${coutNiveau(0)} étoiles pour monter d'un niveau, puis un peu plus à chaque fois : ${SK().niveaux.slice(0,3).map(esc).join(', ')}… jusqu'au niveau ${SK().niveaux.length}, ${esc(SK().niveaux[SK().niveaux.length-1])} ! Chaque niveau atteint te rapporte autant d'étoiles que son numéro : 5 étoiles au niveau 5.</p>
       <p>Dans <b>Mon trésor</b>, tu échanges tes étoiles contre une récompense : tu la demandes, et tes parents la valident.${rec.length?' Pour l\'instant :':''}</p>
       ${rec.length?`<div class="stack">${rec.map(r=>`<div class="item"><span class="grow">${esc(r.titre)}</span><span class="cost">${STAR} ${r.cout}</span></div>`).join('')}</div>`:''}
       <div><button class="btn primary" data-act="acc-fin" data-autofocus>C'est parti !</button></div>`}
@@ -2633,9 +2706,13 @@ document.addEventListener('click',async e=>{
     case 'valider':{const a=S.achats.get(id);if(a)put('achats',id,{...a,statut:'validé'});break}
     case 'refuser':{const a=S.achats.get(id);if(a)put('achats',id,{...a,statut:'refusé'});break}
     case 'del-rec':del('recompenses',id);break;
-    case 'acc-fin':put('config','main',{...cfg(),accueil:'fait'});state.acc=null;state.parent=false;confettis();go('jour');break;
+    case 'acc-fin':put('config','main',{...cfg(),accueil:'fait'});state.acc=null;state.parent=false;state.pinParent='';state.iaf=null;confettis();go('jour');break;
+    case 'acc-ia-plus-tard':state.iaf=null;state.acc={etape:4};render();break;
+    case 'ia-mode':{const f=state.iaf;f.mode=v;f.msg='';f.modeles=null;render();break}
+    case 'ia-tester':envoyerIA({essai:true});break;
+    case 'ia-oublier':envoyerIA({oublierCle:true});break;
     case 'suggestions':SUGGESTIONS.forEach(([t,c])=>put('recompenses',uid(),{titre:t,cout:c}));break;
-    case 'parent-off':state.parent=false;render();break;
+    case 'parent-off':state.parent=false;state.pinParent='';state.iaf=null;render();break;
     case 'skin':put('config','main',{...cfg(),skin:el.dataset.v});toast(`Habillage ${SKINS[el.dataset.v].nom.split(' ·')[0]} choisi.`);break;
     case 'prog-mat':go('programme',v);break;
     case 'comp-etat':{const c=COMP(id);if(!c)break;const cur=etatComp(c).etat;const next={avenir:'vu',vu:'fragile',fragile:'progres',progres:'acquis',acquis:'avenir'}[cur];put('programme',id,{etat:next,date:TODAY(),ts:Date.now()});break}
@@ -2690,7 +2767,7 @@ document.addEventListener('submit',async e=>{
   // Le code parent est vérifié par le serveur, qui le garde haché : il n'arrive jamais dans la page.
   if(kind==='pin'){const creer=!pinDefini();if(creer&&!/^\d{4,8}$/.test(fd.pin)){toast('Choisissez un code de 4 à 8 chiffres.');return}
     let r;try{r=await fetch('/api/pin',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({pin:fd.pin,creer})}).then(x=>x.json())}catch(e){toast("Le serveur du cartable ne répond pas.");return}
-    if(r.ok){if(creer){S.config.set('pin',{id:'pin',defini:true});toast('Code parent créé.')}state.parent=true;render()}else toast(r.code==='deja'?'Un code existe déjà.':'Code incorrect.');return}
+    if(r.ok){if(creer){S.config.set('pin',{id:'pin',defini:true});toast('Code parent créé.')}state.parent=true;state.pinParent=fd.pin;render()}else toast(r.code==='deja'?'Un code existe déjà.':'Code incorrect.');return}
   if(kind==='rec'){put('recompenses',uid(),{titre:fd.titre,cout:Math.max(1,Number(fd.cout)||1)});f.reset();return}
   if(kind==='acc-pin'){const creer=!pinDefini();
     if(creer&&!/^\d{4,8}$/.test(fd.pin)){toast('Choisissez un code de 4 à 8 chiffres.');return}
@@ -2698,12 +2775,13 @@ document.addEventListener('submit',async e=>{
     let r;try{r=await fetch('/api/pin',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({pin:fd.pin,creer})}).then(x=>x.json())}catch(e){toast("Le serveur du cartable ne répond pas.");return}
     if(!r.ok){toast('Code incorrect.');return}
     if(creer){S.config.set('pin',{id:'pin',defini:true});put('config','main',{...cfg(),accueil:'en-cours'})}
-    state.parent=true;state.acc={etape:(cfg().prenom||'').trim()&&!creer?3:2};render();return}
+    state.parent=true;state.pinParent=fd.pin;state.acc={etape:(cfg().prenom||'').trim()&&!creer?3:2};render();return}
   if(kind==='acc-prenom'){const p=(fd.prenom||'').trim();if(!p)return;put('config','main',{...cfg(),prenom:p,zone:fd.zone||ZONE_DEFAUT,accueil:'en-cours'});state.acc={etape:3};render();return}
   if(kind==='acc-rec'){
     SUGGESTIONS.forEach(([t,c],i)=>{if(fd['s'+i])put('recompenses',uid(),{titre:t,cout:Math.max(1,Number(fd['c'+i])||c)})});
     const t=(fd.t||'').trim();if(t)put('recompenses',uid(),{titre:t,cout:Math.max(1,Number(fd.c)||1)});
-    state.acc={etape:4};render();return}
+    state.acc={etape:5};render();return}
+  if(kind==='ia'){envoyerIA();return}
   if(kind==='prenom'){put('config','main',{...cfg(),prenom:(fd.prenom||'').trim()});toast('Enregistré.');return}
 });
 const h=(location.hash||'').slice(1);if(TABS.some(t=>t[0]===h))state.view=h;

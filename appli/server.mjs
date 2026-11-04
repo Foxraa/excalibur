@@ -1,7 +1,8 @@
 // Excalibur — serveur local.
-// Sert l'appli (public/), garde les données dans data/cartable.duckdb et appelle Claude
-// avec la clé API, qui reste sur ce PC et n'est jamais envoyée au navigateur.
+// Sert l'appli (public/), garde les données dans data/cartable.duckdb et appelle l'IA choisie :
+// Ollama (sur ce PC ou un autre) ou Claude, avec une clé API qui reste dans .env et n'est jamais envoyée au navigateur.
 import http from "node:http";
+import https from "node:https";
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -26,14 +27,44 @@ const OLD_JSON = path.join(DATA, "db.json");
 const COLS = new Set(["lecons", "quiz", "notes", "devoirs", "routine", "recompenses", "achats", "config", "programme"]);
 const MAX_IMAGES = 4;
 
-const client = process.env.ANTHROPIC_API_KEY ? new Anthropic() : null;
-// IA=ollama : modèle local sur ce PC (gratuit, plus lent). IA_QUICK permet de choisir à part pour les petites réponses.
-const OLLAMA_URL = new URL(process.env.OLLAMA_URL || "http://127.0.0.1:11434");
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "gemma4:e4b";
+/* ---------- Choix de l'IA ---------- */
+// Réglé dans l'espace parents, gardé dans .env (le lanceur le lit aussi, pour ne pas installer Ollama pour rien).
+// IA=ollama : modèle local, gratuit et plus lent. IA_QUICK permet de choisir à part pour les petites réponses.
+const clientClaude = cle => cle ? new Anthropic({ apiKey: cle }) : null;
+const OLLAMA_LOCAL = process.env.OLLAMA_LOCAL_URL || "http://127.0.0.1:11434"; // autre port sur la clé USB
+// Accepte ce que tape un parent : « 192.168.1.20 », « PC-SALON:11434 », « \\PC-SALON » ou une adresse complète.
+function lireUrlOllama(s) {
+  let t = String(s).trim().replace(/^\\+/, "").replace(/\\/g, "/");
+  if (!/^https?:\/\//i.test(t)) t = "http://" + t;
+  const u = new URL(t);
+  if (!u.port && u.protocol === "http:") u.port = "11434";
+  return new URL(u.origin);
+}
+const urlDepart = () => {
+  try { return lireUrlOllama(process.env.OLLAMA_URL || OLLAMA_LOCAL); }
+  catch { console.log(`Adresse d'Ollama illisible dans .env : ${process.env.OLLAMA_URL}`); return lireUrlOllama(OLLAMA_LOCAL); }
+};
+let client = clientClaude(process.env.ANTHROPIC_API_KEY);
+let OLLAMA_URL = urlDepart();
+let OLLAMA_MODEL = process.env.OLLAMA_MODEL || "gemma4:e4b";
 const OLLAMA_CTX = Number(process.env.OLLAMA_CTX || 16384);
-const IA = (process.env.IA || (client ? "claude" : "ollama")).toLowerCase();
-const IA_QUICK = (process.env.IA_QUICK || IA).toLowerCase();
+let IA = (process.env.IA || (client ? "claude" : "ollama")).toLowerCase();
+let IA_QUICK = (process.env.IA_QUICK || IA).toLowerCase();
 const iaPrete = ia => ia === "ollama" || !!client;
+const ollamaLocal = () => OLLAMA_URL.origin === lireUrlOllama(OLLAMA_LOCAL).origin || ["localhost", "127.0.0.1", "[::1]"].includes(OLLAMA_URL.hostname);
+
+// Change les lignes voulues de .env sans toucher au reste ; null retire la ligne.
+async function majEnv(vals) {
+  const f = path.join(here, ".env");
+  const lignes = (await fs.readFile(f, "utf8").catch(() => "")).trimEnd().split(/\r?\n/);
+  for (const [k, v] of Object.entries(vals)) {
+    const i = lignes.findIndex(l => new RegExp(`^\\s*${k}\\s*=`).test(l));
+    if (v === null) { if (i >= 0) lignes.splice(i, 1); }
+    else if (i >= 0) lignes[i] = `${k}=${v}`;
+    else lignes.push(`${k}=${v}`);
+  }
+  await fs.writeFile(f, lignes.join("\n").trimStart() + "\n");
+}
 
 /* ---------- Stockage : base DuckDB, une ligne par document ---------- */
 // Avec DB_KEY dans .env, le fichier est chiffré (AES-256) : la copie dans OneDrive est illisible sans la clé.
@@ -90,6 +121,12 @@ const lireDoc = async (col, id) => {
   const rows = (await tour(() => duck.runAndReadAll("SELECT data::VARCHAR FROM docs WHERE col = $1 AND id = $2", [col, id]))).getRows();
   return rows.length ? JSON.parse(rows[0][0]) : null;
 };
+const pinCorrect = async pin => {
+  const doc = await lireDoc("config", "pin");
+  const ok = !!doc && crypto.timingSafeEqual(Buffer.from(hacher(pin, doc.sel), "hex"), Buffer.from(doc.hash, "hex"));
+  if (!ok) await new Promise(r => setTimeout(r, 1000)); // une seconde par erreur : deviner au hasard devient très long
+  return ok;
+};
 const enregistrerPin = pin => { const sel = crypto.randomBytes(16).toString("hex"); return ecrire("config", "pin", { sel, hash: hacher(pin, sel) }); };
 // Avant le 21/10/2026, le code était en clair dans config/main : on le range à l'abri.
 {
@@ -134,13 +171,70 @@ function codeErreur(e) {
 
 /* ---------- Ollama (modèle local) ---------- */
 // node:http plutôt que fetch : sur ce PC, lire une longue demande peut prendre plus de 5 minutes avant le premier mot.
+const httpDe = u => u.protocol === "https:" ? https : http;
 function ollama(chemin, corps, signal) {
   return new Promise((ok, ko) => {
-    const req = http.request(new URL(chemin, OLLAMA_URL), { method: "POST", headers: { "content-type": "application/json" }, signal }, ok);
+    const req = httpDe(OLLAMA_URL).request(new URL(chemin, OLLAMA_URL), { method: "POST", headers: { "content-type": "application/json" }, signal }, ok);
     req.on("error", ko);
     req.end(JSON.stringify(corps));
   });
 }
+// Les modèles installés ; une erreur si personne ne répond (ou pas un Ollama) dans le délai.
+async function modelesOllama(url, delai = 8000) {
+  const rep = await new Promise((ok, ko) => {
+    const req = httpDe(url).get(new URL("/api/tags", url), ok).on("error", ko);
+    req.setTimeout(delai, () => req.destroy(new Error("pas de réponse")));
+  });
+  let s = ""; for await (const c of rep) s += c;
+  return JSON.parse(s).models.map(m => m.name);
+}
+const modeleInstalle = (noms, m) => noms.includes(m) || noms.includes(m + ":latest");
+
+// Essaie un réglage sans le garder. Lister les modèles de Claude ne consomme pas de jetons.
+async function essaiIA({ ia, url, modele, cle }) {
+  if (ia === "claude") {
+    const c = cle ? new Anthropic({ apiKey: cle }) : client;
+    if (!c) return { ok: false, code: "no_key" };
+    try { await c.models.list({ limit: 1 }, { maxRetries: 0, timeout: 15000 }); return { ok: true }; }
+    catch (e) { return { ok: false, code: codeErreur(e) }; }
+  }
+  try {
+    const modeles = await modelesOllama(url);
+    return modeleInstalle(modeles, modele) ? { ok: true, modeles } : { ok: false, code: "no_model", modeles };
+  } catch { return { ok: false, code: "no_ollama" }; }
+}
+
+async function reglerIA(req, res) {
+  const { pin = "", essai = false, ia, ollamaUrl = "", ollamaModel = "", cle = "", oublierCle = false } = await readBody(req, 5000);
+  if (!await pinCorrect(pin)) return json(res, 403, { code: "pin" });
+  if (ia !== "ollama" && ia !== "claude") return json(res, 400, { code: "bad_request" });
+  let url = OLLAMA_URL;
+  if (ia === "ollama") {
+    try { url = lireUrlOllama(ollamaUrl || OLLAMA_LOCAL); }
+    catch { return json(res, 400, { code: "bad_url" }); }
+  }
+  const modele = String(ollamaModel).trim() || OLLAMA_MODEL;
+  const laCle = String(cle).trim();
+  if (!/^[\w.:\/-]{1,100}$/.test(modele)) return json(res, 400, { code: "bad_model" });
+  if (laCle && !/^[\w-]{10,300}$/.test(laCle)) return json(res, 400, { code: "bad_key_format" });
+  const resultat = await essaiIA({ ia, url, modele, cle: laCle });
+  // Une clé refusée n'est pas gardée ; une IA injoignable, si : l'autre ordinateur est peut-être seulement éteint.
+  if (essai || (!oublierCle && ["bad_key", "no_key"].includes(resultat.code))) return json(res, 200, resultat);
+
+  IA = IA_QUICK = ia;
+  const env = { IA: ia, IA_QUICK: null };
+  if (ia === "ollama") {
+    OLLAMA_URL = url; OLLAMA_MODEL = modele;
+    env.OLLAMA_URL = ollamaUrl ? url.origin : null;
+    env.OLLAMA_MODEL = modele;
+  }
+  if (laCle) { client = clientClaude(laCle); env.ANTHROPIC_API_KEY = laCle; }
+  else if (oublierCle) { client = null; env.ANTHROPIC_API_KEY = null; }
+  await majEnv(env);
+  if (ia === "ollama" && resultat.ok) verifierOllama();
+  json(res, 200, { ...resultat, enregistre: true });
+}
+
 async function sampleOllama({ prompt, images, max_tokens }, send, signal) {
   const rep = await ollama("/api/chat", {
     model: OLLAMA_MODEL,
@@ -287,6 +381,7 @@ const server = http.createServer(async (req, res) => {
   try {
     if (p === "/api/status") return json(res, 200, {
       ai: iaPrete(IA) && iaPrete(IA_QUICK), ia: IA, iaQuick: IA_QUICK, maxImages: MAX_IMAGES,
+      ollamaUrl: OLLAMA_URL.origin, ollamaLocal: ollamaLocal(), ollamaModel: OLLAMA_MODEL, cle: !!client,
       model: IA === "ollama" ? OLLAMA_MODEL : MODEL, modelQuick: IA_QUICK === "ollama" ? OLLAMA_MODEL : MODEL_QUICK,
     });
     if (p === "/api/db" && req.method === "GET") {
@@ -304,10 +399,9 @@ const server = http.createServer(async (req, res) => {
         await enregistrerPin(pin);
         return json(res, 200, { ok: true });
       }
-      const ok = !!doc && crypto.timingSafeEqual(Buffer.from(hacher(pin, doc.sel), "hex"), Buffer.from(doc.hash, "hex"));
-      if (!ok) await new Promise(r => setTimeout(r, 1000)); // une seconde par erreur : deviner au hasard devient très long
-      return json(res, 200, { ok });
+      return json(res, 200, { ok: await pinCorrect(pin) });
     }
+    if (p === "/api/ia" && req.method === "POST") return await reglerIA(req, res);
     if (p === "/api/cours") return json(res, 200, await coursEtProgression());
     const m = p.match(/^\/api\/db\/([a-z]+)\/([^/]+)$/);
     if (m) {
@@ -354,18 +448,16 @@ for (const s of ["SIGINT", "SIGHUP", "SIGBREAK", "SIGTERM"]) process.on(s, ferme
 server.listen(PORT, HOST, () => {
   console.log(`\nExcalibur est ouvert : http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT}`);
   if (IA === "claude" || IA_QUICK === "claude")
-    console.log(client ? `Claude est prêt (${MODEL}).` : "Pas de clé API : ajoute ANTHROPIC_API_KEY dans le fichier .env pour activer l'aide de Claude.");
+    console.log(client ? `Claude est prêt (${MODEL}).` : "Pas de clé API : ajoute-la dans l'espace parents pour activer l'aide de Claude.");
   if (IA === "ollama" || IA_QUICK === "ollama") verifierOllama();
 });
 
 async function verifierOllama() {
   const qui = IA === IA_QUICK ? "tout" : IA === "ollama" ? "les grosses demandes" : "les petites réponses";
   try {
-    const rep = await new Promise((ok, ko) => http.get(new URL("/api/tags", OLLAMA_URL), ok).on("error", ko));
-    let s = ""; for await (const c of rep) s += c;
-    const noms = JSON.parse(s).models.map(m => m.name);
-    if (noms.includes(OLLAMA_MODEL) || noms.includes(OLLAMA_MODEL + ":latest")) {
-      console.log(`Ollama est prêt (${OLLAMA_MODEL}, pour ${qui}). Chargement du modèle en mémoire...`);
+    const noms = await modelesOllama(OLLAMA_URL, 15000);
+    if (modeleInstalle(noms, OLLAMA_MODEL)) {
+      console.log(`Ollama est prêt (${OLLAMA_MODEL} sur ${OLLAMA_URL.origin}, pour ${qui}). Chargement du modèle en mémoire...`);
       // Précharge le modèle (près d'une minute sur ce PC) pour que la première question ne l'attende pas.
       // Même num_ctx que sampleOllama, sinon Ollama recharge le modèle.
       const t0 = Date.now();
@@ -375,6 +467,6 @@ async function verifierOllama() {
     }
     else console.log(`Ollama tourne, mais le modèle ${OLLAMA_MODEL} manque. Tape : ollama pull ${OLLAMA_MODEL}`);
   } catch {
-    console.log(`Ollama ne répond pas sur ${OLLAMA_URL.origin}. Lance l'application Ollama, puis recharge la page.`);
+    console.log(`Ollama ne répond pas sur ${OLLAMA_URL.origin}. Lance Ollama, ou change l'adresse dans l'espace parents.`);
   }
 }

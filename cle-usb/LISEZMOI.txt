@@ -20,3 +20,5 @@ Bon a savoir
   (appli\data). Ils ne se melangent pas avec ceux du PC d'origine.
 - Si Ollama est deja installe sur le PC, pas de souci : la version de la
   cle utilise son propre port et ses propres fichiers.
+- La cle API de Claude n'est jamais copiee sur la cle : au depart, l'IA est
+  l'Ollama de la cle. On peut en changer dans l'espace parents.

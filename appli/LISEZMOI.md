@@ -1,19 +1,29 @@
 # Excalibur — version locale
 
-L'appli tourne sur ce PC, avec une IA installée elle aussi sur ce PC (Ollama) : rien ne part sur internet. Les données sont dans `data/cartable.duckdb`.
+L'appli tourne sur ce PC. L'IA est au choix : Ollama sur ce PC, Ollama sur un autre ordinateur de la maison, ou Claude avec une clé API. Avec Ollama, rien ne part sur internet. Les données sont dans `data/cartable.duckdb`.
 
 ## Première installation (une seule fois)
 
-Rien à faire : au premier lancement, **Demarrer le cartable.bat** installe Node.js et Ollama s'ils manquent (avec winget ; Windows demande d'accepter l'installation de Node.js), puis télécharge le modèle (`gemma4:e4b`, plusieurs Go). Sans clé API dans `.env`, le cartable utilise Ollama.
+Au premier lancement, **Demarrer le cartable.bat** installe Node.js s'il manque (avec winget ; Windows demande d'accepter l'installation), puis demande où tourne l'IA. Si c'est sur ce PC, il installe aussi Ollama et télécharge le modèle (`gemma4:e4b`, plusieurs Go). Sinon, il n'installe rien de plus.
 
-Un cartable vide s'ouvre sur un accueil en quatre étapes : le code parent, puis le prénom et la zone de vacances, les récompenses, et enfin un écran qui explique les étoiles à l'enfant. Les onglets n'apparaissent qu'à la fin. Si la page est rechargée en cours de route, l'accueil reprend après le code parent.
+Un cartable vide s'ouvre sur un accueil en cinq étapes : le code parent, puis le prénom et la zone de vacances, l'IA, les récompenses, et enfin un écran qui explique les étoiles à l'enfant. Les onglets n'apparaissent qu'à la fin. Si la page est rechargée en cours de route, l'accueil reprend après le code parent.
 
 ## Lancer le cartable
 
-Double-cliquer sur **Demarrer le cartable.bat**. Il démarre Ollama si besoin, puis le navigateur s'ouvre sur http://localhost:3000.
+Double-cliquer sur **Demarrer le cartable.bat**. Il démarre Ollama si l'IA tourne sur ce PC, puis le navigateur s'ouvre sur http://localhost:3000.
 Pour arrêter, fermer la fenêtre noire.
 
-L'IA de ce PC est lente : une question de quiz prend 30 à 40 secondes, la lecture d'une photo plusieurs minutes. Sans Ollama, tout fonctionne sauf la lecture des photos, les quiz et les explications.
+Sur un petit PC, Ollama est lent : une question de quiz prend 30 à 40 secondes, la lecture d'une photo plusieurs minutes. Sans IA, tout fonctionne sauf la lecture des photos, les quiz et les explications.
+
+## Choisir l'IA
+
+Le choix se fait dans l'**espace parents**, rubrique « L'IA du cartable » (aussi à l'accueil d'un cartable neuf). Le bouton **Tester** essaie le réglage sans le garder ; **Enregistrer** l'applique tout de suite, sans relancer.
+
+- **Ollama sur ce PC** : gratuit, rien ne sort de la maison. Si Ollama n'était pas encore installé, fermer la fenêtre noire et relancer le cartable.
+- **Ollama sur le réseau** : un ordinateur plus puissant de la maison fait le travail. On donne son adresse (`192.168.1.20`, `PC-SALON`, ou une adresse complète ; le port 11434 est ajouté tout seul). Sur cet ordinateur, Ollama doit accepter le réseau : mettre la variable d'environnement `OLLAMA_HOST=0.0.0.0`, relancer Ollama et autoriser le port 11434 dans le pare-feu. Ollama n'a pas de mot de passe : à réserver au réseau de la maison.
+- **Claude** : payant selon les jetons utilisés, avec une clé API créée sur [platform.claude.com](https://platform.claude.com). Plus rapide et plus fiable, surtout pour lire les photos. Les photos, les leçons et le prénom sont alors envoyés à Anthropic.
+
+Le choix et la clé sont gardés dans `.env`. La clé ne revient jamais au navigateur et n'est pas copiée sur une clé USB. Le bouton **Oublier la clé** la retire.
 
 ## Les quatre onglets
 
@@ -36,7 +46,7 @@ Dans l'espace parents, « Habillage du cartable » propose quatre skins :
 - **Fée · magie** : pastels et étincelles, baguette étoilée, hibou couronné de fleurs avec des ailes, niveaux de Petite graine à Légende enchantée ;
 - **Préhisto · dinosaures** : sable et dalles de pierre, petit dinosaure, hibou des cavernes avec sa massue, niveaux d'Œuf de dino à Légende de la préhistoire. L'IA rappelle si besoin que les humains n'ont pas connu les dinosaures.
 
-Le skin change les couleurs et les formes, le logo et l'icône de l'onglet, les hiboux, le nom des niveaux et des badges, les encouragements et le ton de l'IA. Les étoiles, les niveaux atteints et les données restent les mêmes. Il y a 50 niveaux dans chaque skin : le premier coûte 150 étoiles, chaque suivant 25 de plus (36 750 étoiles au total pour le niveau 50). Les couleurs des onglets ne changent pas, pour que l'enfant se repère toujours.
+Le skin change les couleurs et les formes, le logo et l'icône de l'onglet, les hiboux, le nom des niveaux et des badges, les encouragements et le ton de l'IA. Les étoiles, les niveaux atteints et les données restent les mêmes. Il y a 50 niveaux dans chaque skin : le premier coûte 150 étoiles, chaque suivant 25 de plus (36 750 étoiles au total pour le niveau 50). Atteindre le niveau N rapporte N étoiles, qui comptent pour les récompenses mais pas pour monter de niveau. Les couleurs des onglets ne changent pas, pour que l'enfant se repère toujours.
 
 ## Les étoiles
 

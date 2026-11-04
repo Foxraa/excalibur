@@ -1,7 +1,7 @@
 @echo off
 cd /d "%~dp0"
 
-rem Sur un PC neuf, installe Node.js et Ollama avec winget (une seule fois)
+rem Sur un PC neuf, installe Node.js avec winget, puis Ollama si l'IA tourne sur ce PC (une seule fois)
 where node >nul 2>&1 && goto node_ok
 if exist "%ProgramFiles%\nodejs\node.exe" goto node_path
 echo Node.js n'est pas installe : installation, une seule fois. Accepte la demande de Windows.
@@ -10,6 +10,56 @@ if not exist "%ProgramFiles%\nodejs\node.exe" goto sans_node
 :node_path
 set "PATH=%ProgramFiles%\nodejs;%PATH%"
 :node_ok
+
+rem Premier lancement : ou tourne l'IA ? (se change ensuite dans l'espace parents)
+if exist .env goto choix_fait
+:choix
+echo.
+echo Quelle IA pour le cartable ?
+echo   1 = Ollama sur ce PC : gratuit, rien ne sort de la maison, plusieurs Go a telecharger
+echo   2 = Ollama sur un autre ordinateur de la maison : gratuit, il faut son adresse
+echo   3 = Claude : payant, avec une cle API, les donnees partent chez Anthropic
+choice /c 123 /n /m "Ton choix (1, 2 ou 3) : "
+if errorlevel 3 goto choix_claude
+if errorlevel 2 goto choix_reseau
+> .env echo IA=ollama
+goto choix_fait
+:choix_reseau
+set "ADRESSE="
+set /p "ADRESSE=Adresse de cet ordinateur (exemple 192.168.1.20) : "
+if not defined ADRESSE goto choix
+> .env echo IA=ollama
+>> .env echo OLLAMA_URL=%ADRESSE%
+goto choix_fait
+:choix_claude
+> .env echo IA=claude
+echo La cle API se colle dans le cartable, a l'etape "L'IA du cartable".
+:choix_fait
+
+rem Lit les reglages dans .env (memes valeurs par defaut que server.mjs)
+set "MODELE=gemma4:e4b"
+set "PORT=3000"
+set "CHOIX_IA="
+set "CHOIX_QUICK="
+set "ADRESSE="
+set "CLE="
+if exist .env for /f "usebackq tokens=1,* delims==" %%a in (".env") do (
+  if /i "%%a"=="OLLAMA_MODEL" set "MODELE=%%b"
+  if /i "%%a"=="PORT" set "PORT=%%b"
+  if /i "%%a"=="IA" set "CHOIX_IA=%%b"
+  if /i "%%a"=="IA_QUICK" set "CHOIX_QUICK=%%b"
+  if /i "%%a"=="OLLAMA_URL" set "ADRESSE=%%b"
+  if /i "%%a"=="ANTHROPIC_API_KEY" set "CLE=%%b"
+)
+if not defined CHOIX_IA if defined CLE set "CHOIX_IA=claude"
+if not defined CHOIX_IA set "CHOIX_IA=ollama"
+if not defined CHOIX_QUICK set "CHOIX_QUICK=%CHOIX_IA%"
+
+rem Rien a faire ici pour Ollama si l'IA tourne ailleurs
+if /i "%CHOIX_IA%"=="claude" if /i "%CHOIX_QUICK%"=="claude" goto lancer
+if not defined ADRESSE goto ollama_ici
+echo %ADRESSE%| findstr /i "localhost 127.0.0.1" >nul || goto lancer
+:ollama_ici
 
 set "OLLAMA=%LOCALAPPDATA%\Programs\Ollama\ollama.exe"
 if exist "%OLLAMA%" goto ollama_installe
@@ -32,17 +82,10 @@ pause
 exit /b 1
 :ollama_ok
 
-rem Lit le modele et le port dans .env (memes valeurs par defaut que server.mjs)
-set "MODELE=gemma4:e4b"
-set "PORT=3000"
-if exist .env for /f "usebackq tokens=1,* delims==" %%a in (".env") do (
-  if /i "%%a"=="OLLAMA_MODEL" set "MODELE=%%b"
-  if /i "%%a"=="PORT" set "PORT=%%b"
-)
-
 rem Telecharge le modele la premiere fois (plusieurs Go)
 "%OLLAMA%" list | findstr /b /c:"%MODELE% " >nul || "%OLLAMA%" pull %MODELE%
 
+:lancer
 if not exist node_modules (
   echo Installation des modules, une seule fois...
   call npm install

@@ -10,7 +10,7 @@ rem Ollama portable : ses propres modeles et son propre port (11435),
 rem pour ne jamais gener un Ollama deja installe sur ce PC.
 set "OLLAMA_MODELS=%RACINE%outils\modeles"
 set "OLLAMA_HOST=127.0.0.1:11435"
-set "OLLAMA_URL=http://127.0.0.1:11435"
+set "OLLAMA_LOCAL_URL=http://127.0.0.1:11435"
 
 if not exist "%NODE%" goto incomplet
 if not exist "%OLLAMA%" goto incomplet
