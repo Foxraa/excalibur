@@ -1115,18 +1115,26 @@ if(parleOK)speechSynthesis.getVoices(); // Chrome charge ses voix au premier app
 const voixPour=langue=>parleOK?speechSynthesis.getVoices().find(v=>v.localService&&v.lang.toLowerCase().startsWith(langue.slice(0,2))):null;
 const voixQuiz=matiere=>!!(LANGUES_ORAL[matiere]&&voixPour(LANGUES_ORAL[matiere]));
 const texteQuestion=x=>x.oral?`${x.question} (texte lu : ${x.oral})`:x.question;
-function lireOral(x){
+function dire(texte,langue){
   if(!parleOK)return;
   speechSynthesis.cancel();
-  const v=voixPour(x.langue);if(!v)return;
-  const u=new SpeechSynthesisUtterance(x.oral);u.voice=v;u.lang=v.lang;u.rate=.85;
+  const v=voixPour(langue);if(!v)return;
+  const u=new SpeechSynthesisUtterance(texte);u.voice=v;u.lang=v.lang;u.rate=.85;
   speechSynthesis.speak(u);
+}
+const lireOral=x=>dire(x.oral,x.langue);
+/* La consigne se lit à la demande, toujours en français. Le trou de la phrase se dit « trou ». */
+let consigneLue=null;
+function lireConsigne(x){
+  consigneLue=x;
+  dire(String(x.question).replace(/<[^>]+>/g,'').replace(/\*+/g,'').replace(/[«»"“”]/g,'').replace(/_{2,}/g,', trou, '),'fr-FR');
 }
 /* Lit la question orale qui vient de s'afficher, une seule fois ; se tait dès qu'on quitte la question. */
 function oralApresRendu(){
-  const b=app.querySelector('[data-act="reecouter"]');
-  if(!b){if(parleOK)speechSynthesis.cancel();return}
-  const q=state.quiz;
+  const b=app.querySelector('[data-act="reecouter"]'),q=state.quiz;
+  // Un rendu venu d'ailleurs (la question suivante prête, par exemple) ne coupe pas la consigne en cours.
+  const memeConsigne=q&&consigneLue&&q.questions[q.i]===consigneLue&&app.querySelector('[data-act="consigne"]');
+  if(!b){if(parleOK&&!memeConsigne)speechSynthesis.cancel();return}
   if(b.hasAttribute('data-oral-auto')){q.lus={...q.lus,[q.i]:true};lireOral(q.questions[q.i])}
 }
 async function genererQuestions(q,diffs){
@@ -1145,10 +1153,11 @@ Règles :
 - Chaque question se suffit à elle-même : ${prenom()} ne voit ni la leçon ni les questions d'avant. Ne parle jamais de « la solution », « le problème », « l'exercice » ou « le texte » sans les écrire en entier dans la question : un problème de mathématiques donne tout son énoncé (la situation, les nombres, ce qu'on cherche) avant de poser la question.
 - La question ne doit jamais contenir ni laisser voir sa réponse. En français surtout : pour faire conjuguer, accorder ou transformer, donne la forme de départ et la consigne, mais pas le résultat attendu (par exemple « Conjugue le verbe chanter au futur avec nous », et non « Conjugue : nous chanterons »).
 - Écris comme une fiche d'exercices : une consigne courte et directe, en 1 ou 2 phrases. Pas de « Imagine que », pas de bavardage, n'annonce jamais de piège et ne parle pas de ses réponses d'avant.
+- Mets-toi à la place d'un enfant de 9 ans qui découvre la question : il doit comprendre tout de suite quoi faire, la réponse ne doit pas être sous ses yeux, et la consigne doit correspondre exactement aux boutons ou à la case qu'il voit. Si ce n'est pas le cas, réécris la question.
 ${oralOK?`- Presque tout se lit à l'écran. Une question est lue à voix haute seulement quand c'est vraiment utile : ${q.matiere==='anglais'?"pour faire reconnaître un mot ou une petite phrase en anglais":"pour faire écrire un mot, un verbe conjugué ou une petite phrase sans les montrer"}. Pour cela : type "courte", le texte à lire dans "oral" (15 mots au plus), une consigne dans "question" (${q.matiere==='anglais'?"« Écoute et écris le mot en français. »":"« Écoute et écris le verbe. »"}) qui ne montre jamais ce texte, et ce qu'il faut écrire dans "reponses". ${q.matiere==='anglais'?'':"À l'oreille, « ils mangent » et « il mange » se confondent : fais lire une phrase où l'on entend le nombre (« Les enfants mangent une pomme. ») ou précise-le dans la consigne. "}Sans champ "oral", jamais de dictée ni « écoute ». Pour le reste, propose une phrase à trou ou un mot mal écrit à corriger ; ne demande jamais comment s'écrit un mot qui est déjà affiché dans la question.`:`- Tout est écrit à l'écran : ${prenom()} lit et n'entend rien. Pas de dictée, jamais « écoute », « tu entends » ou « je vais te lire ». Pour l'orthographe, propose une phrase à trou ou un mot mal écrit à corriger ; ne demande jamais comment s'écrit un mot qui est déjà affiché dans la question.`}
 - Le type dépend de ce qu'on demande, et les boutons affichés en dépendent. Varie les types d'une question à l'autre :
   * "vf" (boutons Vrai et Faux) : une phrase affirmative à juger, sans « Vrai ou faux : », sans point d'interrogation, sans choix entre deux mots. Bien : « Dans "Nous allons à la plage", le mot "à" est une préposition. » Interdit : « Le mot "à" est-il un verbe ou une préposition ? »
-  * "qcm" (boutons à choisir) : dès qu'il faut choisir entre des mots ou des nombres, même deux seulement. Les choix vont seulement dans "choix", 4 si possible, tous différents : ne les recopie pas dans le texte de la question. Bien : question « Le chat ___ faim. », choix ["a","à","as","ont"].
+  * "qcm" (boutons à choisir) : dès qu'il faut choisir entre des mots ou des nombres, même deux seulement. Les choix vont seulement dans "choix", 4 si possible, tous différents : ne les recopie pas dans le texte de la question. Bien : question « Le chat ___ faim. », choix ["a","à","as","ont"]. Dans une phrase à trou, le mot à trouver est remplacé par ___ et n'est écrit nulle part dans la question. Interdit : « Dans "Mon papa a un chien", quel mot est le bon ? », car le mot est déjà là. Les mauvais choix sont de vraies confusions sur la même notion : pour a ou à, jamais « mes » ni « et ».
   * "courte" (case à remplir) : une seule réponse à taper, un mot, un nombre ou une petite phrase. Jamais de liste de mots à choisir dans la question, jamais « donne deux mots » ou « trois exemples », jamais « explique ton choix ».
 - difficulte 1 = application directe de la règle, 2 = un peu de réflexion, 3 = question « pointue » qui vérifie la vraie compréhension : piège classique, application à un cas nouveau, raisonnement ou justification.
 - En mathématiques, mets des calculs et de petits problèmes. En français, fais manipuler la langue (transformer, classer, accorder).
@@ -1743,6 +1752,12 @@ function missionDuJour(){
   return {ico:'📷',titre:'Ajoute ce que tu as fait en classe',detail:"Prends ton cahier en photo : je t'en fais une fiche et un quiz.",
     btn:`<button class="btn primary big" data-act="tab" data-v="ajouter">Prendre une photo</button>`};
 }
+/* Les défis éclair au choix, sur la page du jour comme sur celle des vacances. */
+function boutonDefi(id,libelle,attrs){
+  const f=defiDuJour(id);
+  return `<button class="btn ${f?'fait':''}" data-act="defi" ${attrs} ${f?'disabled title="Déjà fait aujourd’hui : reviens demain"':''}>${f?'✓ ':''}${libelle}</button>`;
+}
+const boutonsDefis=()=>`<div class="row">${[2,3,4,5,6,7,8,9].map(n=>boutonDefi('defi:tables-'+n,`× ${n}`,`data-v="tables" data-n="${n}"`)).join('')}${boutonDefi('defi:ortho','Orthographe','data-v="ortho"')}</div>`;
 function vJour(){
   const t=TODAY(),s=serie(),r=S.routine.get(t)||{items:{}};
   const tip=TIPS[Math.floor(D(t)/86400000)%TIPS.length];
@@ -1762,6 +1777,7 @@ function vJour(){
       ${state.special&&state.special.busy?attente("J'écris ta leçon spéciale…",{debut:state.special.debut,sous:'Cela prend environ une minute.'}):''}${state.special&&state.special.err?`<p class="small" style="color:var(--bad)">${esc(state.special.err)}</p>`:''}
       <div class="row mj-btns">${m.btn}</div>`}
   </section>
+  <section class="card"><div class="sec-title"><h3>Défis éclair</h3><span class="small muted">Une fois par jour chacun</span></div>${boutonsDefis()}</section>
   <section class="card"><details id="routine-d" ${ouvert('routine-d')}><summary>Mon ${SK().code} · ${nbR}/${ROUTINE.length}</summary>
     <p class="small muted" style="margin:4px 0 8px">+5 étoiles quand tout est coché</p>
     <div class="stack">${ROUTINE.map(it=>`<label class="item ${r.items&&r.items[it.id]?'done':''}"><input type="checkbox" class="chk" data-act="routine" data-v="${it.id}" ${r.items&&r.items[it.id]?'checked':''}><span class="grow t">${esc(it.t)}</span></label>`).join('')}</div></details></section>
@@ -1839,7 +1855,7 @@ function vVacances(){
   <section class="card mission"><details id="plus-d" ${ouvert('plus-d')}><summary>Envie d'en faire plus ? (pas obligatoire)</summary>
     ${carteEtoileDuJour()}
     <p class="small muted" style="margin-bottom:8px">Les défis éclair se jouent sans attendre, une fois par jour chacun.</p>
-    <div class="row" style="margin-bottom:12px">${[2,3,4,5,6,7,8,9].map(n=>{const f=defiDuJour('defi:tables-'+n);return `<button class="btn ${f?'fait':''}" data-act="defi" data-v="tables" data-n="${n}" ${f?'disabled title="Déjà fait aujourd’hui : reviens demain"':''}>${f?'✓ ':''}× ${n}</button>`}).join('')}${(f=>`<button class="btn ${f?'fait':''}" data-act="defi" data-v="ortho" ${f?'disabled title="Déjà fait aujourd’hui : reviens demain"':''}>${f?'✓ ':''}Orthographe</button>`)(defiDuJour('defi:ortho'))}</div>
+    <div style="margin-bottom:12px">${boutonsDefis()}</div>
     ${plus.length?`<div class="stack">${plus.map(({l,e})=>`<div class="item"><div class="grow"><div class="t">${esc(l.titre)}</div><div class="small muted">${mchip(l.matiere)} ${esc(e.raison)}</div></div><button class="btn" data-act="lecon" data-id="${l.id}">Relire</button><button class="btn primary" data-act="quiz-lecon" data-id="${l.id}" data-niveau="normal">Quiz</button></div>`).join('')}</div>`:''}</details></section>
   ${sem&&sem.items.length?`<section class="card"><details><summary>Ce qui t'attend à la rentrée (semaine ${sem.n})</summary>
     <p class="small muted" style="margin:6px 0 8px">${esc(plageSemaine(sem.n))} : les leçons prévues. Un coup d'œil la veille de la reprise, et tu seras dans le bain.</p>
@@ -2374,6 +2390,7 @@ function vQuiz(){
     <section class="card stack">
       <div class="row"><span class="small muted">Question ${q.i+1} / ${q.n}</span>${x.difficulte>=3?'<span class="tag-hard">Question pointue</span>':''}</div>
       <p class="qtext">${rich(x.question)}</p>
+      ${voixPour('fr-FR')?`<div><button class="btn ghost" data-act="consigne">🔊 Écouter la consigne</button></div>`:''}
       ${x.oral?`<div><button class="btn" data-act="reecouter" ${!r&&!(q.lus||{})[q.i]?'data-oral-auto':''}>🔊 Réécouter</button></div>`:''}
       ${body}
       ${!r&&x.indice?(q.indices[q.i]?`<p class="tip small"><strong>Indice :</strong> ${rich(x.indice)}</p>`:`<div><button class="btn ghost" data-act="indice">J'ai besoin d'un indice</button></div>`):''}
@@ -2715,6 +2732,7 @@ document.addEventListener('click',async e=>{
     case 'rep':repondre(v);break;
     case 'indice':state.quiz.indices[state.quiz.i]=true;render();break;
     case 'reecouter':lireOral(state.quiz.questions[state.quiz.i]);break;
+    case 'consigne':lireConsigne(state.quiz.questions[state.quiz.i]);break;
     case 'brouillon-effacer':{const q=state.quiz;if(q&&q.brouillons)delete q.brouillons[q.i];const t=app.querySelector('[data-brouillon]');if(t){t.value='';t.focus()}break}
     case 'suivant':{const q=state.quiz;if(q.i<q.n-1){q.i++;render();prefetchQuiz()}else{finirQuiz();render()}window.scrollTo({top:0});break}
     case 'quiz-regen':{const q=state.quiz;if(q){q.genErr=null;render();prepareQuestions(q,q.i+1)}break}

@@ -22,7 +22,7 @@
   // Les mots proposés dans le texte : « a » ou « à » ; soit ses, ces, soit c'est ; choisir : ses, ces ou c'est ?
   function optionsDansTexte(t){
     const Q=`[«"“'‘]\\s*[^«»"“”]{1,30}?\\s*[»"”'’]`;
-    const m=t.match(new RegExp(`${Q}(?:\\s*(?:\\([^)]*\\)\\s*)?(?:,|\\bou bien\\b|\\bou\\b|\\bsoit\\b)\\s*(?:\\bsoit\\b\\s*)?${Q})+`));
+    const m=t.match(new RegExp(`${Q}(?:\\s*(?:\\([^)]*\\)\\s*)?(?:,|\\bou bien\\b|\\bou\\b|\\bet\\b|\\bsoit\\b)\\s*(?:\\bsoit\\b\\s*)?${Q})+`));
     if(m)return [...m[0].matchAll(new RegExp(Q,'g'))].map(o=>propre(o[0].replace(/^[«"“'‘]|[»"”'’]$/g,'')));
     const l=t.match(/(?::|\bsoit\b|\bavec\b)\s*([^:?()]{1,40}?\s(?:ou|soit)\s[^:?().]{1,20})\s*(?:[?).:]|$)/);
     if(l){const o=l[1].split(/,|\bou\b|\bsoit\b/).map(propre).filter(Boolean);if(o.length>=2&&o.every(x=>x.split(' ').length<=3))return o}
@@ -30,6 +30,17 @@
   }
   const contient=(t,mot)=>{const m=propre(mot).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');return !!m&&new RegExp(`(?<![\\p{L}\\p{N}])${m}(?![\\p{L}\\p{N}])`,'iu').test(propre(t))};
   const ouiNon=(texte,oui,x)=>({...x,type:'qcm',question:texte,choix:['Oui','Non'],bonne:oui?0:1,reponses:undefined,calcul:undefined});
+
+  // « Dans "Mon papa a un chien", quel mot est le bon ? » : le mot à trouver est sous les yeux de l'enfant.
+  // Il disparaît de la phrase, et il ne reste qu'une phrase à compléter.
+  const CHOIX_MOT=/(?<!\p{L})quel(?:le)?\s+(?:mot|homophone|forme|orthographe)(?!\p{L})[^?]*(?<!\p{L})(?:bon|bonne|correct|correcte|juste|exact|exacte|choisir|faut|convient|dois|doit|[ée]crire|mettre)(?!\p{L})|(?<!\p{L})(?:dois-tu|doit-on|faut-il|peut-on)(?!\p{L})[^?]*(?<!\p{L})(?:[ée]crire|choisir|mettre|utiliser)(?!\p{L})/iu;
+  const PHRASE=/[«"“]\s*([^«»"“”]*\s[^«»"“”]*?)\s*[»"”]/;
+  function aTrou(t,reponse){
+    const p=t.match(PHRASE),mot=String(reponse??'').trim();
+    if(!p||/_{2,}/.test(t)||!CHOIX_MOT.test(t)||!contient(p[1],mot))return null;
+    const m=propre(mot).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    return `Complète la phrase : « ${p[1].trim().replace(new RegExp(`(?<![\\p{L}\\p{N}])${m}(?![\\p{L}\\p{N}])`,'iu'),'___')} »`;
+  }
 
   // La voix ne sert qu'à faire écrire ce qu'on entend : en français, et en anglais.
   const LANGUES={francais:'fr-FR',anglais:'en-US'};
@@ -76,8 +87,10 @@
     const opts=optionsDansTexte(t);
     if(opts){
       const j=[...new Set(reps.map(r=>opts.indexOf(propre(sansDetail(r)))).filter(i=>i>=0))];
-      if(j.length===1)return {question:{...x,type:'qcm',question:t,choix:[...new Set(opts)],bonne:[...new Set(opts)].indexOf(opts[j[0]]),reponses:undefined,calcul:undefined}};
+      if(j.length===1)return controlerQcm({...x,type:'qcm',choix:opts,bonne:j[0],reponses:undefined,calcul:undefined},t);
     }
+    const trou=aTrou(t,sansDetail(reps[0]));
+    if(trou)return {question:{...x,question:trou,reponses:reps}};
     const affichees=reps.map(sansDetail).filter(r=>propre(r).length>1&&contient(t,r)).sort((a,b)=>b.length-a.length);
     if(ORTHOGRAPHE.test(t)&&affichees.length){
       if(ctx.voix&&LANGUES[ctx.matiere])return controlerOral({...x,oral:affichees[0]},t,ctx);
@@ -89,9 +102,18 @@
   function controlerQcm(x,t){
     const bonne=Number(x.bonne),vus=new Map();
     (Array.isArray(x.choix)?x.choix:[]).forEach((c,i)=>{const k=propre(c);if(!vus.has(k)||i===bonne)vus.set(k,{t:String(c),ok:i===bonne||vus.get(k)?.ok})});
-    const ch=[...vus.values()],b=ch.findIndex(c=>c.ok);
-    if(ch.length<2||b<0)return {refus:'les choix du qcm sont incomplets'};
-    return {question:{...x,question:t,choix:ch.map(c=>c.t),bonne:b}};
+    let ch=[...vus.values()];
+    if(ch.length<2||!ch.some(c=>c.ok))return {refus:'les choix du qcm sont incomplets'};
+    t=t.replace(JUSTIFIER,'').replace(/\?\s*\.$/,'?').trim();
+    // Si la question nomme les mots à départager, les boutons sont ces mots-là, et rien d'autre.
+    const nommes=CHOIX_MOT.test(t)?optionsDansTexte(t):null;
+    if(nommes){
+      const bon=ch.find(c=>c.ok);
+      if(!nommes.includes(propre(bon.t)))return {refus:'la bonne réponse ne fait pas partie des mots nommés dans la question'};
+      ch=[...new Set(nommes)].map(n=>propre(bon.t)===n?bon:{t:n,ok:false});
+    }
+    const b=ch.findIndex(c=>c.ok);
+    return {question:{...x,question:aTrou(t,ch[b].t)||t,choix:ch.map(c=>c.t),bonne:b}};
   }
   function controlerQuestion(x,ctx={}){
     let t=String(x.question??'').trim();

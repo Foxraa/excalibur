@@ -121,6 +121,23 @@ test("le mot cité doit être dans la phrase citée", () => {
   assert.equal(vf("Dans la phrase « Il est grand et fort », le mot 'et' lie deux idées.").question.type, "vf");
 });
 
+test("le mot à trouver n'est pas sous les yeux : la phrase devient une phrase à trou", () => {
+  const r = c({ type: "qcm", question: 'Dans la phrase "Mon papa a un chien", quel mot est le bon entre "a" (sans accent) et "à" (avec accent) ?', choix: ["mes", "et", "à", "a"], bonne: 3 }).question;
+  assert.equal(r.question, "Complète la phrase : « Mon papa ___ un chien »");
+  assert.deepEqual([r.choix, r.choix[r.bonne]], [["a", "à"], "a"]);
+  const s = courte("Dans la phrase « Il va à Paris », quel mot est le bon ?", "à").question;
+  assert.equal(s.question, "Complète la phrase : « Il va ___ Paris »");
+});
+
+test("une question de grammaire garde sa phrase", () => {
+  const q = "Dans la phrase « Le chat dort », quel mot est le verbe ?";
+  assert.equal(c({ type: "qcm", question: q, choix: ["chat", "dort"], bonne: 1 }).question.question, q);
+});
+
+test("la bonne réponse doit être parmi les mots nommés", () => {
+  assert.ok(c({ type: "qcm", question: "Quel mot est le bon : « a » ou « à » ?", choix: ["a", "à", "et"], bonne: 2 }).refus);
+});
+
 test("le mot à écrire ne doit pas être déjà affiché", () => {
   assert.ok(courte("Quel est le mot exact à écrire pour dire « J'ai faim » ? Écris le verbe conjugué.", "j'ai").refus);
   assert.equal(courte("Dans « Les nouveaux exercices », quel mot est un adjectif ?", "nouveaux").question.type, "courte");
