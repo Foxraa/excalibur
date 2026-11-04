@@ -36,7 +36,7 @@ Dans l'espace parents, « Habillage du cartable » propose quatre skins :
 - **Fée · magie** : pastels et étincelles, baguette étoilée, hibou couronné de fleurs avec des ailes, niveaux de Petite graine à Légende enchantée ;
 - **Préhisto · dinosaures** : sable et dalles de pierre, petit dinosaure, hibou des cavernes avec sa massue, niveaux d'Œuf de dino à Légende de la préhistoire. L'IA rappelle si besoin que les humains n'ont pas connu les dinosaures.
 
-Le skin change les couleurs et les formes, le logo et l'icône de l'onglet, les hiboux, le nom des niveaux et des badges, les encouragements et le ton de l'IA. Les étoiles, les niveaux atteints et les données restent les mêmes. Les couleurs des onglets ne changent pas, pour que l'enfant se repère toujours.
+Le skin change les couleurs et les formes, le logo et l'icône de l'onglet, les hiboux, le nom des niveaux et des badges, les encouragements et le ton de l'IA. Les étoiles, les niveaux atteints et les données restent les mêmes. Il y a 50 niveaux dans chaque skin : le premier coûte 150 étoiles, chaque suivant 25 de plus (36 750 étoiles au total pour le niveau 50). Les couleurs des onglets ne changent pas, pour que l'enfant se repère toujours.
 
 ## Les étoiles
 

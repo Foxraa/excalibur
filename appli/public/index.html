@@ -650,7 +650,7 @@ const ROUTINE=[
 const SKINS={
   excalibur:{nom:'Excalibur · chevaliers',ico:'⚔️',
     devise:()=>`L'épée du savoir ${deP()}, chevalier de CM1`,
-    niveaux:['Page','Écuyer','Écuyer d\'honneur','Chevalier','Chevalier d\'argent','Chevalier d\'or','Chevalier de la Table ronde','Gardien d\'Excalibur','Légende de Camelot'],
+    niveaux:`Page|Apprenti d'écurie|Porteur de bouclier|Porteur de lance|Écuyer|Écuyer du château|Écuyer d'honneur|Garde du pont-levis|Garde du donjon|Sentinelle des remparts|Archer du roi|Cavalier|Cavalier du royaume|Chevalier|Chevalier de bronze|Chevalier d'acier|Chevalier d'argent|Chevalier d'or|Chevalier du Lion|Chevalier de l'Aigle|Chevalier du Dragon|Chevalier errant|Protecteur des villages|Vainqueur de tournoi|Champion du tournoi|Champion du roi|Élève de Merlin|Compagnon de Merlin|Porteur de bannière|Capitaine de la garde|Commandant du donjon|Baron|Vicomte|Comte|Marquis|Duc|Conseiller du roi|Main droite du roi|Chevalier de la Table ronde|Héros de la Table ronde|Chercheur du Graal|Gardien du Graal|Ami de la Dame du Lac|Protecteur de Camelot|Seigneur de Camelot|Maître des dragons|Gardien d'Excalibur|Porteur d'Excalibur|Héros de Camelot|Légende de Camelot`.split('|'),
   bravo:{
     top:["Sans faute ! Tu as tout compris.","Victoire totale, chevalier ! Rien ne t'a résisté.","Champion ! Même Merlin est impressionné."],
     bien:["Très bien ! Encore un petit effort et c'est parfait.","Belle bataille ! Tu maîtrises presque tout.","Beau travail ! Revois juste tes erreurs pour affûter ton épée."],
@@ -664,7 +664,7 @@ const SKINS={
     role:'comme un jeune chevalier (quête, épée, dragon à vaincre)',badges:{}},
   manga:{nom:'Manga · héros',ico:'💥',theme:'en manga',
     devise:()=>`Le pouvoir du savoir ${deP()}, héros de CM1`,
-    niveaux:['Débutant','Apprenti','Disciple','Héros','Héros d\'argent','Héros d\'or','Senpai','Sensei','Légende du dojo'],
+    niveaux:`Débutant|Balayeur du dojo|Apprenti|Ceinture blanche|Ceinture jaune|Ceinture orange|Ceinture verte|Ceinture bleue|Ceinture marron|Ceinture noire|Disciple|Disciple appliqué|Disciple du sabre|Apprenti ninja|Ninja de l'ombre|Ninja du vent|Héros|Héros de bronze|Héros d'argent|Héros d'or|Héros de platine|Héros du quartier|Héros de la ville|Rival redoutable|Samouraï|Samouraï errant|Samouraï du clan|Champion du tournoi|Capitaine d'équipe|Senpai|Grand senpai|Maître du sabre|Maître du shuriken|Maître des éléments|Esprit du feu|Esprit de la foudre|Protecteur du village|Chef de clan|Sensei|Grand sensei|Gardien du torii|Héros national|Héros du monde|Héros de la galaxie|Maître ultime|Gardien du dojo|Shogun|Grand shogun|Légende vivante|Légende du dojo`.split('|'),
     bravo:{
       top:["Sans faute ! Tu as tout compris.","Attaque parfaite ! Rien ne t'a résisté.","Incroyable ! Ton sensei est bluffé."],
       bien:["Très bien ! Encore un petit effort et c'est parfait.","Beau combat ! Tu maîtrises presque tout.","Beau travail ! Revois juste tes erreurs pour monter en puissance."],
@@ -678,7 +678,7 @@ const SKINS={
     badges:{b1:'Premier chapitre',b2:'Premier combat',b3:'Coup parfait',b4:'Attaque précise',b5:'Entraînement de 3 jours',b6:'Semaine de héros',b7:'Disciple fidèle',b8:'Grand voyageur',b9:'Bibliothèque du sensei',b10:'Code du héros',b11:'Le retour du héros',b12:'Médaille d\'or'}},
   fee:{nom:'Fée · magie',ico:'🧚',theme:'en monde des fées',
     devise:()=>`La magie du savoir ${deP()}, fée de CM1`,
-    niveaux:['Petite graine','Bourgeon','Luciole','Lutin','Esprit de la forêt','Fée d\'argent','Fée d\'or','Fée des étoiles','Légende enchantée'],
+    niveaux:`Petite graine|Jeune pousse|Bourgeon|Pétale|Fleur des champs|Goutte de rosée|Papillon|Luciole|Luciole dorée|Lutin|Lutin farceur|Lutin jardinier|Gnome des racines|Ami des écureuils|Ami des licornes|Elfe des bois|Elfe des rivières|Esprit de la forêt|Esprit du vent|Esprit de la pluie|Élève de magie|Baguette de noisetier|Baguette de cristal|Fée de la rosée|Fée des fleurs|Fée des papillons|Fée d'argent|Fée de la pluie|Fée des saisons|Fée d'or|Fée de l'arc-en-ciel|Fée de la lune|Fée du soleil|Fée des étoiles|Fée des comètes|Reine des abeilles|Reine des fleurs|Reine des licornes|Reine de la forêt|Étoile filante|Aurore boréale|Gardienne de la source|Gardienne de la lune|Grande enchanteresse|Reine des fées|Impératrice des fées|Esprit des étoiles|Magie éternelle|Légende de la forêt|Légende enchantée`.split('|'),
     bravo:{
       top:["Sans faute ! Tu as tout compris.","Magie parfaite ! Rien ne t'a résisté.","Merveilleux ! Toute la forêt applaudit."],
       bien:["Très bien ! Encore un petit effort et c'est parfait.","Joli sortilège ! Tu maîtrises presque tout.","Beau travail ! Revois juste tes erreurs pour faire briller ta baguette."],
@@ -692,7 +692,7 @@ const SKINS={
     badges:{b1:'Premier grimoire',b2:'Premier sortilège',b3:'Baguette parfaite',b4:'Formule précise',b5:'Trois jours de magie',b6:'Semaine enchantée',b7:'Lutin fidèle',b8:'Voyage enchanté',b9:'Bibliothèque des fées',b10:'Code de la fée',b11:'Ailes du courage',b12:'Poussière d\'or'}},
   dino:{nom:'Préhisto · dinosaures',ico:'🦖',theme:'à l\'âge de pierre, avec des dinosaures',
     devise:()=>`Le feu du savoir ${deP()}, petit sapiens de CM1`,
-    niveaux:['Œuf de dino','Bébé dino','Cueilleur','Chasseur','Tailleur de silex','Gardien du feu','Chef de la tribu','Dompteur de T. rex','Légende de la préhistoire'],
+    niveaux:`Œuf de dino|Œuf qui craque|Bébé dino|Petit tricératops|Ramasseur de cailloux|Cueilleur|Cueilleur de baies|Pêcheur de la rivière|Pisteur|Chasseur|Chasseur de mammouth|Tailleur de silex|Tailleur de lances|Peintre des cavernes|Conteur des cavernes|Ami des tricératops|Ami des diplodocus|Allumeur de feu|Gardien du feu|Gardien de la grotte|Gardien des œufs|Éclaireur de la vallée|Explorateur du volcan|Chercheur de fossiles|Cavalier de stégosaure|Cavalier de diplodocus|Cavalier de ptérodactyle|Guerrier à massue|Guerrier du volcan|Sage de la tribu|Chamane|Grand chamane|Chef de la tribu|Chef des tribus|Dompteur de vélociraptor|Dompteur de tricératops|Dompteur de ptérodactyle|Dompteur d'ankylosaure|Dompteur de spinosaure|Dompteur de T. rex|Ami du T. rex|Roi de la vallée|Roi du volcan|Maître des glaciers|Maître des dinos|Seigneur du Jurassique|Seigneur du Crétacé|Titan de la préhistoire|Héros de la préhistoire|Légende de la préhistoire`.split('|'),
     bravo:{
       top:["Sans faute ! Tu as tout compris.","Victoire de la tribu ! Rien ne t'a résisté.","Énorme ! Même le T. rex est impressionné."],
       bien:["Très bien ! Encore un petit effort et c'est parfait.","Belle chasse ! Tu maîtrises presque tout.","Beau travail ! Revois juste tes erreurs pour aiguiser ton silex."],
@@ -1231,6 +1231,15 @@ function bilan(){
   all('routine').forEach(r=>{const n=ROUTINE.filter(it=>r.items&&r.items[it.id]).length;const pts=ptsRoutine(r.id,n);if(pts)g.push({pts,date:r.id,why:n===ROUTINE.length?'Routine complète':'Routine du jour'})});
   all('notes').forEach(n=>{g.push({pts:ptsNote(n),date:n.date,why:'Note : '+n.intitule})});
   all('lecons').filter(l=>!l.importe&&!l.special).forEach(l=>g.push({pts:ptsLecon(l),date:l.date,why:'Leçon ajoutée : '+l.titre}));
+/* Monter du niveau n au suivant (n compté depuis 0) coûte 150 étoiles, puis 25 de plus à chaque niveau.
+   Le niveau 50 demande 36 750 étoiles au total : plusieurs années de travail. */
+const coutNiveau=n=>150+25*n;
+function niveauDe(total){
+  const max=SK().niveaux.length-1;
+  let niveau=0,reste=total;
+  while(niveau<max&&reste>=coutNiveau(niveau)){reste-=coutNiveau(niveau);niveau++}
+  return {niveau,nomNiveau:SK().niveaux[niveau],maxi:niveau===max,dansNiveau:reste,coutSuivant:coutNiveau(niveau)};
+}
   plansVac().forEach(p=>{
     Object.keys(p.lu||{}).filter(d=>p.lu[d]).forEach(d=>g.push({pts:ptsVac('lu',d),date:d,why:'Lecture de vacances'}));
     Object.keys(p.rentree||{}).filter(d=>p.rentree[d]).forEach(d=>g.push({pts:ptsVac('rentree',d),date:d,why:'Rentrée préparée'}));
@@ -1240,8 +1249,7 @@ function bilan(){
   g.sort((a,b)=>a.date<b.date?1:-1);
   const total=g.reduce((s,x)=>s+x.pts,0);
   const spent=all('achats').filter(a=>a.statut!=='refusé').reduce((s,a)=>s+(Number(a.cout)||0),0);
-  const lvl=Math.floor(total/100);
-  return {gains:g,total,spent,solde:total-spent,niveau:Math.min(lvl,SK().niveaux.length-1),nomNiveau:SK().niveaux[Math.min(lvl,SK().niveaux.length-1)],dansNiveau:total%100};
+  return {gains:g,total,spent,solde:total-spent,...niveauDe(total)};
 }
 /* Leçon du jour : une leçon à revoir, choisie une fois par jour (gardée dans config). */
 function etoileDuJour(){
@@ -1614,8 +1622,8 @@ function renderHeader(){
   const skin=skinId();
   if(document.documentElement.dataset.skin!==skin){document.documentElement.dataset.skin=skin;document.querySelector('#brand svg').outerHTML=LOGO[skin];majIcone(skin)}
   const b=bilan();
-  const maxi=b.niveau>=SK().niveaux.length-1,pct=maxi?100:b.dansNiveau;
-  document.getElementById('wallet').innerHTML=`<span class="pill or" title="Étoiles disponibles">${STAR}<span>${b.solde}</span></span><span class="pill niv" title="${maxi?'Niveau maximum atteint !':`Encore ${100-b.dansNiveau} étoiles pour devenir ${esc(SK().niveaux[b.niveau+1])}`}"><span>Niv. ${b.niveau+1}<span class="nom"> · ${esc(b.nomNiveau)}</span></span><span class="mini-bar" role="progressbar" aria-label="Vers le niveau suivant" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></span><span class="small muted">${maxi?'max':`${b.dansNiveau}/100`}</span></span>`;
+  const pct=b.maxi?100:Math.floor(b.dansNiveau/b.coutSuivant*100);
+  document.getElementById('wallet').innerHTML=`<span class="pill or" title="Étoiles disponibles">${STAR}<span>${b.solde}</span></span><span class="pill niv" title="${b.maxi?'Niveau maximum atteint !':`Encore ${b.coutSuivant-b.dansNiveau} étoiles pour devenir ${esc(SK().niveaux[b.niveau+1])}`}"><span>Niv. ${b.niveau+1}<span class="nom"> · ${esc(b.nomNiveau)}</span></span><span class="mini-bar" role="progressbar" aria-label="Vers le niveau suivant" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></span><span class="small muted">${b.maxi?'max':`${b.dansNiveau}/${b.coutSuivant}`}</span></span>`;
   const cur=state.view in GROUPE?GROUPE[state.view]:state.view;
   document.getElementById('fab').hidden=['quiz','defi','ajouter'].includes(state.view);
   const vac=modeVac();if(vac)document.documentElement.dataset.vac='1';else delete document.documentElement.dataset.vac;
@@ -2453,7 +2461,7 @@ function vRecompenses(){
   const b=bilan();const rec=all('recompenses').sort((a,c)=>a.cout-c.cout);const ach=all('achats').sort((a,c)=>c.createdAt-a.createdAt);
   return `<h2>Mes récompenses</h2>
   <section class="card hello"><div><p class="eyebrow">${SK().tresor}</p><h2 class="row">${STAR.replace('width="16" height="16"','width="34" height="34"')} ${b.solde} étoiles</h2><p class="muted small">${b.total} gagnées depuis le début, ${b.spent} échangées.</p></div>
-    <div style="min-width:230px"><div class="row small" style="justify-content:space-between"><span>Niveau ${b.niveau+1} · ${esc(b.nomNiveau)}</span><span class="muted">${b.dansNiveau}/100</span></div><div class="bar"><i style="width:${b.dansNiveau}%"></i></div><p class="small muted" style="margin-top:6px">${b.niveau<SK().niveaux.length-1?`Prochain niveau : ${esc(SK().niveaux[b.niveau+1])}`:'Niveau maximum atteint !'}</p></div></section>
+    <div style="min-width:230px"><div class="row small" style="justify-content:space-between"><span>Niveau ${b.niveau+1} · ${esc(b.nomNiveau)}</span><span class="muted">${b.maxi?'max':`${b.dansNiveau}/${b.coutSuivant}`}</span></div><div class="bar"><i style="width:${b.maxi?100:Math.floor(b.dansNiveau/b.coutSuivant*100)}%"></i></div><p class="small muted" style="margin-top:6px">${!b.maxi?`Prochain niveau : ${esc(SK().niveaux[b.niveau+1])}`:'Niveau maximum atteint !'}</p></div></section>
   <section class="card stack"><h3>Échanger mes étoiles</h3>
     ${rec.length?rec.map(r=>`<div class="reward"><span class="t">${esc(r.titre)}</span><span class="row"><span class="cost">${STAR} ${r.cout}</span><button class="btn ${b.solde>=r.cout?'primary':''}" data-act="demander" data-id="${r.id}" ${b.solde>=r.cout?'':'disabled'}>${b.solde>=r.cout?'Je la demande':`Encore ${r.cout-b.solde}`}</button></span></div>`).join(''):`<div class="empty">Pas encore de récompense. Demande à tes parents d'en ajouter dans l'espace parents.</div>`}
     ${ach.length?`<p class="eyebrow" style="margin-top:6px">Mes demandes</p>${ach.slice(0,8).map(a=>`<div class="item small"><span class="grow">${esc(a.titre)} · ${esc(shortDate(a.date))}</span><span class="status ${a.statut==='validé'?'ok':a.statut==='refusé'?'no':'wait'}">${a.statut==='demandé'?'En attente des parents':a.statut==='validé'?'Accordée':'Refusée (étoiles rendues)'}</span></div>`).join('')}`:''}</section>
@@ -2555,7 +2563,7 @@ function vAccueil(){
         <li><b>+5</b><span>quand tu finis un quiz, un devoir, ta routine du soir ou quand tu ajoutes une leçon</span></li>
         <li><b>×2</b><span>les étoiles d'un quiz réussi sans faute</span></li>
       </ul>
-      <p>Toutes les 100 étoiles, tu montes d'un niveau : ${SK().niveaux.slice(0,3).map(esc).join(', ')}… jusqu'à ${esc(SK().niveaux[SK().niveaux.length-1])} !</p>
+      <p>Il faut ${coutNiveau(0)} étoiles pour monter d'un niveau, puis un peu plus à chaque fois : ${SK().niveaux.slice(0,3).map(esc).join(', ')}… jusqu'au niveau ${SK().niveaux.length}, ${esc(SK().niveaux[SK().niveaux.length-1])} !</p>
       <p>Dans <b>Mon trésor</b>, tu échanges tes étoiles contre une récompense : tu la demandes, et tes parents la valident.${rec.length?' Pour l\'instant :':''}</p>
       ${rec.length?`<div class="stack">${rec.map(r=>`<div class="item"><span class="grow">${esc(r.titre)}</span><span class="cost">${STAR} ${r.cout}</span></div>`).join('')}</div>`:''}
       <div><button class="btn primary" data-act="acc-fin" data-autofocus>C'est parti !</button></div>`}
