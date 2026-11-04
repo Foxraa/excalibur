@@ -195,3 +195,21 @@ test("une dictée compte l'orthographe, pas la majuscule ni le point", () => {
   assert.ok(!memeEcriture("la mere", "la mère"));
   assert.ok(!memeEcriture("ils mange", "ils mangent"));
 });
+
+test("la voix lit la phrase complète quand les choix se prononcent pareil", () => {
+  const qcm = (question, choix, bonne) => texteAEcouter({ type: "qcm", question, choix, bonne });
+  assert.equal(qcm("Complète : « Mon papa ___ un vélo rouge »", ["a", "à"], 0), "Complète : Mon papa a un vélo rouge");
+  assert.equal(qcm("Mon ami ___ gentil.", ["et", "est", "à", "a"], 1), "Mon ami est gentil.");
+});
+
+test("la voix ne donne pas une réponse qu'on entendrait", () => {
+  const qcm = (question, choix, bonne) => texteAEcouter({ type: "qcm", question, choix, bonne });
+  assert.equal(qcm("Nous ___ une chanson.", ["chantons", "chantez"], 0), "Nous … une chanson.");
+  assert.equal(qcm("Il va ___ Paris.", ["à", "dans", "pour"], 0), "Il va … Paris.");
+  assert.equal(texteAEcouter({ type: "courte", question: "Nous ___ une chanson.", reponses: ["chantons"] }), "Nous … une chanson.");
+  assert.equal(qcm("Elle ___ partie ___ pied.", ["est / à", "et / a"], 0), "Elle … partie … pied.");
+});
+
+test("sans trou, la voix lit la question sans guillemets", () => {
+  assert.equal(texteAEcouter({ type: "vf", question: "Le mot « à » est une **préposition**." }), "Le mot à est une préposition.");
+});

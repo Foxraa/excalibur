@@ -1125,12 +1125,12 @@ function dire(texte,langue){
   clearTimeout(lectureAttente);lectureAttente=setTimeout(()=>speechSynthesis.speak(u),150);
 }
 const lireOral=x=>dire(x.oral,x.langue);
-/* La consigne se lit à la demande, toujours en français. Le trou de la phrase se dit « trou ». */
+/* La consigne se lit à la demande, toujours en français. */
 let consigneLue=null;
 function lireConsigne(x){
   if(!voixPour('fr-FR')){toast("Il n'y a pas de voix française sur cet ordinateur.");return}
   consigneLue=x;
-  dire(String(x.question).replace(/<[^>]+>/g,'').replace(/\*+/g,'').replace(/[«»"“”]/g,'').replace(/_{2,}/g,', trou, '),'fr-FR');
+  dire(texteAEcouter(x),'fr-FR');
 }
 /* Lit la question orale qui vient de s'afficher, une seule fois ; se tait dès qu'on quitte la question. */
 function oralApresRendu(){

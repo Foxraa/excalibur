@@ -143,8 +143,22 @@
   // Textes déjà passés par norm() : « tu as » et « as » valent la même réponse, pas « il as » et « tu as ».
   const sansPronom=s=>s.replace(/^(je|j|tu|il|elle|on|nous|vous|ils|elles) (?=\S)/,'');
   const memeReponse=(rep,attendu)=>!!rep&&!!attendu&&(rep===attendu||rep===sansPronom(attendu)||sansPronom(rep)===attendu);
+  // À l'oreille, ces mots ne se distinguent pas : lire la phrase complète ne donne pas la réponse.
+  const SONS=["a à as","et est es ai","ou où","son sont","on ont","ce se","ces ses c'est s'est sait sais","mes mais met mets","la là l'a","leur leurs","peu peut peux","sa ça","ma m'a","ta t'a","mon m'ont","ton t'ont","ni n'y","si s'y","dans d'en","quand quant qu'en"].map(g=>g.split(' '));
+  const groupeSon=m=>SONS.find(g=>g.includes(propre(m)));
+  // Le texte de la consigne pour la voix. Le trou est lu avec le bon mot s'il se confond à l'oreille avec un autre choix ;
+  // sinon, le dire donnerait la réponse : la voix marque une pause.
+  function texteAEcouter(x){
+    const t=String(x.question??'').replace(/<[^>]+>/g,'').replace(/\*+/g,'').replace(/[«»"“”]/g,'').replace(/\s+/g,' ').trim();
+    const trous=t.match(/_{2,}/g)||[];
+    if(!trous.length)return t;
+    const qcm=x.type==='qcm',bon=sansDetail(qcm?x.choix?.[x.bonne]:x.reponses?.[0]),g=groupeSon(bon);
+    const sansRisque=!!g&&(!qcm||x.choix.some((c,i)=>i!==x.bonne&&g.includes(propre(c))));
+    return t.replace(/_{2,}/g,trous.length===1&&sansRisque?bon:'…');
+  }
   global.controlerQuestion=controlerQuestion;
   global.memeReponse=memeReponse;
+  global.texteAEcouter=texteAEcouter;
   // Pour une dictée, l'orthographe est ce qu'on vérifie : les accents comptent, pas la majuscule ni le point.
   global.memeEcriture=(rep,attendu)=>memeReponse(propre(rep),propre(sansDetail(attendu)));
   global.LANGUES_ORAL=LANGUES;
