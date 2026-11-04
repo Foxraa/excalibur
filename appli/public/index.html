@@ -624,6 +624,7 @@ html[data-skin="dino"] .fb{border-radius:26px 14px 28px 12px/14px 26px 12px 24px
 
 <script src="local.js"></script>
 <script src="programme.js"></script>
+<script src="questions.js"></script>
 <script>
 /* ============ Données de référence ============ */
 const MATIERES=[
@@ -722,7 +723,7 @@ const pick=a=>a[Math.floor(Math.random()*a.length)];
 /* ============ Outils ============ */
 const app=document.getElementById('app');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const rich=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+const rich=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/&lt;u&gt;(.+?)&lt;\/u&gt;/g,'<u>$1</u>').replace(/\n/g,'<br>');
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const isoDay=(d=new Date())=>{const z=new Date(d.getTime()-d.getTimezoneOffset()*60000);return z.toISOString().slice(0,10)};
 const TODAY=()=>isoDay();
@@ -1122,15 +1123,19 @@ Règles :
 - Chaque question doit être parfaitement claire pour un enfant de 9 ans, sans rien à deviner : une seule chose demandée, tous les renseignements utiles donnés, et ce qu'il faut répondre (un nombre, une unité, un mot…). Précise tout ce qui pourrait se comprendre de deux façons. Par exemple, pour une horloge, dis toujours quelle aiguille montre quoi : « la petite aiguille (celle des heures) est sur le 3, la grande aiguille (celle des minutes) est sur le 6 », jamais seulement « l'aiguille est sur le 6 ».
 - Chaque question se suffit à elle-même : ${prenom()} ne voit ni la leçon ni les questions d'avant. Ne parle jamais de « la solution », « le problème », « l'exercice » ou « le texte » sans les écrire en entier dans la question : un problème de mathématiques donne tout son énoncé (la situation, les nombres, ce qu'on cherche) avant de poser la question.
 - La question ne doit jamais contenir ni laisser voir sa réponse. En français surtout : pour faire conjuguer, accorder ou transformer, donne la forme de départ et la consigne, mais pas le résultat attendu (par exemple « Conjugue le verbe chanter au futur avec nous », et non « Conjugue : nous chanterons »).
-- Varie les types d'une question à l'autre : QCM (4 choix), vrai/faux et réponses courtes (un mot, un nombre ou une petite phrase).
-- Pour un QCM, les choix vont seulement dans "choix" : ne les recopie pas dans le texte de la question. Pour un vrai/faux, "question" est l'affirmation seule, sans « Vrai ou faux : ».
+- Écris comme une fiche d'exercices : une consigne courte et directe, en 1 ou 2 phrases. Pas de « Imagine que », pas de bavardage, n'annonce jamais de piège et ne parle pas de ses réponses d'avant.
+- Tout est écrit à l'écran : ${prenom()} lit et n'entend rien. Pas de dictée, jamais « écoute », « tu entends » ou « je vais te lire ». Pour l'orthographe, propose une phrase à trou ou un mot mal écrit à corriger ; ne demande jamais comment s'écrit un mot qui est déjà affiché dans la question.
+- Le type dépend de ce qu'on demande, et les boutons affichés en dépendent. Varie les types d'une question à l'autre :
+  * "vf" (boutons Vrai et Faux) : une phrase affirmative à juger, sans « Vrai ou faux : », sans point d'interrogation, sans choix entre deux mots. Bien : « Dans "Nous allons à la plage", le mot "à" est une préposition. » Interdit : « Le mot "à" est-il un verbe ou une préposition ? »
+  * "qcm" (boutons à choisir) : dès qu'il faut choisir entre des mots ou des nombres, même deux seulement. Les choix vont seulement dans "choix", 4 si possible, tous différents : ne les recopie pas dans le texte de la question. Bien : question « Le chat ___ faim. », choix ["a","à","as","ont"].
+  * "courte" (case à remplir) : une seule réponse à taper, un mot, un nombre ou une petite phrase. Jamais de liste de mots à choisir dans la question, jamais « donne deux mots » ou « trois exemples », jamais « explique ton choix ».
 - difficulte 1 = application directe de la règle, 2 = un peu de réflexion, 3 = question « pointue » qui vérifie la vraie compréhension : piège classique, application à un cas nouveau, raisonnement ou justification.
 - En mathématiques, mets des calculs et de petits problèmes. En français, fais manipuler la langue (transformer, classer, accorder).
 - Reste dans le programme de CM1 et dans le contenu de la leçon.
 - "explication" : 2 phrases courtes, 40 mots au plus : la règle, puis pourquoi c'est la bonne réponse ici (ou pourquoi le piège est faux). ${prenom()} peut demander plus de détails ensuite.
 - "indice" : une seule phrase courte (15 mots au plus) qui met sur la piste sans donner la réponse.
 - Choix de QCM et réponses courtes : quelques mots seulement.
-- Pour "courte", donne dans "reponses" la réponse attendue et ses variantes acceptables.
+- Pour "courte", donne dans "reponses" la réponse attendue et ses variantes acceptables, toutes justes et bien écrites.
 - Si la réponse d'un QCM ou d'une réponse courte s'obtient par un calcul, écris l'opération complète dans "calcul", avec seulement des nombres, + - × : et des parenthèses (par exemple "4,75 + 13 + 2,50"). Sinon, ne mets pas "calcul".${faibles.length?`\n- Dans son cahier, ${prenom()} se trompe souvent sur ces points : consacre-leur au moins la moitié des questions, avec des exemples nouveaux :\n${faibles.map(e=>'  * '+e).join('\n')}`:''}${erreurs.length?`\n- ${prenom()} s'est déjà trompé sur ces questions, reviens sur les mêmes notions autrement :\n${erreurs.map(e=>'  * '+e).join('\n')}`:''}${comps.length>1?`\n- Pour chaque question, mets dans "competence" l'identifiant de l'objectif du programme qu'elle vérifie, pris dans cette liste :\n${comps.map(id=>`  * ${id} : ${COMP(id).t}`).join('\n')}`:''}
 
 Contenu :
@@ -1146,11 +1151,15 @@ Forme JSON de chaque type de question :
 ${historique?`Questions déjà posées (ne les répète pas, change de notion ou d'angle) :
 ${historique}
 `:''}${ratees.length?`${prenom()} vient de se tromper sur : ${ratees.map(t=>'« '+t+' »').join(' et ')}. Reviens sur la même notion autrement, avec un exemple nouveau et plus simple, pour qu'il la comprenne vraiment.
+`:''}${(q.refus||[]).length?`Ces questions ont été refusées, ne refais pas la même erreur :
+${q.refus.map(e=>'  * « '+e.question+' » : '+e.refus).join('\n')}
 `:''}Crée maintenant ${diffs.length===1?'la question suivante':`les ${diffs.length} questions suivantes`} (n° ${q.questions.length+1}${diffs.length>1?' à '+(q.questions.length+diffs.length):''}), de difficulte : ${diffs.join(', ')}.
 Réponds uniquement avec un objet JSON {"questions":[...]} contenant exactement ${diffs.length} question(s).`;
   const r=await askJSON(prompt,{modelTier:'default',cache:false});
   const deja=new Set(q.questions.map(x=>norm(x.question)));
-  const qs=(r&&Array.isArray(r.questions)?r.questions:[]).filter(q=>q&&q.question&&['qcm','vf','courte'].includes(q.type)&&!deja.has(norm(q.question)));
+  const controles=(r&&Array.isArray(r.questions)?r.questions:[]).filter(q=>q&&q.question&&['qcm','vf','courte'].includes(q.type)&&!deja.has(norm(q.question))).map(x=>({x,...controlerQuestion(x)}));
+  controles.filter(c=>c.refus).forEach(c=>{console.warn('Question refusée',c.x.question,'→',c.refus);q.refus=[...(q.refus||[]),{question:String(c.x.question),refus:c.refus}].slice(-3)});
+  const qs=controles.filter(c=>c.question).map(c=>c.question);
   qs.forEach(q=>{
     if(q.type==='qcm'){
       const ch=(q.choix||[]).map((t,i)=>({t:String(t),ok:i===Number(q.bonne)}));
@@ -1164,7 +1173,7 @@ Réponds uniquement avec un objet JSON {"questions":[...]} contenant exactement 
   });
   return qs.filter(q=>q.type!=='qcm'||(q.choix.length>=2&&q.bonne>=0)).map(verifierCalcul).filter(Boolean).slice(0,diffs.length);
 }
-/* Complète le quiz jusqu'à avoir `jusqua` questions (une seule génération à la fois, 2 essais). */
+/* Complète le quiz jusqu'à avoir `jusqua` questions (une seule génération à la fois, 3 essais : une question peut être refusée). */
 async function prepareQuestions(q,jusqua){
   if(q.gen||q.questions.length>=Math.min(jusqua,q.n))return;
   const nb=Math.min(jusqua,q.n)-q.questions.length;
@@ -1172,7 +1181,7 @@ async function prepareQuestions(q,jusqua){
   q.gen=true;q.genErr=null;
   try{
     let qs=[];
-    for(let essai=0;essai<2&&!qs.length;essai++){try{qs=await genererQuestions(q,diffs)}catch(e){if(essai)throw e}}
+    for(let essai=0;essai<3&&!qs.length;essai++){try{qs=await genererQuestions(q,diffs)}catch(e){if(essai===2)throw e}}
     if(!qs.length)throw {code:'invalid_json'};
     q.questions.push(...qs.slice(0,q.n-q.questions.length));
   }catch(e){q.genErr=errMsg(e)}
@@ -1208,7 +1217,7 @@ async function verifierCourte(q,rep,francais){
 Question posée à ${prenom()} : « ${q.question} »
 Réponses attendues : ${q.reponses.join(' / ')}
 Réponse ${deP()} : « ${rep} »
-La réponse ${deP()} est-elle juste sur le fond ? ${francais?"Sois bienveillant sur l'orthographe si le sens est bon, mais exigeant sur la notion.":"Ce n'est pas une question de français : ne tiens AUCUN compte de l'orthographe, de la grammaire, de la conjugaison, des accents ni de la ponctuation. Un mot mal écrit mais reconnaissable compte comme juste ; seul le sens compte, et ne parle pas de l'orthographe dans le commentaire."}
+La réponse ${deP()} est-elle juste sur le fond ? Compte-la juste si elle contient ce qui est attendu : avec ou sans le pronom ou le déterminant (« as » ou « tu as », « chat » ou « le chat »), en un mot ou en phrase. ${francais?"Sois bienveillant sur l'orthographe si le sens est bon, mais exigeant sur la notion.":"Ce n'est pas une question de français : ne tiens AUCUN compte de l'orthographe, de la grammaire, de la conjugaison, des accents ni de la ponctuation. Un mot mal écrit mais reconnaissable compte comme juste ; seul le sens compte, et ne parle pas de l'orthographe dans le commentaire."}
 Si c'est faux, le commentaire dit ce qui est juste dans sa réponse, puis où est l'erreur et pourquoi.
 Réponds uniquement en JSON : {"correct":true,"commentaire":"1 ou 2 phrases pour ${prenom()}"}`,{modelTier:'quick'});
   return {ok:!!(r&&(r.correct===true||r.correct==='true')),commentaire:r&&r.commentaire?String(r.commentaire):''};
@@ -1927,7 +1936,7 @@ ${liees.length?`\nCe qu'il a vu en classe :\n${liees.map(l=>resumeLecon(l,true))
 - Pars de ce qu'il sait déjà, puis explique AUTREMENT que le cahier : une image mentale, une manipulation, des étapes numérotées.
 - Traite une à une ses difficultés et ses erreurs, en lui montrant pourquoi son erreur est tentante et comment l'éviter, sans le gronder.
 - Donne des exemples résolus pas à pas.
-- Termine par "entrainement" : 5 petits exercices du plus facile au plus difficile, chacun avec sa solution expliquée.
+- Termine par "entrainement" : 5 petits exercices écrits, du plus facile au plus difficile, chacun avec sa solution expliquée. Il les fait seul sur son cahier : pas de dictée ni rien à écouter.
 - Reste au niveau CM1, phrases courtes.
 
 ${SCHEMAS_AIDE}
@@ -2367,7 +2376,7 @@ async function repondre(v){
   else if(x.type==='vf'){v=v==='true';q.rep[q.i]={v,ok:v===x.bonne}}
   else{
     const fr=q.matiere==='francais';
-    const n=norm(v);const ok=x.reponses.some(a=>{const b=norm(a);return b&&(n===b||(b.length>3&&n.includes(b))||(!fr&&procheOrtho(v,a)))});
+    const n=norm(v);const ok=x.reponses.some(a=>{const b=norm(a);return b&&(memeReponse(n,b)||(b.length>3&&n.includes(b))||(!fr&&procheOrtho(v,a)))});
     if(ok||!sample)q.rep[q.i]={v,ok};
     else{q.rep[q.i]={v,pending:true};render();const idx=q.i;try{const r=await verifierCourte(x,v,fr);q.rep[idx]={v,ok:r.ok,commentaire:r.commentaire}}catch(e){q.rep[idx]={v,ok:false,commentaire:"Je n'ai pas pu vérifier en détail, compare avec la bonne réponse."}}}
   }
