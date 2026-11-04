@@ -1770,17 +1770,17 @@ function vJour(){
     ${mascotte()}
     <div><p class="eyebrow">${esc(longDate(t))}</p><h2>Bonjour <span class="nom">${esc(prenom())}</span> !</h2>${s.n>=2?`<p class="small muted">🔥 ${s.n} jours de suite</p>`:''}</div>
   </section>
-  <section class="card mission-jour"><p class="eyebrow">Ma mission du jour</p>
+  <div class="cols"><section class="card mission-jour"><p class="eyebrow">Ma mission du jour</p>
     ${!m?`<p class="muted">J'ouvre ton cartable…</p>`
     :fini?`<div class="mj-ico" aria-hidden="true">✅</div><h2>Mission accomplie !</h2><p class="muted">Tu as déjà travaillé aujourd'hui. ${SK().fier}</p><button class="btn ghost" data-act="encore">J'en veux encore une</button>`
     :`<div class="mj-ico" aria-hidden="true">${m.ico}</div><h2>${esc(m.titre)}</h2><p class="muted">${esc(m.detail)}</p>
       ${state.special&&state.special.busy?attente("J'écris ta leçon spéciale…",{debut:state.special.debut,sous:'Cela prend environ une minute.'}):''}${state.special&&state.special.err?`<p class="small" style="color:var(--bad)">${esc(state.special.err)}</p>`:''}
       <div class="row mj-btns">${m.btn}</div>`}
   </section>
-  <section class="card"><div class="sec-title"><h3>Défis éclair</h3><span class="small muted">Une fois par jour chacun</span></div>${boutonsDefis()}</section>
-  <section class="card"><details id="routine-d" ${ouvert('routine-d')}><summary>Mon ${SK().code} · ${nbR}/${ROUTINE.length}</summary>
+  <section class="card"><div class="sec-title"><h3>Mon ${SK().code}</h3><span class="small muted">${nbR}/${ROUTINE.length}</span></div>
     <p class="small muted" style="margin:4px 0 8px">+5 étoiles quand tout est coché</p>
-    <div class="stack">${ROUTINE.map(it=>`<label class="item ${r.items&&r.items[it.id]?'done':''}"><input type="checkbox" class="chk" data-act="routine" data-v="${it.id}" ${r.items&&r.items[it.id]?'checked':''}><span class="grow t">${esc(it.t)}</span></label>`).join('')}</div></details></section>
+    <div class="stack">${ROUTINE.map(it=>`<label class="item ${r.items&&r.items[it.id]?'done':''}"><input type="checkbox" class="chk" data-act="routine" data-v="${it.id}" ${r.items&&r.items[it.id]?'checked':''}><span class="grow t">${esc(it.t)}</span></label>`).join('')}</div></section></div>
+  <section class="card"><div class="sec-title"><h3>Défis éclair</h3><span class="small muted">Une fois par jour chacun</span></div>${boutonsDefis()}</section>
   <section class="tip"><p class="eyebrow">Astuce d'organisation</p><p><strong>${esc(tip.t)}.</strong> ${esc(tip.d)}</p></section>`;
 }
 
