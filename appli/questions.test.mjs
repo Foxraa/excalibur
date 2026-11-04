@@ -134,6 +134,18 @@ test("une question de grammaire garde sa phrase", () => {
   assert.equal(c({ type: "qcm", question: q, choix: ["chat", "dort"], bonne: 1 }).question.question, q);
 });
 
+test("une phrase sans trou ni réponse est refusée", () => {
+  assert.ok(c({ type: "qcm", question: "Dans la phrase : « Les dessins sont magnifiques », quel mot faut-il choisir entre « est » (verbe être) et « et » (conjonction) ?", choix: ["est", "et"], bonne: 0 }).refus);
+  assert.ok(courte("Dans la phrase « Les dessins sont magnifiques », quel mot faut-il choisir ?", "est").refus);
+});
+
+test("en français, une phrase à trou trop courte ne passe qu'au premier niveau", () => {
+  const q = (question, difficulte) => c({ type: "qcm", question, choix: ["a", "à"], bonne: 0, difficulte }, { matiere: "francais" });
+  assert.ok(q("Complète la phrase : « Le chien ___ faim »", 1).question);
+  assert.ok(q("Complète la phrase : « Le chien ___ faim »", 2).refus);
+  assert.ok(q("Complète : « Pendant les vacances, ma cousine ___ appris le piano toute seule. »", 2).question);
+});
+
 test("la bonne réponse doit être parmi les mots nommés", () => {
   assert.ok(c({ type: "qcm", question: "Quel mot est le bon : « a » ou « à » ?", choix: ["a", "à", "et"], bonne: 2 }).refus);
 });

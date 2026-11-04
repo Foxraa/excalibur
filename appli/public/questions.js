@@ -35,6 +35,10 @@
   // Il disparaît de la phrase, et il ne reste qu'une phrase à compléter.
   const CHOIX_MOT=/(?<!\p{L})quel(?:le)?\s+(?:mot|homophone|forme|orthographe)(?!\p{L})[^?]*(?<!\p{L})(?:bon|bonne|correct|correcte|juste|exact|exacte|choisir|faut|convient|dois|doit|[ée]crire|mettre)(?!\p{L})|(?<!\p{L})(?:dois-tu|doit-on|faut-il|peut-on)(?!\p{L})[^?]*(?<!\p{L})(?:[ée]crire|choisir|mettre|utiliser)(?!\p{L})/iu;
   const PHRASE=/[«"“]\s*([^«»"“”]*\s[^«»"“”]*?)\s*[»"”]/;
+  const MOTS_MIN_TROU=8;
+  // La phrase citée n'a ni trou ni la réponse : l'enfant n'a rien à en faire.
+  const phraseInutile=(t,reponse)=>{const p=t.match(PHRASE);return !!p&&!/_{2,}/.test(t)&&CHOIX_MOT.test(t)&&!contient(p[1],sansDetail(reponse))};
+  const REFUS_PHRASE="la phrase citée n'a ni trou ni la réponse : écrire une phrase avec ___ à la place du mot";
   function aTrou(t,reponse){
     const p=t.match(PHRASE),mot=String(reponse??'').trim();
     if(!p||/_{2,}/.test(t)||!CHOIX_MOT.test(t)||!contient(p[1],mot))return null;
@@ -89,6 +93,7 @@
       const j=[...new Set(reps.map(r=>opts.indexOf(propre(sansDetail(r)))).filter(i=>i>=0))];
       if(j.length===1)return controlerQcm({...x,type:'qcm',choix:opts,bonne:j[0],reponses:undefined,calcul:undefined},t);
     }
+    if(phraseInutile(t,reps[0]))return {refus:REFUS_PHRASE};
     const trou=aTrou(t,sansDetail(reps[0]));
     if(trou)return {question:{...x,question:trou,reponses:reps}};
     const affichees=reps.map(sansDetail).filter(r=>propre(r).length>1&&contient(t,r)).sort((a,b)=>b.length-a.length);
@@ -113,6 +118,7 @@
       ch=[...new Set(nommes)].map(n=>propre(bon.t)===n?bon:{t:n,ok:false});
     }
     const b=ch.findIndex(c=>c.ok);
+    if(phraseInutile(t,ch[b].t))return {refus:REFUS_PHRASE};
     return {question:{...x,question:aTrou(t,ch[b].t)||t,choix:ch.map(c=>c.t),bonne:b}};
   }
   function controlerQuestion(x,ctx={}){
@@ -127,6 +133,8 @@
     if(cite&&!contient(cite[1],cite[2]))return {refus:'le mot dont parle la question n\'est pas dans la phrase citée'};
     if(oral)return controlerOral(x,t,ctx);
     x={...x,oral:undefined};
+    // En français, passé le premier niveau, une phrase à trou de 4 mots ne fait pas réfléchir.
+    if(ctx.matiere==='francais'&&Number(x.difficulte)>=2&&/_{2,}/.test(t)&&(t.match(PHRASE)?.[1]??t).trim().split(/\s+/).length<MOTS_MIN_TROU)return {refus:`phrase à trou trop simple : au moins ${MOTS_MIN_TROU} mots, avec un vrai contexte`};
     if(x.type==='vf')return controlerVf(x,t);
     if(x.type==='courte')return controlerCourte(x,t,ctx);
     if(x.type==='qcm')return controlerQcm(x,t);
