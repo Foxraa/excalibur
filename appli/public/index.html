@@ -1628,7 +1628,7 @@ function vDefi(){
     return `<div class="quiz defi stack"><section class="card stack" style="text-align:center;align-items:center">
       <p class="eyebrow">${esc(titre)}</p><div class="score">${d.score}/${d.total}</div><p style="font-size:1.15rem">${esc(pct===1?pick(SK().bravo.top):pct>=.75?pick(SK().bravo.bien):pct>=.5?pick(SK().bravo.moyen):pick(SK().bravo.bas))}</p>
       <p class="muted">En ${Math.floor(d.duree/60)?Math.floor(d.duree/60)+' min ':''}${d.duree%60} s</p><span class="pill">${STAR} +${d.etoiles} étoiles</span>${detailEtoiles(d)}
-      <div class="row" style="justify-content:center"><button class="btn primary" data-act="tab" data-v="jour">Retour à mes vacances</button></div></section>
+      <div class="row" style="justify-content:center"><button class="btn primary" data-act="tab" data-v="jour">${modeVac()?'Retour à mes vacances':'Retour à ma journée'}</button></div></section>
       ${d.fautes.length?`<section class="card stack"><h3>Je revois mes erreurs</h3>${d.fautes.map(x=>`<div class="answer"><strong>${x.type==='courte'?esc(x.question)+' = '+esc(x.reponses[0]):esc(x.question.replace('___',x.choix[x.bonne]))}</strong>${x.lent?' (trop lent)':''}${x.explication?`<p class="small">${rich(x.explication)}</p>`:''}</div>`).join('')}</section>`:''}</div>`}
   const x=d.questions[d.i],r=d.rep[d.i];
   const dots=d.questions.map((_,i)=>`<i class="${d.rep[i]?(d.rep[i].ok?'ok':'ko'):''} ${i===d.i?'cur':''}"></i>`).join('');
