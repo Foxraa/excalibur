@@ -20,7 +20,10 @@
     vraiQuizPct:.8,       // leçon réussie à ce taux : le quiz suivant n'est plus un vrai quiz
     vraiQuizJours:7,      // ... pendant ce nombre de jours
     secParQuestionDefaut:20, // durée supposée par question quand la durée est inconnue
-    tempsQuestionMax:180000  // plafond du temps d'une question, en ms
+    tempsQuestionMax:180000, // plafond du temps d'une question, en ms
+    heureReport:18,       // le jour même apparaît dans le report à partir de cette heure
+    joursPeriode:7,       // taille des deux périodes comparées par le commentaire
+    ecartPoints:3         // écart (en points) à partir duquel on parle de hausse ou de baisse
   };
 
   const tempsQuestion=ms=>Math.min(ms,SEUILS.tempsQuestionMax);
@@ -72,8 +75,31 @@
     if(note.pct<SEUILS.justessePct)return `Vise la justesse : prends ton temps pour bien répondre et ${arme.ton} brillera davantage.`;
     const restant=SEUILS.tempsSec/60-note.minutes;
     if(restant>0)return `Encore ${restant} minute${restant>1?'s':''} de travail pour que ${arme.ton} brille davantage.`;
+    if(note.rang===3&&note.pct<SEUILS.bleuPct)return `Vise ${SEUILS.bleuPct*100} % de bonnes réponses pour faire briller ${arme.ton} encore plus.`;
     return `Réussis un vrai quiz sur une leçon nouvelle pour atteindre le bleu avec ${arme.ton}.`;
   }
 
-  Object.assign(global,{COULEURS_EPEE,tempsQuestion,noteDuJour,nomEpee,conseilEpee});
+  // Les jours travaillés, du plus récent au plus ancien. Le jour même n'apparaît qu'à partir de 18 h.
+  function joursEpees(tous,aujourdhui,heure){
+    const dates=[...new Set((tous||[]).map(q=>q.date))].filter(d=>d<=aujourdhui&&(d<aujourdhui||heure>=SEUILS.heureReport));
+    return dates.sort().reverse().map(date=>({date,note:noteDuJour(tous,date)})).filter(j=>j.note);
+  }
+
+  const moyennePct=l=>Math.round(l.reduce((s,j)=>s+j.note.pct,0)/l.length*100);
+
+  // Le commentaire du haut de page : les 7 derniers jours travaillés comparés aux 7 d'avant.
+  function dynamique(jours,arme){
+    if(!jours.length)return '';
+    const avant=jours.slice(SEUILS.joursPeriode,2*SEUILS.joursPeriode);
+    if(!avant.length)return `C'est la première fois que tu forges ${arme.ton} : continue, elle va prendre des couleurs !`;
+    const a=moyennePct(avant),b=moyennePct(jours.slice(0,SEUILS.joursPeriode));
+    let t;
+    if(b-a>=SEUILS.ecartPoints)t=`Tes réponses montent : ${a} % puis ${b} %.`;
+    else if(a-b>=SEUILS.ecartPoints)t=`Période plus difficile, mais tu as continué. Un quiz bien posé et ${arme.ton} repart !`;
+    else t=`Tu tiens le cap : ${b} % de bonnes réponses.`;
+    if(jours.length>=3&&jours.slice(0,3).every(j=>j.note.rang>=3))t+=' Trois jours de suite au vert ou mieux !';
+    return t;
+  }
+
+  Object.assign(global,{COULEURS_EPEE,tempsQuestion,noteDuJour,nomEpee,conseilEpee,joursEpees,dynamique});
 })(globalThis);

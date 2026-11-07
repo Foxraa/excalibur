@@ -3,7 +3,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import "./public/epee.js";
 
-const { COULEURS_EPEE, tempsQuestion, noteDuJour, conseilEpee, nomEpee } = globalThis;
+const { COULEURS_EPEE, tempsQuestion, noteDuJour, conseilEpee, nomEpee, joursEpees, dynamique } = globalThis;
 const J = "2026-11-07";
 let n = 0;
 const q = (score, total, o = {}) => ({ score, total, duree: 300, date: J, createdAt: n++, termine: true, leconIds: ["l" + n], niveau: "normal", ...o });
@@ -85,4 +85,57 @@ test("nom de l'arme accordé", () => {
   const note = noteDuJour([q(8, 10, { duree: 900 })], J);
   assert.equal(nomEpee(note, { nom: "Massue", feminin: true }), "Massue verte");
   assert.equal(nomEpee(note, { nom: "Katana", feminin: false }), "Katana vert");
+});
+
+test("conseil : vert mais moins de 85 % invite à viser 85 %", () => {
+  const arme = { ton: "ton épée", feminin: true };
+  const c = conseilEpee(noteDuJour([q(8, 10, { duree: 900 })], J), arme);
+  assert.match(c, /85 %/);
+  assert.doesNotMatch(c, /vrai quiz/);
+});
+
+const arme = { nom: "Épée", ton: "ton épée", feminin: true };
+const jourFictif = (pct, rang = 2) => ({ date: "x", note: { pct, rang } });
+const serie = (n, pct, rang) => Array.from({ length: n }, () => jourFictif(pct, rang));
+
+test("joursEpees : aujourd'hui seulement à partir de 18 h", () => {
+  const tous = [q(8, 10)];
+  assert.equal(joursEpees(tous, J, 17).length, 0);
+  const l = joursEpees(tous, J, 18);
+  assert.equal(l.length, 1);
+  assert.equal(l[0].date, J);
+  assert.equal(l[0].note.couleur, noteDuJour(tous, J).couleur);
+});
+test("joursEpees : jours passés toujours présents, du plus récent au plus ancien, sans jour vide", () => {
+  const tous = [q(8, 10, { date: "2026-11-03" }), q(8, 10, { date: "2026-11-05" }), q(8, 10, { date: "2026-11-05" })];
+  assert.deepEqual(joursEpees(tous, J, 8).map((j) => j.date), ["2026-11-05", "2026-11-03"]);
+});
+test("joursEpees : un jour avec seulement un quiz validé n'apparaît pas", () => {
+  assert.equal(joursEpees([q(8, 10, { date: "2026-11-05", valide: true })], J, 20).length, 0);
+});
+test("joursEpees : ignore les jours à venir", () => {
+  assert.equal(joursEpees([q(8, 10, { date: "2026-11-09" })], J, 20).length, 0);
+});
+
+test("dynamique : rien sans jour", () => assert.equal(dynamique([], arme), ""));
+test("dynamique : un seul jour, première épée", () => assert.match(dynamique([jourFictif(.7)], arme), /première/));
+test("dynamique : sans période précédente, première épée", () => assert.match(dynamique(serie(7, .8), arme), /première/));
+test("dynamique : ça monte", () => {
+  const t = dynamique([...serie(7, .86), ...serie(7, .72)], arme);
+  assert.match(t, /72 %/);
+  assert.match(t, /86 %/);
+});
+test("dynamique : ça descend, ton encourageant", () => {
+  const t = dynamique([...serie(7, .72), ...serie(7, .86)], arme);
+  assert.match(t, /continué/);
+  assert.match(t, /ton épée/);
+  assert.doesNotMatch(t, /mauvais|baisse|dommage/);
+});
+test("dynamique : écart de moins de 3 points, on tient le cap", () => {
+  assert.match(dynamique([...serie(7, .8), ...serie(7, .79)], arme), /cap/);
+});
+test("dynamique : trois derniers jours au vert ou mieux", () => {
+  const t = dynamique([...serie(3, .8, 3), ...serie(4, .8, 2), ...serie(7, .8, 2)], arme);
+  assert.match(t, /de suite/);
+  assert.doesNotMatch(dynamique([...serie(2, .8, 3), ...serie(5, .8, 2), ...serie(7, .8, 2)], arme), /de suite/);
 });
