@@ -1522,7 +1522,7 @@ function annonceMission(avant){if(nbMissions()>avant)setTimeout(()=>{toast(bonus
 const noteEpee=()=>noteDuJour(all('quiz'),TODAY());
 const rangEpee=()=>{const n=noteEpee();return n?n.rang:-1};
 // Annonce la montée de l'épée ; le rang est lu avant l'enregistrement du quiz, comme pour annonceMission.
-function annonceEpee(avant){const n=noteEpee();if(!n||n.rang<=avant)return;const ton=SK().arme.ton;
+function annonceEpee(avant){const n=noteEpee();if(!n||n.rang<1||n.rang<=avant)return;const ton=SK().arme.ton;
   setTimeout(()=>{toast(`${ton[0].toUpperCase()+ton.slice(1)} passe ${n.couleur==='orange'?"à l'orange":'au '+n.nom} !`);if(n.rang===4)confettis()},1600)}
 // L'objet du thème sur son rocher ; couleur=null : au repos, en gris. Le halo n'apparaît que lorsque l'objet a une couleur.
 function dessinEpee(couleur){
@@ -1729,8 +1729,8 @@ function renderStrip(){
 /* ============ État de l'interface ============ */
 /* Quatre onglets. Les autres écrans vivent dans un onglet (GROUPE), avec des sous-onglets (SOUS). */
 const TABS=[['jour',"Aujourd'hui"],['matieres','Apprendre'],['devoirs','Devoirs'],['recompenses','Mon trésor']];
-const GROUPE={matiere:'matieres',lecon:'matieres',annee:'matieres',cours:'matieres',ajouter:'matieres',notes:'recompenses',parents:'recompenses',programme:'recompenses',defi:'jour',quiz:''};
-const SOUS={matieres:[['matieres','📚 Mes leçons'],['annee','📅 Mon année']],recompenses:[['recompenses','👑 Mes étoiles'],['notes','📊 Mes notes'],['parents','🔒 Espace parents']]};
+const GROUPE={matiere:'matieres',lecon:'matieres',annee:'matieres',cours:'matieres',ajouter:'matieres',notes:'recompenses',epees:'recompenses',parents:'recompenses',programme:'recompenses',defi:'jour',quiz:''};
+const SOUS={matieres:[['matieres','📚 Mes leçons'],['annee','📅 Mon année']],recompenses:[['recompenses','👑 Mes étoiles'],['epees','⚔️ Mes épées'],['notes','📊 Mes notes'],['parents','🔒 Espace parents']]};
 function sousOnglets(){
   const v=state.view==='programme'?'parents':state.view,g=Object.keys(SOUS).find(k=>SOUS[k].some(([x])=>x===v));if(!g)return '';
   return `<nav class="matpick sous" aria-label="Dans cet onglet">${SOUS[g].map(([x,l])=>`<button class="btn" style="--m:var(--accent)" data-act="tab" data-v="${x}" aria-pressed="${x===v}">${l}</button>`).join('')}</nav>`;
@@ -1806,7 +1806,7 @@ function render(){
   const acc=besoinAccueil();document.documentElement.toggleAttribute('data-accueil',acc);
   if(acc){renderHeader();app.innerHTML=vAccueil();const af=app.querySelector('[data-autofocus]');if(af)af.focus({preventScroll:true});return}
   lierAuto();renderHeader();
-  const v={jour:modeVac()?vVacances:vJour,defi:vDefi,matieres:vMatieres,matiere:vMatiere,lecon:vLecon,ajouter:vAjouter,quiz:vQuiz,devoirs:vDevoirs,notes:vNotes,recompenses:vRecompenses,programme:vProgramme,annee:vAnnee,cours:vCours,parents:vParents}[state.view]||vJour;
+  const v={jour:modeVac()?vVacances:vJour,defi:vDefi,matieres:vMatieres,matiere:vMatiere,lecon:vLecon,ajouter:vAjouter,quiz:vQuiz,devoirs:vDevoirs,notes:vNotes,epees:vEpees,recompenses:vRecompenses,programme:vProgramme,annee:vAnnee,cours:vCours,parents:vParents}[state.view]||vJour;
   app.innerHTML=(storeMode==='local'?`<div class="offline small">Le serveur du cartable ne répond pas : les données restent pour l'instant dans ce navigateur. Lance « Démarrer le cartable » sur l'ordinateur, puis recharge la page.</div>`:'')+sousOnglets()+v();
   const af=app.querySelector('[data-autofocus]');if(af)af.focus({preventScroll:true});
   oralApresRendu();
@@ -2633,6 +2633,14 @@ function chartNotes(ns){
   const step=Math.ceil(s.length/8);
   const labels=s.map((n,i)=>i%step===0||i===s.length-1?`<text x="${x(i)}" y="${H-8}" text-anchor="middle">${esc(shortDate(n.date))}</text>`:'').join('');
   return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Évolution des notes sur 20">${grid}<polyline points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/>${pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="${i===pts.length-1?6:4.5}" fill="${M(s[i].matiere).c}" stroke="var(--surface)" stroke-width="2"><title>${esc(s[i].intitule)} : ${fmtN(s[i].valeur)}/${s[i].sur}</title></circle>`).join('')}${labels}</svg></div>`;
+}
+/* ---- Mes épées : une épée par jour travaillé, et un commentaire sur la dynamique ---- */
+function vEpees(){
+  const arme=SK().arme,js=joursEpees(all('quiz'),TODAY(),new Date().getHours()),com=dynamique(js,arme);
+  return `<h2>Mes épées</h2>
+  ${js.length?`${com?`<section class="card"><p>${esc(com)}</p></section>`:''}
+  <section class="card stack">${js.map(j=>`<div class="item" style="gap:12px;align-items:center"><span style="width:30px;flex:none">${dessinEpee(j.note.couleur)}</span><div class="grow"><b>${esc(longDate(j.date))}</b><br><small class="muted">${Math.round(j.note.pct*100)} % de bonnes réponses</small></div><b style="color:${COULEURS_EPEE.find(x=>x.id===j.note.couleur).c}">${esc(nomEpee(j.note,arme))}</b></div>`).join('')}</section>`
+  :`<div class="empty">Ton premier quiz forgera ta première épée.</div>`}`;
 }
 function vNotes(){
   const ns=all('notes').sort((a,b)=>a.date<b.date?1:-1);const moy=moyenne(ns);
