@@ -32,7 +32,9 @@
   const cle=q=>q.date+'#'+String(q.createdAt||0).padStart(15,'0');
   const duree=q=>q.duree??q.total*SEUILS.secParQuestionDefaut;
   const pctDe=q=>q.score/q.total;
-  const bacle=q=>pctDe(q)<SEUILS.baclePct&&duree(q)/q.total<SEUILS.bacleSecParQuestion;
+  // Un défi chronométré (questions à limite de temps) n'est jamais bâclé : le temps y est imposé.
+  const chronometre=q=>(q.questions||[]).some(x=>x.limite);
+  const bacle=q=>!chronometre(q)&&pctDe(q)<SEUILS.baclePct&&duree(q)/q.total<SEUILS.bacleSecParQuestion;
 
   // Un vrai quiz : ni défi, ni niveau facile, et la leçon n'a pas déjà été bien réussie ces derniers jours.
   function vraiQuiz(q,tous){
@@ -91,7 +93,12 @@
   function dynamique(jours,arme){
     if(!jours.length)return '';
     const avant=jours.slice(SEUILS.joursPeriode,2*SEUILS.joursPeriode);
-    if(!avant.length)return `C'est la première fois que tu forges ${arme.ton} : continue, elle va prendre des couleurs !`;
+    if(jours.length===1)return `C'est la première fois que tu forges ${arme.ton} : continue, ça va prendre des couleurs !`;
+    if(!avant.length){
+      let t=`Déjà ${jours.length} ${arme.pluriel} forgé${arme.feminin?'e':''}s, continue !`;
+      if(jours.length>=3&&jours.slice(0,3).every(j=>j.note.rang>=3))t+=' Trois jours de suite au vert ou mieux !';
+      return t;
+    }
     const a=moyennePct(avant),b=moyennePct(jours.slice(0,SEUILS.joursPeriode));
     let t;
     if(b-a>=SEUILS.ecartPoints)t=`Tes réponses montent : ${a} % puis ${b} %.`;

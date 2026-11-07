@@ -16,6 +16,13 @@ test("les cinq couleurs de l'épée", () => {
 });
 
 test("aucun quiz : pas de note", () => assert.equal(noteDuJour([], J), null));
+test("défi chronométré : 5/12 en 120 s n'est pas bâclé : orange", () => {
+  const questions = Array.from({ length: 12 }, () => ({ limite: 10 }));
+  assert.equal(couleur([q(5, 12, { duree: 120, defi: true, questions })]), "orange");
+});
+test("défi sans limite (avant le minuteur) : 2/12 en 84 s reste rouge", () => {
+  assert.equal(couleur([q(2, 12, { duree: 84, defi: true, questions: [{}, {}] })]), "rouge");
+});
 test("moins de 3 réponses : rouge", () => assert.equal(couleur([q(2, 2)]), "rouge"));
 test("quiz bâclé : rouge", () => assert.equal(couleur([q(2, 12, { duree: 84 })]), "rouge"));
 test("rapide mais juste, trop court : jaune", () => assert.equal(couleur([q(12, 12, { duree: 48, defi: true })]), "jaune"));
@@ -94,7 +101,7 @@ test("conseil : vert mais moins de 85 % invite à viser 85 %", () => {
   assert.doesNotMatch(c, /vrai quiz/);
 });
 
-const arme = { nom: "Épée", ton: "ton épée", feminin: true };
+const arme = { nom: "Épée", pluriel: "épées", ton: "ton épée", feminin: true };
 const jourFictif = (pct, rang = 2) => ({ date: "x", note: { pct, rang } });
 const serie = (n, pct, rang) => Array.from({ length: n }, () => jourFictif(pct, rang));
 
@@ -119,7 +126,19 @@ test("joursEpees : ignore les jours à venir", () => {
 
 test("dynamique : rien sans jour", () => assert.equal(dynamique([], arme), ""));
 test("dynamique : un seul jour, première épée", () => assert.match(dynamique([jourFictif(.7)], arme), /première/));
-test("dynamique : sans période précédente, première épée", () => assert.match(dynamique(serie(7, .8), arme), /première/));
+test("dynamique : sans période précédente (5 jours), pas de « première »", () => {
+  const t = dynamique(serie(5, .8), arme);
+  assert.doesNotMatch(t, /première/);
+  assert.match(t, /Déjà 5 épées forgées/);
+});
+test("dynamique : trois jours verts sans période précédente", () => {
+  assert.match(dynamique(serie(3, .8, 3), arme), /de suite/);
+});
+test("dynamique : arme masculine, accord correct", () => {
+  const katana = { nom: "Katana", pluriel: "katanas", ton: "ton katana", feminin: false };
+  assert.match(dynamique(serie(4, .8), katana), /Déjà 4 katanas forgés, continue/);
+  assert.doesNotMatch(dynamique([jourFictif(.7)], katana), /elle/);
+});
 test("dynamique : ça monte", () => {
   const t = dynamique([...serie(7, .86), ...serie(7, .72)], arme);
   assert.match(t, /72 %/);
