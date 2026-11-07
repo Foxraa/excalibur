@@ -1,15 +1,18 @@
 /* Pont entre le cartable et le serveur local : remplace window.claude.use('db') et use('sample')
    de claude.ai par des appels au serveur de ce PC (données dans data/cartable.duckdb, IA choisie dans l'espace parents). */
 (function () {
-  let cache = null, pending = 0;
+  let cache = null, pending = 0, ecritures = 0;
   const subs = {};
-  async function charger() {
+  async function lire() {
     const r = await fetch('/api/db', { cache: 'no-store' });
     if (!r.ok) throw new Error('db ' + r.status);
-    cache = await r.json();
+    return r.json();
   }
   const snap = col => ({ docs: Object.entries((cache && cache[col]) || {}).map(([id, d]) => ({ id, data: () => d })) });
-  function prevenir() { Object.entries(subs).forEach(([col, cbs]) => cbs.forEach(cb => cb(snap(col)))); }
+  const pareil = (a = {}, b = {}) => {
+    const ids = Object.keys(a);
+    return ids.length === Object.keys(b).length && ids.every(id => id in b && JSON.stringify(a[id]) === JSON.stringify(b[id]));
+  };
 
   const db = {
     collection(col) {
@@ -24,12 +27,12 @@
                 const r = await fetch(url, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(data) });
                 if (!r.ok) throw { code: r.status === 413 ? 'quota_exceeded' : 'save_failed' };
                 (cache[col] = cache[col] || {})[id] = data;
-              } finally { pending--; }
+              } finally { pending--; ecritures++; }
             },
             async delete() {
               pending++;
               try { await fetch(url, { method: 'DELETE' }); if (cache[col]) delete cache[col][id]; }
-              finally { pending--; }
+              finally { pending--; ecritures++; }
             },
           };
         },
@@ -37,9 +40,20 @@
     },
   };
   // Si le cartable est ouvert sur deux appareils, on récupère les changements de l'autre.
+  // La page n'est redessinée que si une collection a vraiment changé : sinon elle ne bouge pas.
+  // Une lecture croisée par un enregistrement est jetée : elle pourrait dater d'avant celui-ci.
   setInterval(async () => {
     if (document.hidden || pending || !cache) return;
-    try { await charger(); prevenir(); } catch (e) {}
+    const debut = ecritures;
+    try {
+      const neuf = await lire();
+      if (pending || ecritures !== debut) return;
+      const avant = cache;
+      cache = neuf;
+      Object.entries(subs).forEach(([col, cbs]) => {
+        if (!pareil(avant[col], neuf[col])) cbs.forEach(cb => cb(snap(col)));
+      });
+    } catch (e) {}
   }, 30000);
 
   let status = null;
@@ -81,7 +95,7 @@
 
   window.claude = {
     async use(name) {
-      if (name === 'db') { try { await charger(); return db; } catch (e) { return null; } }
+      if (name === 'db') { try { cache = await lire(); return db; } catch (e) { return null; } }
       if (name === 'sample') {
         const s = await getStatus();
         if (!s.ai) return null;

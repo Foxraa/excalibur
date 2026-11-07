@@ -72,6 +72,20 @@
     return {question:{...x,question:t,oral:o,langue,reponses:reps,indice:x.indice&&!montre(x.indice)?x.indice:undefined}};
   }
 
+  // « Quel mot est mal écrit ? » : le modèle pose souvent la question sur une phrase sans faute.
+  // Il doit donc nommer le mot fautif (x.faute) tel qu'il est dans la phrase, et sa correction dans x.reponses.
+  const CHERCHE_FAUTE=/(?<!\p{L})mots?(?!\p{L})[^.?!]*(?<!\p{L})(?:mal [ée]crits?|mal orthographi[ée]s?|fautes?|erreurs?)(?!\p{L})|(?<!\p{L})(?:fautes?|erreurs?) d['’]orthographe(?!\p{L})|(?<!\p{L})où est la faute(?!\p{L})/iu;
+  const A_RECOPIER=/^(?:recopie|corrige|réécris|reecris)(?!\p{L})/iu;
+  const REFUS_FAUTE=`pour faire trouver une faute : type courte, le mot fautif tel qu'il est écrit dans la phrase dans "faute", sa correction dans "reponses"`;
+  function controlerFaute(x,t,{matiere}={}){
+    if(matiere&&matiere!=='francais')return {refus:"l'orthographe ne compte qu'en français : poser une question sur la leçon"};
+    const reps=(Array.isArray(x.reponses)?x.reponses:[]).map(String).filter(Boolean);
+    if(A_RECOPIER.test(t))return reps.some(r=>contient(t,sansDetail(r)))?{refus:"la phrase contient déjà la réponse : il n'y a aucune faute à corriger"}:null;
+    const faute=String(x.faute??'').trim(),corrige=reps.filter(r=>propre(r)!==propre(faute));
+    if(x.type!=='courte'||!corrige.length||!contient(t,faute))return {refus:REFUS_FAUTE};
+    return {question:{...x,question:t,reponses:[...corrige,faute]}};
+  }
+
   function controlerVf(x,t){
     const bonne=x.bonne===true||x.bonne==='true'||x.bonne==='vrai';
     if(CONSIGNE.test(t))return {refus:"c'est une consigne, pas une affirmation à juger vrai ou faux"};
@@ -133,6 +147,7 @@
     if(cite&&!contient(cite[1],cite[2]))return {refus:'le mot dont parle la question n\'est pas dans la phrase citée'};
     if(oral)return controlerOral(x,t,ctx);
     x={...x,oral:undefined};
+    if(CHERCHE_FAUTE.test(t)){const f=controlerFaute(x,t,ctx);if(f)return f}
     // En français, passé le premier niveau, une phrase à trou de 4 mots ne fait pas réfléchir.
     if(ctx.matiere==='francais'&&Number(x.difficulte)>=2&&/_{2,}/.test(t)&&(t.match(PHRASE)?.[1]??t).trim().split(/\s+/).length<MOTS_MIN_TROU)return {refus:`phrase à trou trop simple : au moins ${MOTS_MIN_TROU} mots, avec un vrai contexte`};
     if(x.type==='vf')return controlerVf(x,t);
@@ -156,6 +171,45 @@
     const sansRisque=!!g&&(!qcm||x.choix.some((c,i)=>i!==x.bonne&&g.includes(propre(c))));
     return t.replace(/_{2,}/g,trous.length===1&&sansRisque?bon:'…');
   }
+  // En maths, le modèle se trompe parfois en écrivant la question, mais retrouve la bonne réponse
+  // quand on lui donne l'exercice seul : on compare les deux, sans lui montrer la réponse proposée.
+  const enChoix=x=>x.type==='vf'?{choix:['Vrai','Faux'],bonne:x.bonne?0:1}:x;
+  function promptResolution(x){
+    const choix=x.type==='courte'?null:enChoix(x).choix;
+    return `Résous cet exercice de mathématiques de CM1, pas à pas, sans te presser.
+
+${x.question}${choix?`\nChoix : ${choix.join(' ; ')}`:''}
+
+Réponds uniquement en JSON : {"raisonnement":"...","resultat":"le nombre trouvé"${choix?',"choix":"le choix exact"':''}}`;
+  }
+  const nombres=s=>(String(s??'').match(/\d(?:[\d ]*\d)?(?:[.,]\d+)?/g)||[]).map(n=>Number(n.replace(/ /g,'').replace(',','.')));
+  const memesNombres=(a,b)=>a.length===b.length&&a.every((n,i)=>Math.abs(n-b[i])<1e-6);
+  // true : même réponse ; false : réponse différente ; null : impossible à comparer, la question n'est pas jugée.
+  function accordResolution(x,r){
+    if(!r||typeof r!=='object')return null;
+    const vus=nombres(r.resultat);
+    if(x.type==='courte'){
+      const attendus=(x.reponses||[]).map(nombres).filter(n=>n.length);
+      return vus.length&&attendus.length?attendus.some(n=>memesNombres(n,vus)):null;
+    }
+    const {choix,bonne}=enChoix(x),j=choix.findIndex(c=>propre(c)===propre(r.choix));
+    if(j>=0)return j===bonne;
+    const attendu=nombres(choix[bonne]);
+    return vus.length&&attendu.length?memesNombres(attendu,vus):null;
+  }
+  // Ce que dit le badge du coin sur le quiz en cours : null s'il n'y a rien à montrer.
+  function etatBadgeQuiz(q){
+    if(!q||q.fini)return null;
+    const k=q.questions.length,commence=!q.attente||q.rep.length>0,echec=!q.gen&&!!q.genErr;
+    if(q.err||(echec&&k<=q.i))return {ico:'⚠️',texte:'Quiz : un souci, appuie ici',ton:'souci'};
+    if(commence)return k>q.i?{ico:'▶️',texte:`Reprendre mon quiz (question ${q.i+1}/${q.n})`,ton:'pret'}:{ico:'⏳',texte:`Question ${q.i+1}/${q.n} en préparation…`,ton:'attente'};
+    if(!k)return {ico:'⏳',texte:'Je prépare ton quiz…',ton:'attente'};
+    if(k>=q.n||echec)return {ico:'✅',texte:'Ton quiz est prêt !',ton:'pret'};
+    return {ico:'⏳',texte:`Quiz : ${k}/${q.n} prêtes`,ton:'attente'};
+  }
+  global.etatBadgeQuiz=etatBadgeQuiz;
+  global.promptResolution=promptResolution;
+  global.accordResolution=accordResolution;
   global.controlerQuestion=controlerQuestion;
   global.memeReponse=memeReponse;
   global.texteAEcouter=texteAEcouter;
