@@ -27,13 +27,14 @@ Le choix et la clé sont gardés dans `.env`. La clé ne revient jamais au navig
 
 ## Les quatre onglets
 
-- **Aujourd'hui** (ou **Mes vacances** pendant les vacances) : une seule mission du jour. C'est d'abord un devoir qui presse (en retard, pour aujourd'hui ou pour demain ; le mercredi, ceux de jeudi et de vendredi aussi ; le samedi et le dimanche, ceux de lundi et de mardi aussi). Les jours de classe sans devoir, c'est un défi éclair pour réviser les bases : les tables le lundi, l'orthographe le jeudi. Ensuite vient une leçon à réviser, un point à retravailler ou la leçon de la semaine. Le mardi et le vendredi soir sont des soirées de pause : sans devoir qui presse, la mission est « Soirée tranquille », et l'enfant peut en demander une quand même. Une soirée de pause sans travail ne casse pas la série de jours. On trouve aussi le « code du chevalier » (son nom suit l'habillage), c'est-à-dire la routine du soir : pas de ligne cartable le mardi, le vendredi et le samedi, pas de ligne devoirs le mardi et le vendredi, et les étoiles se gagnent en cochant les lignes du jour.
+- **Aujourd'hui** (ou **Mes vacances** pendant les vacances) : une seule mission du jour. C'est d'abord un devoir qui presse (en retard, pour aujourd'hui ou pour demain ; le mercredi, ceux de jeudi et de vendredi aussi ; le samedi et le dimanche, ceux de lundi et de mardi aussi). Les jours de classe sans devoir, c'est un défi éclair pour réviser les bases : les tables le lundi, l'orthographe le jeudi. Aux tables, chaque calcul a une limite de temps, qui dépend de la période de l'année et de la difficulté du calcul (la grille est dans `public/tables.js`). Ensuite vient une leçon à réviser, un point à retravailler ou la leçon de la semaine. Le mardi et le vendredi soir sont des soirées de pause : sans devoir qui presse, la mission est « Soirée tranquille », et l'enfant peut en demander une quand même. Une soirée de pause sans travail ne casse pas la série de jours. On trouve aussi le « code du chevalier » (son nom suit l'habillage), c'est-à-dire la routine du soir : pas de ligne cartable le mardi, le vendredi et le samedi, pas de ligne devoirs le mardi et le vendredi, et les étoiles se gagnent en cochant les lignes du jour.
 - **Apprendre** :
   - *Mes leçons* : ce qu'il a fait en classe, rangé par matière. Le bouton « 📷 Ajouter une photo », en bas à droite, transforme une photo du cahier en fiche reliée aux objectifs du programme.
   - *Mon année* : les 88 leçons du dossier `programme_cm1`, semaine par semaine selon `programme_cm1/10_Progression_annuelle.md`. Pour déplacer une leçon, déplacer sa ligne dans ce fichier, puis recharger la page.
 - **Devoirs** : « Scanner mon agenda » relève les devoirs sur une photo de l'agenda, et on vérifie la liste avant de l'ajouter. Pour un contrôle, les révisions J-3, J-2 et J-1 se planifient toutes seules.
 - **Mon trésor** :
   - *Mes étoiles* : les récompenses et les badges ;
+  - *Mes épées* : une épée par jour travaillé, avec un commentaire sur la tendance ;
   - *Mes notes* ;
   - *Espace parents* (avec un code) : valider les récompenses, choisir l'habillage du cartable, et le **programme officiel de CM1** avec ce qui est su, en bonne voie ou à retravailler.
 
@@ -50,7 +51,11 @@ Le skin change les couleurs et les formes, le logo et l'icône de l'onglet, les 
 
 ## Les étoiles
 
-+1 par bonne réponse, +5 par chose finie, ×2 sans faute. On gagne moitié moins pour un quiz Facile, les tables de 2, 5 ou 10, ou un quiz déjà réussi dans la semaine (le quart si déjà réussi deux fois).
++1 par bonne réponse, +5 par chose finie, ×2 sans faute, +4 pour 10 ou 11 sur 12 au défi des tables. On gagne moitié moins pour un quiz Facile, les tables de 2, 5 ou 10, ou un quiz déjà réussi dans la semaine (le quart si déjà réussi deux fois).
+
+## Les couleurs de l'épée
+
+L'épée du jour va du rouge au bleu et ne redescend jamais dans la journée. Rouge : moins de 3 réponses, ou quiz bâclés. Orange : moins de 50 % de bonnes réponses. Jaune : moins de 70 %, ou moins de 15 minutes de travail. Vert : le reste. Bleu : au moins 85 % sur un vrai quiz (leçon nouvelle ou pas réussie récemment). Les défis et les quiz Faciles ne comptent pas comme vrais quiz. Dans « Mes épées », le jour même n'apparaît qu'à partir de 18 h. Tous les seuils sont en haut de `public/epee.js` (objet `SEUILS`).
 
 ## Le code parent
 

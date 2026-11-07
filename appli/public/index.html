@@ -288,6 +288,10 @@ details summary{cursor:pointer;font-weight:700;color:var(--accent);min-height:40
 .hello > *{position:relative;z-index:1}
 .hello:not(:has(.mascotte)){grid-template-columns:1fr auto}
 @media (max-width:760px){.hello,.hello:not(:has(.mascotte)){grid-template-columns:1fr}.hello .mascotte{display:none}}
+.epee-carte{display:flex;gap:10px;align-items:center;max-width:260px}
+.epee-carte svg{width:50px;height:81px;flex:none}
+.epee-carte b{display:block;color:var(--ink)}
+.epee-carte small{display:block;line-height:1.35;color:var(--ink-soft)}
 .hello h2{font-size:2.2rem;color:var(--ink)}
 .hello h2 .nom{color:var(--accent)}
 .mascotte{width:110px;height:110px}
@@ -334,6 +338,10 @@ details summary{cursor:pointer;font-weight:700;color:var(--accent);min-height:40
 .defi .trou{display:inline-block;min-width:3.2em;border-bottom:4px dotted var(--accent);color:var(--accent);font-weight:700}
 .defi input.rep{font-size:2rem;text-align:center;width:7ch;font-variant-numeric:tabular-nums}
 .defi .chrono{font-variant-numeric:tabular-nums}
+/* La barre donne le temps restant : elle reste animée même avec « réduire les animations ». */
+.tempsq{height:12px;border-radius:99px;background:var(--line);overflow:hidden}
+.tempsq i{display:block;height:100%;background:var(--accent);transform-origin:left;animation:tempsq linear forwards}
+@keyframes tempsq{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 .stat{background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:8px 10px;min-width:0;text-align:center}
 .stat:nth-child(1){border-color:#f2c200;background:linear-gradient(180deg,#fffbe6,#fff3bf)} .stat:nth-child(1) b{color:#a36b00}
 .stat:nth-child(2){border-color:#ff922b;background:linear-gradient(180deg,#fff4e6,#ffe8cc)} .stat:nth-child(2) b{color:#c2410c}
@@ -635,6 +643,8 @@ html[data-skin="dino"] .fb{border-radius:26px 14px 28px 12px/14px 26px 12px 24px
 <script src="programme.js"></script>
 <script src="questions.js"></script>
 <script src="semaine.js"></script>
+<script src="tables.js"></script>
+<script src="epee.js"></script>
 <script>
 /* ============ Données de référence ============ */
 const MATIERES=[
@@ -659,7 +669,7 @@ const ROUTINE=[
 /* Les skins, choisis dans l'espace parents : le vocabulaire, le logo et la mascotte d'attente changent avec l'habillage.
    Excalibur (chevaliers) est celui par défaut ; les autres ajoutent leur style dans la feuille de style (html[data-skin="…"]). */
 const SKINS={
-  excalibur:{nom:'Excalibur · chevaliers',ico:'⚔️',
+  excalibur:{nom:'Excalibur · chevaliers',ico:'⚔️',arme:{nom:'Épée',ton:'ton épée',feminin:true},
     devise:()=>`L'épée du savoir ${deP()}, chevalier de CM1`,
     niveaux:`Page|Apprenti d'écurie|Porteur de bouclier|Porteur de lance|Écuyer|Écuyer du château|Écuyer d'honneur|Garde du pont-levis|Garde du donjon|Sentinelle des remparts|Archer du roi|Cavalier|Cavalier du royaume|Chevalier|Chevalier de bronze|Chevalier d'acier|Chevalier d'argent|Chevalier d'or|Chevalier du Lion|Chevalier de l'Aigle|Chevalier du Dragon|Chevalier errant|Protecteur des villages|Vainqueur de tournoi|Champion du tournoi|Champion du roi|Élève de Merlin|Compagnon de Merlin|Porteur de bannière|Capitaine de la garde|Commandant du donjon|Baron|Vicomte|Comte|Marquis|Duc|Conseiller du roi|Main droite du roi|Chevalier de la Table ronde|Héros de la Table ronde|Chercheur du Graal|Gardien du Graal|Ami de la Dame du Lac|Protecteur de Camelot|Seigneur de Camelot|Maître des dragons|Gardien d'Excalibur|Porteur d'Excalibur|Héros de Camelot|Légende de Camelot`.split('|'),
   bravo:{
@@ -673,7 +683,7 @@ const SKINS={
     serie:n=>`${n} jours de suite, bravo ! Un vrai chevalier de la Table ronde.`,fier:'Bravo, Camelot est fier de toi !',
     code:'code du chevalier',tresor:'Le trésor du château',accueil:'Bienvenue au château !',heros:'Le chevalier',
     role:'comme un jeune chevalier (quête, épée, dragon à vaincre)',badges:{}},
-  manga:{nom:'Manga · héros',ico:'💥',theme:'en manga',
+  manga:{nom:'Manga · héros',ico:'💥',arme:{nom:'Katana',ton:'ton katana',feminin:false},theme:'en manga',
     devise:()=>`Le pouvoir du savoir ${deP()}, héros de CM1`,
     niveaux:`Débutant|Balayeur du dojo|Apprenti|Ceinture blanche|Ceinture jaune|Ceinture orange|Ceinture verte|Ceinture bleue|Ceinture marron|Ceinture noire|Disciple|Disciple appliqué|Disciple du sabre|Apprenti ninja|Ninja de l'ombre|Ninja du vent|Héros|Héros de bronze|Héros d'argent|Héros d'or|Héros de platine|Héros du quartier|Héros de la ville|Rival redoutable|Samouraï|Samouraï errant|Samouraï du clan|Champion du tournoi|Capitaine d'équipe|Senpai|Grand senpai|Maître du sabre|Maître du shuriken|Maître des éléments|Esprit du feu|Esprit de la foudre|Protecteur du village|Chef de clan|Sensei|Grand sensei|Gardien du torii|Héros national|Héros du monde|Héros de la galaxie|Maître ultime|Gardien du dojo|Shogun|Grand shogun|Légende vivante|Légende du dojo`.split('|'),
     bravo:{
@@ -687,7 +697,7 @@ const SKINS={
     code:'code du héros',tresor:'Le trésor du dojo',accueil:'Bienvenue au dojo !',heros:'Le héros',
     role:'comme le héros d\'un manga (mission, entraînement, pouvoir, boss à battre)',
     badges:{b1:'Premier chapitre',b2:'Premier combat',b3:'Coup parfait',b4:'Attaque précise',b5:'Entraînement de 3 jours',b6:'Semaine de héros',b7:'Disciple fidèle',b8:'Grand voyageur',b9:'Bibliothèque du sensei',b10:'Code du héros',b11:'Le retour du héros',b12:'Médaille d\'or'}},
-  fee:{nom:'Fée · magie',ico:'🧚',theme:'en monde des fées',
+  fee:{nom:'Fée · magie',ico:'🧚',arme:{nom:'Baguette',ton:'ta baguette',feminin:true},theme:'en monde des fées',
     devise:()=>`La magie du savoir ${deP()}, fée de CM1`,
     niveaux:`Petite graine|Jeune pousse|Bourgeon|Pétale|Fleur des champs|Goutte de rosée|Papillon|Luciole|Luciole dorée|Lutin|Lutin farceur|Lutin jardinier|Gnome des racines|Ami des écureuils|Ami des licornes|Elfe des bois|Elfe des rivières|Esprit de la forêt|Esprit du vent|Esprit de la pluie|Élève de magie|Baguette de noisetier|Baguette de cristal|Fée de la rosée|Fée des fleurs|Fée des papillons|Fée d'argent|Fée de la pluie|Fée des saisons|Fée d'or|Fée de l'arc-en-ciel|Fée de la lune|Fée du soleil|Fée des étoiles|Fée des comètes|Reine des abeilles|Reine des fleurs|Reine des licornes|Reine de la forêt|Étoile filante|Aurore boréale|Gardienne de la source|Gardienne de la lune|Grande enchanteresse|Reine des fées|Impératrice des fées|Esprit des étoiles|Magie éternelle|Légende de la forêt|Légende enchantée`.split('|'),
     bravo:{
@@ -701,7 +711,7 @@ const SKINS={
     code:'code de la fée',tresor:'Le trésor de la forêt enchantée',accueil:'Bienvenue dans la forêt enchantée !',heros:'La fée',
     role:'comme une petite fée ou un apprenti magicien (baguette, formule magique, sortilège à réussir)',
     badges:{b1:'Premier grimoire',b2:'Premier sortilège',b3:'Baguette parfaite',b4:'Formule précise',b5:'Trois jours de magie',b6:'Semaine enchantée',b7:'Lutin fidèle',b8:'Voyage enchanté',b9:'Bibliothèque des fées',b10:'Code de la fée',b11:'Ailes du courage',b12:'Poussière d\'or'}},
-  dino:{nom:'Préhisto · dinosaures',ico:'🦖',theme:'à l\'âge de pierre, avec des dinosaures',
+  dino:{nom:'Préhisto · dinosaures',ico:'🦖',arme:{nom:'Massue',ton:'ta massue',feminin:true},theme:'à l\'âge de pierre, avec des dinosaures',
     devise:()=>`Le feu du savoir ${deP()}, petit sapiens de CM1`,
     niveaux:`Œuf de dino|Œuf qui craque|Bébé dino|Petit tricératops|Ramasseur de cailloux|Cueilleur|Cueilleur de baies|Pêcheur de la rivière|Pisteur|Chasseur|Chasseur de mammouth|Tailleur de silex|Tailleur de lances|Peintre des cavernes|Conteur des cavernes|Ami des tricératops|Ami des diplodocus|Allumeur de feu|Gardien du feu|Gardien de la grotte|Gardien des œufs|Éclaireur de la vallée|Explorateur du volcan|Chercheur de fossiles|Cavalier de stégosaure|Cavalier de diplodocus|Cavalier de ptérodactyle|Guerrier à massue|Guerrier du volcan|Sage de la tribu|Chamane|Grand chamane|Chef de la tribu|Chef des tribus|Dompteur de vélociraptor|Dompteur de tricératops|Dompteur de ptérodactyle|Dompteur d'ankylosaure|Dompteur de spinosaure|Dompteur de T. rex|Ami du T. rex|Roi de la vallée|Roi du volcan|Maître des glaciers|Maître des dinos|Seigneur du Jurassique|Seigneur du Crétacé|Titan de la préhistoire|Héros de la préhistoire|Légende de la préhistoire`.split('|'),
     bravo:{
@@ -1297,7 +1307,7 @@ function quizPct(q){return q.total?q.score/q.total:0}
    1. chaque bonne réponse (quiz, défi éclair) : +1 ;
    2. chaque chose finie (quiz ou défi terminé, devoir coché, leçon rangée, note rentrée,
       code du chevalier complet, tâche de vacances) : +5 ;
-   3. sans faute : les étoiles du quiz sont doublées.
+   3. sans faute : les étoiles du quiz sont doublées. Aux tables, 10 ou 11 sur 12 donnent 4 étoiles en plus.
    Ce qui a été gagné avant garde l'ancien barème : le trésor ne baisse jamais. */
 const REGLES_3='2026-10-22';
 const neuf=date=>String(date||'')>=REGLES_3;
@@ -1384,6 +1394,8 @@ function calculEtoiles(q){
   const parfait=q.total>0&&q.score===q.total,d=[];
   let pts=q.score+5;d.push(`${q.score} bonne${q.score>1?'s':''} réponse${q.score>1?'s':''} : +${q.score}`,`${q.defi?'Défi':'Quiz'} terminé : +5`);
   if(parfait){pts*=2;d.push('Sans faute : étoiles doublées')}
+  const bonus=q.defi&&q.type==='tables'?bonusTables(q.score,q.total):0;
+  if(bonus){pts+=bonus;d.push(`Presque parfait : +${bonus}`)}
   if(q.defi?q.type==='tables'&&[2,5,10].includes(Number(q.n)):q.niveau==='facile'){pts/=2;d.push(q.defi?'Table facile : moitié des étoiles':'Quiz Facile : moitié des étoiles')}
   const cle=(q.leconIds||[]).join(',');
   const reussis=all('quiz').filter(x=>x.termine&&!x.valide&&(x.leconIds||[]).join(',')===cle&&x.createdAt>Date.now()-7*864e5&&quizPct(x)>=.8).length;
@@ -1506,6 +1518,31 @@ const missionFaite=(p,j)=>tachesJour(p,j).every(x=>x.ok);
 const nbMissions=()=>plansVac().reduce((n,p)=>n+p.jours.filter(j=>missionFaite(p,j)).length,0);
 /* Après un quiz ou un défi : annonce le bonus si la mission d'un jour vient d'être bouclée. */
 function annonceMission(avant){if(nbMissions()>avant)setTimeout(()=>{toast(bonusMission(TODAY())?'+5 étoiles ! Mission de vacances complète.':'Mission de vacances complète, bravo !');confettis()},900)}
+/* ---- L'épée du jour : sa couleur suit la note du jour (epee.js), son dessin suit le thème ---- */
+const noteEpee=()=>noteDuJour(all('quiz'),TODAY());
+const rangEpee=()=>{const n=noteEpee();return n?n.rang:-1};
+// Annonce la montée de l'épée ; le rang est lu avant l'enregistrement du quiz, comme pour annonceMission.
+function annonceEpee(avant){const n=noteEpee();if(!n||n.rang<1||n.rang<=avant)return;const ton=SK().arme.ton;
+  setTimeout(()=>{toast(`${ton[0].toUpperCase()+ton.slice(1)} passe ${n.couleur==='orange'?"à l'orange":'au '+n.nom} !`);if(n.rang===4)confettis()},1600)}
+// L'objet du thème sur son rocher ; couleur=null : au repos, en gris. Le halo n'apparaît que lorsque l'objet a une couleur.
+function dessinEpee(couleur){
+  const c=couleur?COULEURS_EPEE.find(x=>x.id===couleur).c:'#adb5bd',ln='stroke="#000" stroke-opacity=".28" stroke-width="2"';
+  const halo=couleur?`<circle cx="40" cy="62" r="34" fill="${c}" opacity=".22"/>`:'';
+  const rocher='<path d="M6 128q0-24 18-27 9-6 19-3 18-3 25 9 8 6 7 21z" fill="#868e96"/><path d="M18 116q6-4 12-2M50 112q6-2 11 2" stroke="#fff" stroke-width="2.5" fill="none" opacity=".5" stroke-linecap="round"/>';
+  const or='fill="#ffd43b" stroke="#f08c00" stroke-width="2"';
+  const objet={
+    excalibur:`<path d="M33 39h14v66H33z" fill="${c}" ${ln}/><path d="M40 41v62" stroke="#fff" stroke-width="2" opacity=".6"/><circle cx="40" cy="9" r="7" ${or}/><rect x="36" y="15" width="8" height="17" rx="2" fill="#8d5524"/><rect x="20" y="31" width="40" height="8" rx="4" ${or}/>`,
+    manga:`<path d="M34 39h12q1 36-1 66l-5 5-5-5q-2-30-1-66z" fill="${c}" ${ln}/><path d="M40 41v62" stroke="#fff" stroke-width="2" opacity=".6"/><rect x="36" y="8" width="8" height="25" rx="2" fill="#343a40"/><path d="M36 14l8 4M36 21l8 4M36 28l8 4" stroke="#adb5bd" stroke-width="1.6"/><ellipse cx="40" cy="35" rx="14" ry="4.5" ${or}/>`,
+    fee:`<rect x="37" y="30" width="6" height="76" rx="3" fill="${c}" ${ln}/><path d="M40 8l4.5 9.5 10.5 1.4-7.6 7.3 1.9 10.4-9.3-5-9.3 5 1.9-10.4-7.6-7.3 10.5-1.4z" ${or} stroke-linejoin="round"/>`,
+    dino:`<path d="M40 108V58" stroke="${c}" stroke-width="8" stroke-linecap="round"/><path d="M40 64q-17-6-14-28 3-20 14-23 11 3 14 23 3 22-14 28z" fill="${c}" ${ln} stroke-linejoin="round"/><path d="M34 32l4 3M45 42l-4 3M35 50l4 2" stroke="#000" stroke-opacity=".3" stroke-width="2" stroke-linecap="round"/>`
+  }[skinId()];
+  return `<svg viewBox="0 0 80 130" aria-hidden="true">${halo}${objet}${rocher}</svg>`;
+}
+// Le bloc de la carte « bonjour » : dessin, couleur en toutes lettres, et un conseil encourageant.
+function carteEpee(){
+  const note=noteEpee(),arme=SK().arme;
+  return `<div class="epee-carte">${dessinEpee(note&&note.couleur)}<div><b>${note?esc(nomEpee(note,arme)):`${esc(arme.nom)} au repos`}</b><small>${esc(note?conseilEpee(note,arme):'Fais un quiz pour la réveiller.')}</small></div></div>`;
+}
 const IDEES_VAC=[
   "Aide à préparer une recette : c'est toi qui mesures les grammes et les centilitres.",
   "Joue à un jeu de société avec des dés et compte les points de tout le monde.",
@@ -1559,11 +1596,22 @@ function lancerDefi(type,n){
     // 4 calculs d'autres tables pour réviser, tous différents (4 × 2 et 2 × 4 comptent pour un).
     const m=[],vus=new Set();
     while(m.length<4){const a=pick(autres),b=2+Math.floor(Math.random()*8),k=Math.min(a,b)+'x'+Math.max(a,b);if(b===n||vus.has(k))continue;vus.add(k);m.push([a,b])}
-    qs=[...f,...m].sort(()=>Math.random()-.5).map(([a,b])=>Math.random()<.5?[a,b]:[b,a]).map(([a,b])=>({type:'courte',question:`${a} × ${b}`,reponses:[String(a*b)],competence:'maths-4-1'}));
+    const p=periodeDefi(COURS,COURS&&semaineDuJour());
+    qs=[...f,...m].sort(()=>Math.random()-.5).map(([a,b])=>Math.random()<.5?[a,b]:[b,a]).map(([a,b])=>({type:'courte',question:`${a} × ${b}`,reponses:[String(a*b)],competence:'maths-4-1',limite:limiteCalcul(a,b,p)}));
   }else{
     qs=[...ORTHO_VAC].sort(()=>Math.random()-.5).slice(0,10).map(([p,c,b,ex])=>({type:'qcm',question:p,choix:c,bonne:b,explication:ex,competence:'francais-4-6'}));
   }
-  state.defi={type,n,questions:qs,i:0,rep:[],debut:Date.now(),fini:false};go('defi');
+  state.defi={type,n,questions:qs,i:0,rep:[],debut:Date.now(),fini:false};armerDefi(state.defi);go('defi');
+}
+/* Le chrono des tables : un seul minuteur par calcul. Après « Arrêter » ou un nouveau défi, defiActif empêche tout passage automatique. */
+const defiActif=(d,i)=>state.view==='defi'&&state.defi===d&&d.i===i&&!d.fini;
+function armerDefi(d){
+  const x=d.questions[d.i],i=d.i;if(!x.limite)return;
+  d.debutQ=Date.now();
+  d.minuteur=setTimeout(()=>{if(!defiActif(d,i)||d.rep[i])return;d.rep[i]={v:'',ok:false,lent:true};render();enchainerDefi(d)},x.limite*1000);
+}
+function enchainerDefi(d){
+  const i=d.i;setTimeout(()=>{if(defiActif(d,i)){suiteDefi();window.scrollTo({top:0})}},d.rep[i].ok?800:2000);
 }
 function vDefi(){
   const d=state.defi;if(!d)return `<div class="empty">Aucun défi en cours.</div><button class="btn" data-act="tab" data-v="jour">Retour</button>`;
@@ -1573,36 +1621,38 @@ function vDefi(){
       <p class="eyebrow">${esc(titre)}</p><div class="score">${d.score}/${d.total}</div><p style="font-size:1.15rem">${esc(pct===1?pick(SK().bravo.top):pct>=.75?pick(SK().bravo.bien):pct>=.5?pick(SK().bravo.moyen):pick(SK().bravo.bas))}</p>
       <p class="muted">En ${Math.floor(d.duree/60)?Math.floor(d.duree/60)+' min ':''}${d.duree%60} s</p><span class="pill">${STAR} +${d.etoiles} étoiles</span>${detailEtoiles(d)}
       <div class="row" style="justify-content:center"><button class="btn primary" data-act="tab" data-v="jour">Retour à mes vacances</button></div></section>
-      ${d.fautes.length?`<section class="card stack"><h3>Je revois mes erreurs</h3>${d.fautes.map(x=>`<div class="answer"><strong>${x.type==='courte'?esc(x.question)+' = '+esc(x.reponses[0]):esc(x.question.replace('___',x.choix[x.bonne]))}</strong>${x.explication?`<p class="small">${rich(x.explication)}</p>`:''}</div>`).join('')}</section>`:''}</div>`}
+      ${d.fautes.length?`<section class="card stack"><h3>Je revois mes erreurs</h3>${d.fautes.map(x=>`<div class="answer"><strong>${x.type==='courte'?esc(x.question)+' = '+esc(x.reponses[0]):esc(x.question.replace('___',x.choix[x.bonne]))}</strong>${x.lent?' (trop lent)':''}${x.explication?`<p class="small">${rich(x.explication)}</p>`:''}</div>`).join('')}</section>`:''}</div>`}
   const x=d.questions[d.i],r=d.rep[d.i];
   const dots=d.questions.map((_,i)=>`<i class="${d.rep[i]?(d.rep[i].ok?'ok':'ko'):''} ${i===d.i?'cur':''}"></i>`).join('');
   let body;
-  if(x.type==='courte')body=`<p class="big-q">${esc(x.question)} = ${r?`<span style="color:var(--${r.ok?'ok':'bad'})">${esc(r.v)}</span>`:'?'}</p>
+  if(x.type==='courte')body=`<p class="big-q">${esc(x.question)} = ${r?`<span style="color:var(--${r.ok?'ok':'bad'})">${r.lent?'…':esc(r.v)}</span>`:'?'}</p>
     ${r?'':`<form class="row" data-form="defi" style="justify-content:center"><input class="rep" type="text" inputmode="numeric" name="v" autocomplete="off" aria-label="Ta réponse" data-autofocus required><button class="btn primary big">OK</button></form>`}`;
   else body=`<p class="phrase">${esc(x.question).replace('___',`<span class="trou">${r?esc(x.choix[r.v]):'?'}</span>`)}</p>
     <div class="choices" style="grid-template-columns:repeat(${x.choix.length},1fr)">${x.choix.map((c,i)=>`<button class="choice ${r?(i===x.bonne?'right':(r.v===i?'wrong':'')):''}" data-act="defi-rep" data-v="${i}" ${r?'disabled':''}>${esc(c)}</button>`).join('')}</div>`;
-  const fb=r?`<div class="fb ${r.ok?'ok':'ko'}"><span class="h">${r.ok?pick(['Bravo !','Exact !',...SK().touche]):'Pas tout à fait…'}</span>${!r.ok?`<p>La bonne réponse : <strong>${esc(x.type==='courte'?x.reponses[0]:x.choix[x.bonne])}</strong></p>`:''}${x.explication?`<p>${rich(x.explication)}</p>`:''}
-    <div class="row"><button class="btn primary" data-act="defi-suite" data-autofocus>${d.i<d.questions.length-1?'Suivant':'Voir mon résultat'}</button></div></div>`:'';
+  const fb=r?`<div class="fb ${r.ok?'ok':'ko'}"><span class="h">${r.ok?pick(['Bravo !','Exact !',...SK().touche]):r.lent?'Trop lent !':'Pas tout à fait…'}</span>${!r.ok?`<p>La bonne réponse : <strong>${esc(x.type==='courte'?x.reponses[0]:x.choix[x.bonne])}</strong></p>`:''}${x.explication?`<p>${rich(x.explication)}</p>`:''}
+    ${x.limite?'':`<div class="row"><button class="btn primary" data-act="defi-suite" data-autofocus>${d.i<d.questions.length-1?'Suivant':'Voir mon résultat'}</button></div>`}</div>`:'';
+  const barre=x.limite&&!r?`<div class="tempsq" role="presentation"><i style="animation-duration:${x.limite}s;animation-delay:${-(Date.now()-d.debutQ)/1000}s"></i></div>`:'';
   return `<div class="quiz defi stack">
     <div class="sec-title"><div><p class="eyebrow">${d.type==='tables'?`8 calculs de la table de ${d.n}, 4 d'autres tables`:'Rien qu’avec ta tête'}</p><h2>${esc(titre)}</h2></div><button class="btn ghost" data-act="tab" data-v="jour">Arrêter</button></div>
     <div class="dots" aria-label="Question ${d.i+1} sur ${d.questions.length}">${dots}</div>
-    <section class="card stack"><span class="small muted">Question ${d.i+1} / ${d.questions.length}</span>${body}${fb}</section></div>`;
+    <section class="card stack"><span class="small muted">Question ${d.i+1} / ${d.questions.length}</span>${barre}${body}${fb}</section></div>`;
 }
 function repDefi(v){
   const d=state.defi,x=d&&d.questions[d.i];if(!x||d.rep[d.i])return;
   if(x.type==='courte'){const s=String(v).replace(/\s/g,'');d.rep[d.i]={v:s,ok:s===x.reponses[0]}}
   else{v=Number(v);d.rep[d.i]={v,ok:v===x.bonne}}
-  render();
+  clearTimeout(d.minuteur);render();
+  if(x.limite)enchainerDefi(d);
 }
 function suiteDefi(){
   const d=state.defi;if(!d)return;
-  if(d.i<d.questions.length-1){d.i++;render();return}
+  if(d.i<d.questions.length-1){d.i++;armerDefi(d);render();return}
   d.score=d.rep.filter(r=>r.ok).length;d.total=d.questions.length;d.duree=Math.round((Date.now()-d.debut)/1000);
-  const ce=calculEtoiles({...d,defi:true,leconIds:[d.type==='tables'?'defi:tables-'+d.n:'defi:ortho']});d.etoiles=ce.pts;d.detailEtoiles=ce.detail;d.fautes=d.questions.filter((_,i)=>!d.rep[i].ok);d.fini=true;
-  const titre=d.type==='tables'?`Défi éclair : table de ${d.n}`:'Défi éclair : orthographe',mv=nbMissions();
+  const ce=calculEtoiles({...d,defi:true,leconIds:[d.type==='tables'?'defi:tables-'+d.n:'defi:ortho']});d.etoiles=ce.pts;d.detailEtoiles=ce.detail;d.fautes=d.questions.map((x,i)=>({...x,lent:d.rep[i].lent})).filter((_,i)=>!d.rep[i].ok);d.fini=true;
+  const titre=d.type==='tables'?`Défi éclair : table de ${d.n}`:'Défi éclair : orthographe',mv=nbMissions(),re=rangEpee();
   put('quiz',uid(),{leconIds:[d.type==='tables'?'defi:tables-'+d.n:'defi:ortho'],competences:comp([d.type==='tables'?'maths-4-1':'francais-4-6']),matiere:d.type==='tables'?'maths':'francais',titre,niveau:'normal',defi:true,duree:d.duree,
-    date:TODAY(),createdAt:Date.now(),questions:d.questions,reponses:d.rep.map(r=>({v:r.v,ok:r.ok})),score:d.score,total:d.total,etoiles:d.etoiles,detailEtoiles:d.detailEtoiles,pointuesOk:0,termine:true});
-  gagne(d.etoiles,d.score===d.total?'Défi parfait !':'');annonceMission(mv);
+    date:TODAY(),createdAt:Date.now(),questions:d.questions,reponses:d.rep.map(r=>({v:r.v,ok:r.ok,lent:r.lent})),score:d.score,total:d.total,etoiles:d.etoiles,detailEtoiles:d.detailEtoiles,pointuesOk:0,termine:true});
+  gagne(d.etoiles,d.score===d.total?'Défi parfait !':'');annonceMission(mv);annonceEpee(re);
 }
 
 /* ============ Leçons du programme et progression de l'année ============ */
@@ -1679,8 +1729,8 @@ function renderStrip(){
 /* ============ État de l'interface ============ */
 /* Quatre onglets. Les autres écrans vivent dans un onglet (GROUPE), avec des sous-onglets (SOUS). */
 const TABS=[['jour',"Aujourd'hui"],['matieres','Apprendre'],['devoirs','Devoirs'],['recompenses','Mon trésor']];
-const GROUPE={matiere:'matieres',lecon:'matieres',annee:'matieres',cours:'matieres',ajouter:'matieres',notes:'recompenses',parents:'recompenses',programme:'recompenses',defi:'jour',quiz:''};
-const SOUS={matieres:[['matieres','📚 Mes leçons'],['annee','📅 Mon année']],recompenses:[['recompenses','👑 Mes étoiles'],['notes','📊 Mes notes'],['parents','🔒 Espace parents']]};
+const GROUPE={matiere:'matieres',lecon:'matieres',annee:'matieres',cours:'matieres',ajouter:'matieres',notes:'recompenses',epees:'recompenses',parents:'recompenses',programme:'recompenses',defi:'jour',quiz:''};
+const SOUS={matieres:[['matieres','📚 Mes leçons'],['annee','📅 Mon année']],recompenses:[['recompenses','👑 Mes étoiles'],['epees','⚔️ Mes épées'],['notes','📊 Mes notes'],['parents','🔒 Espace parents']]};
 function sousOnglets(){
   const v=state.view==='programme'?'parents':state.view,g=Object.keys(SOUS).find(k=>SOUS[k].some(([x])=>x===v));if(!g)return '';
   return `<nav class="matpick sous" aria-label="Dans cet onglet">${SOUS[g].map(([x,l])=>`<button class="btn" style="--m:var(--accent)" data-act="tab" data-v="${x}" aria-pressed="${x===v}">${l}</button>`).join('')}</nav>`;
@@ -1695,15 +1745,16 @@ const mascotte=()=>MASCOTTE_SKIN[skinId()];
 const state={view:'jour',param:null,quiz:null,add:{images:[],indice:'',date:TODAY(),busy:false,res:null,err:'',sujet:''},scan:{images:[],indice:'',busy:false,res:null,err:''},confirm:null,parent:false,ask:{},chrono:false};
 function go(view,param){state.view=view;state.param=param||null;state.confirm=null;if(view!=='quiz'){state.nouveauQuiz=null;if(state.quiz&&state.quiz.fini)state.quiz=null}render();window.scrollTo({top:0})}
 let dirty=false;
+const enExercice=()=>(state.view==='quiz'&&state.quiz&&!state.quiz.fini)||(state.view==='defi'&&state.defi&&!state.defi.fini);
 function requestRender(force){
   if(!force){
-    if(state.view==='quiz'&&state.quiz&&!state.quiz.fini){dirty=true;renderHeader();return}
+    if(enExercice()){dirty=true;renderHeader();return}
     const a=document.activeElement;
     if(a&&app.contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&a.type!=='checkbox'){dirty=true;renderHeader();return}
   }
   render();
 }
-document.addEventListener('focusout',()=>setTimeout(()=>{const a=document.activeElement;if(dirty&&!(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))&&!(state.view==='quiz'&&state.quiz&&!state.quiz.fini)){dirty=false;render()}},150));
+document.addEventListener('focusout',()=>setTimeout(()=>{const a=document.activeElement;if(dirty&&!(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))&&!enExercice()){dirty=false;render()}},150));
 
 function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.getElementById('toast').appendChild(t);setTimeout(()=>t.remove(),3200)}
 function confettis(){const cols=['var(--star)','var(--accent)','var(--marge)','var(--ok)'];for(let i=0;i<36;i++){const c=document.createElement('i');c.className='confetti';c.style.left=Math.random()*100+'vw';c.style.background=cols[i%4];c.style.animationDelay=(Math.random()*.5)+'s';document.body.appendChild(c);setTimeout(()=>c.remove(),2400)}}
@@ -1755,7 +1806,7 @@ function render(){
   const acc=besoinAccueil();document.documentElement.toggleAttribute('data-accueil',acc);
   if(acc){renderHeader();app.innerHTML=vAccueil();const af=app.querySelector('[data-autofocus]');if(af)af.focus({preventScroll:true});return}
   lierAuto();renderHeader();
-  const v={jour:modeVac()?vVacances:vJour,defi:vDefi,matieres:vMatieres,matiere:vMatiere,lecon:vLecon,ajouter:vAjouter,quiz:vQuiz,devoirs:vDevoirs,notes:vNotes,recompenses:vRecompenses,programme:vProgramme,annee:vAnnee,cours:vCours,parents:vParents}[state.view]||vJour;
+  const v={jour:modeVac()?vVacances:vJour,defi:vDefi,matieres:vMatieres,matiere:vMatiere,lecon:vLecon,ajouter:vAjouter,quiz:vQuiz,devoirs:vDevoirs,notes:vNotes,epees:vEpees,recompenses:vRecompenses,programme:vProgramme,annee:vAnnee,cours:vCours,parents:vParents}[state.view]||vJour;
   app.innerHTML=(storeMode==='local'?`<div class="offline small">Le serveur du cartable ne répond pas : les données restent pour l'instant dans ce navigateur. Lance « Démarrer le cartable » sur l'ordinateur, puis recharge la page.</div>`:'')+sousOnglets()+v();
   const af=app.querySelector('[data-autofocus]');if(af)af.focus({preventScroll:true});
   oralApresRendu();
@@ -1833,6 +1884,7 @@ function vJour(){
   <section class="card hello">
     ${mascotte()}
     <div><p class="eyebrow">${esc(longDate(t))}</p><h2>Bonjour <span class="nom">${esc(prenom())}</span> !</h2>${s.n>=2?`<p class="small muted">🔥 ${s.n} jours de suite</p>`:''}</div>
+    ${carteEpee()}
   </section>
   <div class="cols"><section class="card mission-jour"><p class="eyebrow">Ma mission du jour</p>
     ${!m?`<p class="muted">J'ouvre ton cartable…</p>`
@@ -1876,7 +1928,7 @@ function vVacances(){
   const reste=daysBetween(t,v.reprise);
   const hero=(nudge,stats)=>`<section class="card hello vac-hero">${mascotteVac()}
     <div><p class="eyebrow">${esc(v.nom)} · ${esc(longDate(t))}</p><h2>Bonnes vacances <span class="nom">${esc(prenom())}</span> !</h2><p class="nudge">${esc(nudge)}</p></div>
-    <div class="stack" style="min-width:230px"><div class="stats">${stats}</div></div></section>`;
+    <div class="stack" style="min-width:230px"><div class="stats">${stats}</div>${carteEpee()}</div></section>`;
   if(loading()||!COURS)return hero("J'ouvre ton carnet de vacances…",'');
   let p=planVac(v);
   if(!p){p=creerPlanVac(v)}
@@ -2087,7 +2139,7 @@ ${its.map(([k,x])=>`- id ${k}:${x.id} (${NOM[k]}, ${M(x.matiere).nom}) : ${x.tit
 Objectifs du programme :
 ${LISTE_COMP(mats.length?mats:null)}
 
-Réponds uniquement en JSON : {"liens":[{"id":"id donné ci-dessus","competences":["identifiant"]}]}`,{modelTier:'default',cache:false});
+Réponds uniquement en JSON : {"liens":[{"id":"id donné ci-dessus","competences":["identifiant"]}]}`,{modelTier:'quick',cache:false});
     let n=0;(r&&Array.isArray(r.liens)?r.liens:[]).forEach(x=>{const [k,id]=String(x.id).split(':');const col=COLL[k],o=col&&S[col].get(id);const cs=compValides(x.competences).slice(0,4);
       if(o&&cs.length){put(col,o.id,{...o,competences:cs,lien:'ia'});n++}else if(o)put(col,o.id,{...o,lien:'ia'})});
     state.relier={};toast(n?`${n} élément${n>1?'s':''} relié${n>1?'s':''} au programme.`:"Je n'ai trouvé aucun lien.");
@@ -2446,6 +2498,7 @@ function vQuiz(){
     <div class="dots" aria-label="Question ${q.i+1} sur ${q.n}">${dots}</div>
     <section class="card stack"><span class="small muted">Question ${q.i+1} / ${q.n}</span>${bloc}</section></div>`;
   }
+  if(q.vu!==q.i){q.vu=q.i;q.t0=Date.now()} // la durée part de l'affichage d'une question prête, pas de l'attente de l'IA
   let body='';
   if(x.type==='qcm')body=`<div class="choices">${x.choix.map((c,i)=>`<button class="choice ${r&&!r.pending?(i===x.bonne?'right':(r.v===i?'wrong':'')):''}" data-act="rep" data-v="${i}" ${r?'disabled':''}>${esc(c)}</button>`).join('')}</div>`;
   else if(x.type==='vf')body=`<div class="choices" style="grid-template-columns:1fr 1fr">${[true,false].map(v=>`<button class="choice ${r&&!r.pending?(v===x.bonne?'right':(r.v===v?'wrong':'')):''}" data-act="rep" data-v="${v}" ${r?'disabled':''}>${v?'Vrai':'Faux'}</button>`).join('')}</div>`;
@@ -2504,10 +2557,10 @@ function finirQuiz(){
   const q=state.quiz;q.questions=q.questions.filter((_,i)=>q.rep[i]&&!q.rep[i].pending);q.rep=q.rep.filter(r=>r&&!r.pending);q.score=q.rep.filter(r=>r.ok).length;q.total=q.questions.length;
   const ce=calculEtoiles(q);q.etoiles=ce.pts;q.detailEtoiles=ce.detail;
   q.pointuesOk=q.questions.filter((x,i)=>x.difficulte>=3&&q.rep[i].ok).length;q.fini=true;
-  const id=uid(),mv=nbMissions();
-  put('quiz',id,{leconIds:q.leconIds,competences:q.competences||[],matiere:q.matiere,titre:q.titre,niveau:q.niveau,date:TODAY(),createdAt:Date.now(),questions:q.questions,reponses:q.rep.map(r=>({v:r.v,ok:r.ok})),score:q.score,total:q.total,etoiles:q.etoiles,detailEtoiles:q.detailEtoiles,...(ce.bonusJour?{bonusJour:true}:{}),pointuesOk:q.pointuesOk,termine:true,
+  const id=uid(),mv=nbMissions(),re=rangEpee();
+  put('quiz',id,{leconIds:q.leconIds,duree:Math.round((q.ms||0)/1000),competences:q.competences||[],matiere:q.matiere,titre:q.titre,niveau:q.niveau,date:TODAY(),createdAt:Date.now(),questions:q.questions,reponses:q.rep.map(r=>({v:r.v,ok:r.ok})),score:q.score,total:q.total,etoiles:q.etoiles,detailEtoiles:q.detailEtoiles,...(ce.bonusJour?{bonusJour:true}:{}),pointuesOk:q.pointuesOk,termine:true,
     ...(Object.values(q.brouillons||{}).some(b=>b&&b.trim())?{brouillons:q.questions.map((_,i)=>(q.brouillons[i]||'').trim())}:{})});
-  gagne(q.etoiles,q.score===q.total?'Sans faute !':'');annonceMission(mv);
+  gagne(q.etoiles,q.score===q.total?'Sans faute !':'');annonceMission(mv);annonceEpee(re);
 }
 
 /* ---- Devoirs ---- */
@@ -2581,6 +2634,14 @@ function chartNotes(ns){
   const labels=s.map((n,i)=>i%step===0||i===s.length-1?`<text x="${x(i)}" y="${H-8}" text-anchor="middle">${esc(shortDate(n.date))}</text>`:'').join('');
   return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Évolution des notes sur 20">${grid}<polyline points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/>${pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="${i===pts.length-1?6:4.5}" fill="${M(s[i].matiere).c}" stroke="var(--surface)" stroke-width="2"><title>${esc(s[i].intitule)} : ${fmtN(s[i].valeur)}/${s[i].sur}</title></circle>`).join('')}${labels}</svg></div>`;
 }
+/* ---- Mes épées : une épée par jour travaillé, et un commentaire sur la dynamique ---- */
+function vEpees(){
+  const arme=SK().arme,js=joursEpees(all('quiz'),TODAY(),new Date().getHours()),com=dynamique(js,arme);
+  return `<h2>Mes épées</h2>
+  ${js.length?`${com?`<section class="card"><p>${esc(com)}</p></section>`:''}
+  <section class="card stack">${js.map(j=>`<div class="item" style="gap:12px;align-items:center"><span style="width:30px;flex:none">${dessinEpee(j.note.couleur)}</span><div class="grow"><b>${esc(longDate(j.date))}</b><br><small class="muted">${Math.round(j.note.pct*100)} % de bonnes réponses</small></div><b style="color:${COULEURS_EPEE.find(x=>x.id===j.note.couleur).c}">${esc(nomEpee(j.note,arme))}</b></div>`).join('')}</section>`
+  :`<div class="empty">Ton premier quiz forgera ta première épée.</div>`}`;
+}
 function vNotes(){
   const ns=all('notes').sort((a,b)=>a.date<b.date?1:-1);const moy=moyenne(ns);
   const par=MATIERES.map(m=>({m,ns:ns.filter(n=>n.matiere===m.id)})).filter(o=>o.ns.length);
@@ -2616,6 +2677,7 @@ function vRecompenses(){
     <div class="regle"><b>+1</b><span>pour chaque bonne réponse, dans un quiz ou un défi éclair</span></div>
     <div class="regle"><b>+5</b><span>pour chaque chose finie : un quiz, un défi, un devoir coché, une leçon rangée, une note rentrée, ton ${SK().code} complet, une tâche de vacances</span></div>
     <div class="regle"><b>×2</b><span>sans faute : les étoiles du quiz sont doublées</span></div>
+    <div class="regle"><b>+4</b><span>10 ou 11 sur 12 aux tables : 4 étoiles en plus</span></div>
     <div class="regle"><b>🎁</b><span>chaque niveau te rapporte autant d'étoiles que son numéro, et tous les ${PALIER_CADEAU} niveaux une récompense est offerte</span></div>
     <div class="regle"><b>÷2</b><span>quiz Facile, tables de 2, 5 ou 10, ou quiz déjà réussi cette semaine (le quart si déjà réussi 2 fois)</span></div></div></section>
   <section class="card"><h3>Dernières étoiles gagnées</h3><div class="stack">${b.gains.slice(0,10).map(g=>`<div class="item small"><span class="grow">${esc(g.why)}</span><span class="muted">${esc(shortDate(g.date))}</span><span class="cost">+${g.pts}</span></div>`).join('')||'<div class="empty">Ton premier quiz te rapportera tes premières étoiles.</div>'}</div></section>
@@ -2815,7 +2877,7 @@ document.addEventListener('click',async e=>{
     case 'reecouter':lireOral(state.quiz.questions[state.quiz.i]);break;
     case 'consigne':lireConsigne(state.quiz.questions[state.quiz.i]);break;
     case 'brouillon-effacer':{const q=state.quiz;if(q&&q.brouillons)delete q.brouillons[q.i];const t=app.querySelector('[data-brouillon]');if(t){t.value='';t.focus()}break}
-    case 'suivant':{const q=state.quiz;if(q.i<q.n-1){q.i++;render();prefetchQuiz()}else{finirQuiz();render()}window.scrollTo({top:0});break}
+    case 'suivant':{const q=state.quiz;if(q.t0)q.ms=(q.ms||0)+tempsQuestion(Date.now()-q.t0);if(q.i<q.n-1){q.i++;render();prefetchQuiz()}else{finirQuiz();render()}window.scrollTo({top:0});break}
     case 'quiz-regen':{const q=state.quiz;if(q){q.genErr=null;render();prepareQuestions(q,q.i+1)}break}
     case 'quiz-finir':{const q=state.quiz;if(q){finirQuiz();render()}break}
     case 'explique':{const q=state.quiz,x=q.questions[q.i],r=q.rep[q.i],idx=q.i;q.extra[idx]={busy:true};render();
