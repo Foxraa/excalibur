@@ -10,6 +10,12 @@
   // Lignes de la routine du soir qui n'ont pas lieu d'être ce jour-là.
   const horsRoutine=(id,iso)=>(id==='cartable'&&[MARDI,VENDREDI,SAMEDI].includes(jourSemaine(iso)))||(id==='devoirs'&&soireePause(iso));
 
+  // L'astuce du jour : celle du repos les soirées de pause, sinon une autre, sans le cartable les soirs où il n'y en a pas.
+  function astuceDu(iso,astuces){
+    const ok=astuces.filter(a=>soireePause(iso)?a.pause:!a.pause&&!(a.cartable&&horsRoutine('cartable',iso)));
+    return ok[Math.floor(Date.parse(iso+'T12:00:00Z')/86400000)%ok.length];
+  }
+
   function serieDe(actifs,aujourdhui){
     let d=actifs.has(aujourdhui)?aujourdhui:veille(aujourdhui),n=0;
     while(actifs.has(d)||soireePause(d)){if(actifs.has(d))n++;d=veille(d)}
@@ -22,5 +28,5 @@
     return best;
   }
 
-  Object.assign(global,{soireePause,horsRoutine,serieDe,meilleureSerieDe});
+  Object.assign(global,{soireePause,horsRoutine,astuceDu,serieDe,meilleureSerieDe});
 })(globalThis);
