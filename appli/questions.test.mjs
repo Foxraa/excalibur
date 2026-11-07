@@ -3,7 +3,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import "./public/questions.js";
 
-const { controlerQuestion: c, memeReponse, memeEcriture } = globalThis;
+const { controlerQuestion: c, memeReponse, memeEcriture, promptResolution, accordResolution } = globalThis;
 const vf = (question, bonne = true) => c({ type: "vf", question, bonne });
 const courte = (question, ...reponses) => c({ type: "courte", question, reponses });
 
@@ -212,6 +212,68 @@ test("la voix ne donne pas une réponse qu'on entendrait", () => {
 
 test("sans trou, la voix lit la question sans guillemets", () => {
   assert.equal(texteAEcouter({ type: "vf", question: "Le mot « à » est une **préposition**." }), "Le mot à est une préposition.");
+});
+
+const SANS_FAUTE = "Dans l'énoncé suivant : « Les personnes qui ont vécu la Révolution française sont des témoins importants de cette période, » quel mot est mal orthographié ?";
+const FAUTE = "Quel mot est mal écrit dans : Le chien à faim et il cherche sa gamelle dans le jardin ?";
+const FR = { matiere: "francais" };
+
+test("une phrase sans faute ne peut pas demander le mot mal écrit", () => {
+  assert.ok(c({ type: "courte", question: SANS_FAUTE, reponses: ["personnes"] }, FR).refus);
+  assert.ok(c({ type: "courte", question: SANS_FAUTE, faute: "personnes", reponses: ["personnes"] }, FR).refus);
+  assert.ok(c({ type: "courte", question: SANS_FAUTE, faute: "personne", reponses: ["personnes"] }, FR).refus);
+  assert.ok(c({ type: "qcm", question: FAUTE, choix: ["chien", "à", "faim"], bonne: 1 }, FR).refus);
+  assert.ok(c({ type: "courte", question: "Corrige le mot mal écrit dans : « Les personnes sont là. »", reponses: ["personnes"] }, FR).refus);
+});
+
+test("une vraie faute à trouver passe : le mot fautif et sa correction sont acceptés", () => {
+  const r = c({ type: "courte", question: FAUTE, faute: "à", reponses: ["a"] }, FR).question;
+  assert.deepEqual([r.type, r.reponses], ["courte", ["a", "à"]]);
+  assert.deepEqual(c({ type: "courte", question: FAUTE, faute: "à", reponses: ["à", "a"] }, FR).question.reponses, ["a", "à"]);
+});
+
+test("hors français, on ne cherche pas de mot mal écrit", () => {
+  assert.ok(c({ type: "courte", question: FAUTE, faute: "à", reponses: ["a"] }, { matiere: "histoire" }).refus);
+});
+
+test("parler d'une erreur sans chercher un mot reste permis", () => {
+  assert.equal(courte("Quelle erreur a fait Louis XVI en fuyant à Varennes ?", "la fuite").question.type, "courte");
+  assert.equal(c({ type: "vf", question: "Une erreur de calcul change le résultat." }, { matiere: "maths" }).question.type, "vf");
+});
+
+const FARINE = { type: "qcm", question: "Pour 2 gâteaux identiques, il faut 4 tasses de farine. Avec 1 gâteau, il te faudra :", choix: ["8 tasses de farine", "2 tasses de farine", "1 tasse de farine", "4 tasses de farine"], bonne: 2 };
+
+test("celui qui résout ne voit jamais la réponse proposée", () => {
+  const p = promptResolution(FARINE);
+  assert.ok(p.includes("1 tasse de farine") && p.includes("4 tasses de farine"));
+  assert.doesNotMatch(p, /bonne réponse|"bonne"/);
+  assert.doesNotMatch(promptResolution({ type: "courte", question: "Calcule 6 × 7.", reponses: ["42"] }), /42/);
+});
+
+test("un QCM est écarté si la résolution choisit une autre réponse", () => {
+  assert.equal(accordResolution(FARINE, { choix: "2 tasses de farine", resultat: "2" }), false);
+  assert.equal(accordResolution({ ...FARINE, bonne: 1 }, { choix: "2 tasses de farine", resultat: "2" }), true);
+  assert.equal(accordResolution(FARINE, { choix: "aucun", resultat: "2" }), false);
+});
+
+test("une réponse courte est comparée par ses nombres", () => {
+  const q = { type: "courte", question: "…", reponses: ["12 kg", "12"] };
+  assert.equal(accordResolution(q, { resultat: "12" }), true);
+  assert.equal(accordResolution(q, { resultat: "13 kg" }), false);
+  assert.equal(accordResolution({ ...q, reponses: ["1 234,5"] }, { resultat: "1234.5" }), true);
+  assert.equal(accordResolution({ ...q, reponses: ["2 h 30"] }, { resultat: "2 h 15" }), false);
+});
+
+test("un vrai/faux se vérifie aussi", () => {
+  const q = { type: "vf", question: "La moitié de 8 est 4.", bonne: true };
+  assert.equal(accordResolution(q, { choix: "Vrai" }), true);
+  assert.equal(accordResolution(q, { choix: "Faux" }), false);
+});
+
+test("sans résolution lisible, la question n'est pas jugée", () => {
+  assert.equal(accordResolution(FARINE, null), null);
+  assert.equal(accordResolution(FARINE, {}), null);
+  assert.equal(accordResolution({ type: "courte", question: "…", reponses: ["un triangle"] }, { resultat: "triangle" }), null);
 });
 
 test("le badge du quiz dit où en est la préparation", () => {

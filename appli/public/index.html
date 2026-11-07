@@ -634,6 +634,7 @@ html[data-skin="dino"] .fb{border-radius:26px 14px 28px 12px/14px 26px 12px 24px
 <script src="local.js"></script>
 <script src="programme.js"></script>
 <script src="questions.js"></script>
+<script src="semaine.js"></script>
 <script>
 /* ============ Données de référence ============ */
 const MATIERES=[
@@ -741,6 +742,14 @@ const longDate=iso=>D(iso).toLocaleDateString('fr-FR',{weekday:'long',day:'numer
 const shortDate=iso=>D(iso).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
 const addDays=(iso,n)=>{const d=D(iso);d.setDate(d.getDate()+n);return isoDay(d)};
 const mondayOf=iso=>{const d=D(iso);d.setDate(d.getDate()-((d.getDay()+6)%7));return isoDay(d)};
+/* Les jours sans classe servent à prendre de l'avance : le mercredi pour jeudi et vendredi, le week-end pour lundi et mardi. */
+const jourLibre=iso=>({0:'ce week-end',3:'ce mercredi',6:'ce week-end'})[D(iso).getDay()];
+/* Dernier jour dont les devoirs sont à faire maintenant : demain, ou plus loin un jour sans classe. */
+const limiteDevoirs=t=>addDays(t,{0:2,3:2,6:3}[D(t).getDay()]||1);
+/* La routine du soir suit la semaine (voir semaine.js). Les jours d'avant ce réglage gardent leurs quatre lignes : leurs étoiles ne bougent pas. */
+const REGLES_JOURS='2026-11-07';
+const routineDu=iso=>ROUTINE.filter(it=>iso<REGLES_JOURS||!horsRoutine(it.id,iso));
+const quandDevoir=(pour,t)=>pour===t?"aujourd'hui":pour===addDays(t,1)?'demain':longDate(pour);
 const daysBetween=(a,b)=>Math.round((D(b)-D(a))/86400000);
 const norm=s=>String(s??'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9,.]+/g,' ').replace(/\b(le|la|les|l|un|une|des|du|de|d)\b/g,' ').replace(/\s+/g,' ').trim();
 const fmtN=n=>(Math.round(n*10)/10).toString().replace('.',',');
@@ -1172,7 +1181,7 @@ ${oralOK?`- Presque tout se lit à l'écran. Une question est lue à voix haute 
   * "qcm" (boutons à choisir) : dès qu'il faut choisir entre des mots ou des nombres, même deux seulement. Les choix vont seulement dans "choix", 4 si possible, tous différents : ne les recopie pas dans le texte de la question. Bien : question « Le chat ___ faim. », choix ["a","à","as","ont"]. Dans une phrase à trou, le mot à trouver est remplacé par ___ et n'est écrit nulle part dans la question. Interdit : « Dans "Mon papa a un chien", quel mot est le bon ? », car le mot est déjà là. Les mauvais choix sont de vraies confusions sur la même notion : pour a ou à, jamais « mes » ni « et ».
   * "courte" (case à remplir) : une seule réponse à taper, un mot, un nombre ou une petite phrase. Jamais de liste de mots à choisir dans la question, jamais « donne deux mots » ou « trois exemples », jamais « explique ton choix ».
 - difficulte 1 = application directe de la règle, 2 = un peu de réflexion, 3 = question « pointue » qui vérifie la vraie compréhension : piège classique, application à un cas nouveau, raisonnement ou justification.
-- En mathématiques, mets des calculs et de petits problèmes. En français, fais manipuler la langue (transformer, classer, accorder), avec des phrases de CM1 de 8 à 15 mots, jamais de petite phrase évidente. Pour un homophone : difficulte 1, une phrase à un trou ; difficulte 2, une phrase à deux trous, par exemple « Pendant les vacances, ma cousine ___ appris ___ nager dans le lac. », avec des choix comme « a / à » et « à / a » ; difficulte 3, une phrase avec une faute à trouver, par exemple « Quel mot est mal écrit dans : Le chien à faim et il cherche sa gamelle dans le jardin ? ». Ne donne jamais la nature du mot en aide, comme « (verbe être) ».
+- En mathématiques, mets des calculs et de petits problèmes. En français, fais manipuler la langue (transformer, classer, accorder), avec des phrases de CM1 de 8 à 15 mots, jamais de petite phrase évidente. Pour un homophone : difficulte 1, une phrase à un trou ; difficulte 2, une phrase à deux trous, par exemple « Pendant les vacances, ma cousine ___ appris ___ nager dans le lac. », avec des choix comme « a / à » et « à / a » ; difficulte 3, une phrase avec une faute à trouver, en type "courte", par exemple « Quel mot est mal écrit dans : Le chien à faim et il cherche sa gamelle dans le jardin ? », avec "faute":"à" (le mot fautif tel qu'il est écrit dans la phrase) et "reponses":["a"] (sa correction). La faute doit vraiment être dans la phrase. Dans les autres matières, ne pose jamais de question sur l'orthographe. Ne donne jamais la nature du mot en aide, comme « (verbe être) ».
 - Reste dans le programme de CM1 et dans le contenu de la leçon.
 - "explication" : 2 phrases courtes, 40 mots au plus : la règle, puis pourquoi c'est la bonne réponse ici (ou pourquoi le piège est faux). ${prenom()} peut demander plus de détails ensuite.
 - "indice" : une seule phrase courte (15 mots au plus) qui met sur la piste sans donner la réponse.
@@ -1214,7 +1223,20 @@ Réponds uniquement avec un objet JSON {"questions":[...]} contenant exactement 
     q.difficulte=Number(q.difficulte)||1;
     q.competence=comps.length===1?comps[0]:comps.includes(q.competence)?q.competence:undefined;
   });
-  return qs.filter(q=>q.type!=='qcm'||(q.choix.length>=2&&q.bonne>=0)).map(verifierCalcul).filter(Boolean).slice(0,diffs.length);
+  const verifiees=qs.filter(q=>q.type!=='qcm'||(q.choix.length>=2&&q.bonne>=0)).map(verifierCalcul).filter(Boolean).slice(0,diffs.length);
+  if(q.matiere!=='maths')return verifiees;
+  const justes=[];
+  for(const x of verifiees)if(await reponseConfirmee(q,x))justes.push(x);
+  return justes;
+}
+/* L'IA résout l'exercice sans voir la réponse proposée. En cas de désaccord, on ne sait pas qui a raison :
+   la question est écartée, plutôt que de compter faux une bonne réponse. Si l'IA ne répond pas, elle est gardée. */
+async function reponseConfirmee(q,x){
+  let r;try{r=await askJSON(promptResolution(x),{modelTier:'default',cache:false})}catch(e){return true}
+  if(accordResolution(x,r)!==false)return true;
+  console.warn('Réponse non confirmée',x.question,'→',r);
+  q.refus=[...(q.refus||[]),{question:String(x.question),refus:`la réponse indiquée comme bonne est fausse : en résolvant l'exercice, on trouve ${r.choix||r.resultat}`}].slice(-3);
+  return false;
 }
 /* Complète le quiz jusqu'à avoir `jusqua` questions (une seule génération à la fois, 3 essais : une question peut être refusée). */
 async function prepareQuestions(q,jusqua){
@@ -1281,14 +1303,14 @@ const REGLES_3='2026-10-22';
 const neuf=date=>String(date||'')>=REGLES_3;
 const jourDe=x=>x.createdAt?isoDay(new Date(x.createdAt)):x.date;
 const ptsDevoir=d=>neuf(d.faitLe)?5:d.faitLe<=d.pour?5:2;
-const ptsRoutine=(date,n)=>neuf(date)?(n===ROUTINE.length?5:0):n+(n===ROUTINE.length?3:0);
+const ptsRoutine=(date,n)=>{const plein=n===routineDu(date).length;return neuf(date)?(plein?5:0):n+(plein?3:0)};
 const ptsNote=n=>{const p=n.valeur/n.sur;return neuf(jourDe(n))?5:p>=.8?10:p>=.6?5:2};
 const ptsLecon=l=>neuf(jourDe(l))?5:3;
 const ptsVac=(k,date)=>neuf(date)?5:{lu:2,rentree:2,bonus:1}[k];
 const bonusMission=date=>neuf(date)?0:5;
-/* Monter du niveau n au suivant (n compté depuis 0) coûte 150 étoiles, puis 25 de plus à chaque niveau.
-   Le niveau 50 demande 36 750 étoiles au total : plusieurs années de travail. */
-const coutNiveau=n=>150+25*n;
+/* Monter du niveau n au suivant (n compté depuis 0) coûte 150 étoiles, puis 40 de plus à chaque niveau.
+   Le niveau 50 demande 54 390 étoiles au total : plusieurs années de travail. */
+const coutNiveau=n=>150+40*n;
 function niveauDe(total){
   const max=SK().niveaux.length-1;
   let niveau=0,reste=total;
@@ -1305,11 +1327,23 @@ function bonusNiveaux(g,niveau){
   }
   return bonus;
 }
+/* Tous les 10 niveaux, l'enfant choisit une récompense offerte. La demande passe par les parents comme les autres :
+   c'est un achat à 0 étoile marqué du palier. Si elle est refusée, le cadeau reste à choisir. */
+const PALIER_CADEAU=10;
+function cadeauxRang(b){
+  const paliers=[];
+  for(let p=PALIER_CADEAU;p<=b.niveau+1;p+=PALIER_CADEAU)if(!all('achats').some(a=>a.palier===p&&a.statut!=='refusé'))paliers.push(p);
+  return paliers;
+}
+function prochainCadeau(b){
+  const p=(Math.floor((b.niveau+1)/PALIER_CADEAU)+1)*PALIER_CADEAU;
+  return p<=SK().niveaux.length?p:null;
+}
 function bilan(){
   const g=[];
   all('quiz').filter(q=>q.termine&&!q.valide).forEach(q=>g.push({pts:q.etoiles||0,date:q.date,why:'Quiz : '+q.titre}));
   all('devoirs').filter(d=>d.fait&&d.faitLe).forEach(d=>g.push({pts:ptsDevoir(d),date:d.faitLe,why:'Devoir fait : '+d.titre}));
-  all('routine').forEach(r=>{const n=ROUTINE.filter(it=>r.items&&r.items[it.id]).length;const pts=ptsRoutine(r.id,n);if(pts)g.push({pts,date:r.id,why:n===ROUTINE.length?'Routine complète':'Routine du jour'})});
+  all('routine').forEach(r=>{const n=routineDu(r.id).filter(it=>r.items&&r.items[it.id]).length;const pts=ptsRoutine(r.id,n);if(pts)g.push({pts,date:r.id,why:n===routineDu(r.id).length?'Routine complète':'Routine du jour'})});
   all('notes').forEach(n=>{g.push({pts:ptsNote(n),date:n.date,why:'Note : '+n.intitule})});
   all('lecons').filter(l=>!l.importe&&!l.special).forEach(l=>g.push({pts:ptsLecon(l),date:l.date,why:'Leçon ajoutée : '+l.titre}));
   plansVac().forEach(p=>{
@@ -1367,12 +1401,8 @@ function joursActifs(){
   plansVac().forEach(p=>['lu','rentree','bonus'].forEach(k=>Object.keys(p[k]||{}).filter(d=>p[k][d]).forEach(d=>s.add(d))));
   return s;
 }
-function serie(){
-  const s=joursActifs();let d=TODAY();if(!s.has(d))d=addDays(d,-1);let n=0;
-  while(s.has(d)){n++;d=addDays(d,-1)}
-  return {n,aujourdhui:s.has(TODAY())};
-}
-function meilleureSerie(){const s=[...joursActifs()].sort();let best=0,cur=0,prev=null;s.forEach(d=>{cur=(prev&&daysBetween(prev,d)===1)?cur+1:1;best=Math.max(best,cur);prev=d});return best}
+const serie=()=>serieDe(joursActifs(),TODAY());
+const meilleureSerie=()=>meilleureSerieDe(joursActifs());
 const BADGES=[
   {id:'b1',nom:'Premier parchemin',desc:'Ajouter sa première leçon',test:()=>all('lecons').length>=1},
   {id:'b2',nom:'Adoubement',desc:'Terminer un quiz',test:()=>all('quiz').some(q=>q.termine)},
@@ -1383,7 +1413,7 @@ const BADGES=[
   {id:'b7',nom:'Écuyer fidèle',desc:'Faire 10 devoirs à temps',test:()=>all('devoirs').filter(d=>d.fait&&d.faitLe<=d.pour).length>=10},
   {id:'b8',nom:'Explorateur du royaume',desc:'Des leçons dans 5 matières',test:()=>new Set(all('lecons').map(l=>l.matiere)).size>=5},
   {id:'b9',nom:'Bibliothèque de Merlin',desc:'20 leçons dans le cartable',test:()=>all('lecons').length>=20},
-  {id:'b10',nom:'Code d\'honneur',desc:'5 routines complètes',test:()=>all('routine').filter(r=>ROUTINE.every(it=>r.items&&r.items[it.id])).length>=5},
+  {id:'b10',nom:'Code d\'honneur',desc:'5 routines complètes',test:()=>all('routine').filter(r=>routineDu(r.id).every(it=>r.items&&r.items[it.id])).length>=5},
   {id:'b11',nom:'Cœur de lion',desc:'Refaire un quiz raté et progresser',test:()=>{const by={};all('quiz').filter(q=>q.termine&&q.leconIds&&q.leconIds.length===1).sort((a,b)=>a.createdAt-b.createdAt).forEach(q=>{(by[q.leconIds[0]]=by[q.leconIds[0]]||[]).push(quizPct(q))});return Object.values(by).some(a=>a.length>1&&a[0]<.7&&Math.max(...a.slice(1))>a[0])}},
   {id:'b12',nom:'Blason doré',desc:'Une note au-dessus de 16/20',test:()=>all('notes').some(n=>n.valeur/n.sur>=.8)},
 ];
@@ -1703,7 +1733,7 @@ function renderHeader(){
   if(document.documentElement.dataset.skin!==skin){document.documentElement.dataset.skin=skin;document.querySelector('#brand svg').outerHTML=LOGO[skin];majIcone(skin)}
   const b=bilan();
   const pct=b.maxi?100:Math.floor(b.dansNiveau/b.coutSuivant*100);
-  document.getElementById('wallet').innerHTML=`<span class="pill or" title="Étoiles disponibles">${STAR}<span>${b.solde}</span></span><span class="pill niv" title="${b.maxi?'Niveau maximum atteint !':`Encore ${b.coutSuivant-b.dansNiveau} étoiles pour devenir ${esc(SK().niveaux[b.niveau+1])}`}"><span>Niv. ${b.niveau+1}<span class="nom"> · ${esc(b.nomNiveau)}</span></span><span class="mini-bar" role="progressbar" aria-label="Vers le niveau suivant" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></span><span class="small muted">${b.maxi?'max':`${b.dansNiveau}/${b.coutSuivant}`}</span></span>`;
+  document.getElementById('wallet').innerHTML=`<span class="pill or" title="Étoiles disponibles">${STAR}<span>${b.solde}</span></span><span class="pill niv" title="${b.maxi?'Niveau maximum atteint !':`Encore ${b.coutSuivant-b.dansNiveau} étoiles pour devenir ${esc(SK().niveaux[b.niveau+1])}`}"><span>${cadeauxRang(b).length?'<span title="Un cadeau t\'attend dans tes récompenses">🎁</span> ':''}Niv. ${b.niveau+1}<span class="nom"> · ${esc(b.nomNiveau)}</span></span><span class="mini-bar" role="progressbar" aria-label="Vers le niveau suivant" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></span><span class="small muted">${b.maxi?'max':`${b.dansNiveau}/${b.coutSuivant}`}</span></span>`;
   const cur=state.view in GROUPE?GROUPE[state.view]:state.view;
   document.getElementById('fab').hidden=['quiz','defi','ajouter'].includes(state.view);
   majBadgeQuiz();
@@ -1738,11 +1768,12 @@ const loading=()=>storeMode==='loading'||(storeMode==='db'&&loadedCols.size<COLS
 /* ---- Aujourd'hui ---- */
 function nudge(){
   const t=TODAY();const dv=all('devoirs').filter(d=>!d.fait);
-  const retard=dv.filter(d=>d.pour<t),demain=dv.filter(d=>d.pour===addDays(t,1)),auj=dv.filter(d=>d.pour===t);
+  const retard=dv.filter(d=>d.pour<t),proches=dv.filter(d=>d.pour>t&&d.pour<=limiteDevoirs(t)),auj=dv.filter(d=>d.pour===t);
   const s=serie();const h=new Date().getHours();
   if(retard.length)return `Il reste ${retard.length} devoir${retard.length>1?'s':''} en retard. On s'y met ? Cinq minutes suffisent pour commencer.`;
   if(auj.length)return `Tu as ${auj.length} chose${auj.length>1?'s':''} à faire pour aujourd'hui. Coche-les dès que c'est fait !`;
-  if(demain.length&&h>=15)return `Pour demain : ${demain.map(d=>d.titre).join(', ')}. C'est le bon moment pour le faire.`;
+  if(proches.length&&jourLibre(t))return `À faire ${jourLibre(t)} : ${proches.map(d=>d.titre).join(', ')}.`;
+  if(proches.length&&h>=15)return `Pour demain : ${proches.map(d=>d.titre).join(', ')}. C'est le bon moment pour le faire.`;
   if(!s.aujourdhui&&s.n>=2)return `Tu as travaillé ${s.n} jours de suite. Ne casse pas ta série : un petit quiz et c'est gagné !`;
   if(!s.aujourdhui)return h<12?SK().matin:SK().aprem;
   if(s.n>=3)return SK().serie(s.n);
@@ -1750,18 +1781,29 @@ function nudge(){
 }
 function itemDevoir(d){
   const t=TODAY(),late=!d.fait&&d.pour<t;
-  const quand=d.pour===t?"aujourd'hui":d.pour===addDays(t,1)?'demain':longDate(d.pour);
+  const quand=quandDevoir(d.pour,t);
   return `<div class="item ${late?'late':''} ${d.fait?'done':''}"><input type="checkbox" class="chk" data-act="devoir-fait" data-id="${d.id}" ${d.fait?'checked':''} aria-label="Fait : ${esc(d.titre)}"><div class="grow"><div class="t">${esc(d.titre)}</div>${d.detail?`<div class="small">${esc(d.detail)}</div>`:''}<div class="small muted">${mchip(d.matiere)} ${esc(d.type||'Devoir')} · pour ${late?'<strong style="color:var(--bad)">':''}${quand}${late?' (en retard)</strong>':''}</div>${d.fait?'':chipsLiens(d)}</div></div>`;
 }
+/* Les jours de classe sans devoir à faire, on entretient les bases : tables le lundi, orthographe le jeudi. Le mardi et le vendredi soir sont en pause.
+   Un devoir coché ou un défi éclair joué aujourd'hui suffit : il n'y a rien de plus à imposer. */
+function baseDuJour(t){
+  if(jourLibre(t)||soireePause(t)||all('devoirs').some(d=>d.faitLe===t)||all('quiz').some(q=>q.defi&&q.termine&&q.date===t))return null;
+  const tb=D(t).getDay()===1,n=TABLES_VAC[Math.floor(D(t)/86400000)%TABLES_VAC.length];
+  return {base:true,ico:'⚡',titre:tb?`Révise la table de ${n}`:"Révise l'orthographe",detail:`Pas de devoir pour demain : un défi éclair pour garder tes bases.`,
+    btn:`<button class="btn primary big" data-act="defi" data-v="${tb?'tables':'ortho'}" data-n="${tb?n:''}">C'est parti !</button>`};
+}
 /* La mission du jour : UNE chose à faire maintenant, de la plus urgente à la moins urgente.
-   Devoir en retard ou proche, puis la leçon à réviser (étoile du jour d'abord), un objectif à retravailler,
+   Devoir en retard ou proche, puis les révisions de base, la leçon à réviser (étoile du jour d'abord), un objectif à retravailler,
    une leçon de la semaine pas encore lue, et sinon ajouter ce qu'il a fait en classe. */
 function missionDuJour(){
   const t=TODAY(),dv=all('devoirs').filter(d=>!d.fait).sort((a,b)=>a.pour<b.pour?-1:1);
-  const d=dv.find(x=>x.pour<t)||dv.find(x=>x.pour===t)||dv.find(x=>x.pour===addDays(t,1));
+  const d=dv.find(x=>x.pour<=limiteDevoirs(t));
   if(d){const l=['Contrôle','Leçon à apprendre','Révision'].includes(d.type)&&leconsLiees(d)[0];
-    return {devoir:true,ico:'✏️',titre:d.titre,detail:`${M(d.matiere).nom} · ${d.type||'Devoir'} ${d.pour<t?'en retard':d.pour===t?"pour aujourd'hui":'pour demain'}${d.detail?' · '+d.detail:''}`,
+    return {devoir:true,ico:'✏️',titre:d.titre,detail:`${M(d.matiere).nom} · ${d.type||'Devoir'} ${d.pour<t?'en retard':'pour '+quandDevoir(d.pour,t)}${d.detail?' · '+d.detail:''}`,
     btn:`${l?`<button class="btn" data-act="lecon" data-id="${l.id}">📖 Relire « ${esc(l.titre)} »</button>${sample?`<button class="btn" data-act="quiz-lecon" data-id="${l.id}" data-niveau="normal">Me tester</button>`:''}`:''}<button class="btn primary big" data-act="devoir-ok" data-id="${d.id}">C'est fait !</button><button class="btn" data-act="tab" data-v="devoirs">Tous mes devoirs</button>`}}
+  if(soireePause(t)&&!state.encore)return {ico:'🌙',titre:'Soirée tranquille',detail:"Pas d'école demain : ce soir, c'est repos. Rien à faire, sauf si tu en as envie.",
+    btn:`<button class="btn ghost" data-act="encore">Une mission quand même</button>`};
+  const base=baseDuJour(t);if(base)return base;
   const ej=etoileDuJour(),l=ej||(aReviser()[0]||{}).l;
   if(l)return {ico:'📖',titre:`Relis « ${l.titre} », puis fais le quiz`,detail:`${M(l.matiere).nom} · ${etatLecon(l).raison}${ej?" · leçon du jour":''}`,
     btn:`${sample?`<button class="btn primary big" data-act="quiz-lecon" data-id="${l.id}" data-niveau="normal">Faire le quiz</button>`:''}<button class="btn ${sample?'':'primary big'}" data-act="lecon" data-id="${l.id}">Relire d'abord</button>`};
@@ -1784,9 +1826,9 @@ function vJour(){
   const t=TODAY(),s=serie(),r=S.routine.get(t)||{items:{}};
   const tip=TIPS[Math.floor(D(t)/86400000)%TIPS.length];
   const m=loading()?null:missionDuJour();
-  // Déjà travaillé aujourd'hui : mission accomplie (sauf un devoir qui presse), une autre seulement s'il la demande.
-  const fini=m&&!m.devoir&&s.aujourdhui&&!state.encore;
-  const nbR=ROUTINE.filter(it=>r.items&&r.items[it.id]).length;
+  // Déjà travaillé aujourd'hui : mission accomplie (sauf un devoir qui presse ou les bases), une autre seulement s'il la demande.
+  const fini=m&&!m.devoir&&!m.base&&s.aujourdhui&&!state.encore;
+  const rt=routineDu(t),nbR=rt.filter(it=>r.items&&r.items[it.id]).length;
   return `${vacEnCours()?`<div class="row" style="justify-content:center"><button class="btn primary" data-act="vac-on">🏖️ Revenir à mes vacances</button></div>`:''}
   <section class="card hello">
     ${mascotte()}
@@ -1799,9 +1841,9 @@ function vJour(){
       ${state.special&&state.special.busy?attente("J'écris ta leçon spéciale…",{debut:state.special.debut,sous:'Cela prend environ une minute.'}):''}${state.special&&state.special.err?`<p class="small" style="color:var(--bad)">${esc(state.special.err)}</p>`:''}
       <div class="row mj-btns">${m.btn}</div>`}
   </section>
-  <section class="card"><div class="sec-title"><h3>Mon ${SK().code}</h3><span class="small muted">${nbR}/${ROUTINE.length}</span></div>
+  <section class="card"><div class="sec-title"><h3>Mon ${SK().code}</h3><span class="small muted">${nbR}/${rt.length}</span></div>
     <p class="small muted" style="margin:4px 0 8px">+5 étoiles quand tout est coché</p>
-    <div class="stack">${ROUTINE.map(it=>`<label class="item ${r.items&&r.items[it.id]?'done':''}"><input type="checkbox" class="chk" data-act="routine" data-v="${it.id}" ${r.items&&r.items[it.id]?'checked':''}><span class="grow t">${esc(it.t)}</span></label>`).join('')}</div></section></div>
+    <div class="stack">${rt.map(it=>`<label class="item ${r.items&&r.items[it.id]?'done':''}"><input type="checkbox" class="chk" data-act="routine" data-v="${it.id}" ${r.items&&r.items[it.id]?'checked':''}><span class="grow t">${esc(it.t)}</span></label>`).join('')}</div></section></div>
   <section class="card"><div class="sec-title"><h3>Défis éclair</h3><span class="small muted">Une fois par jour chacun</span></div>${boutonsDefis()}</section>
   <section class="tip"><p class="eyebrow">Astuce d'organisation</p><p><strong>${esc(tip.t)}.</strong> ${esc(tip.d)}</p></section>`;
 }
@@ -2507,9 +2549,9 @@ function vScan(){
   </section>`;
 }
 function vDevoirs(){
-  const t=TODAY();const dv=all('devoirs').sort((a,b)=>a.pour<b.pour?-1:1);
+  const t=TODAY(),lim=limiteDevoirs(t);const dv=all('devoirs').sort((a,b)=>a.pour<b.pour?-1:1);
   const afaire=dv.filter(d=>!d.fait);const groups=[
-    ['En retard',afaire.filter(d=>d.pour<t)],["Pour aujourd'hui",afaire.filter(d=>d.pour===t)],['Pour demain',afaire.filter(d=>d.pour===addDays(t,1))],['Plus tard',afaire.filter(d=>d.pour>addDays(t,1))]];
+    ['En retard',afaire.filter(d=>d.pour<t)],["Pour aujourd'hui",afaire.filter(d=>d.pour===t)],[jourLibre(t)?'À faire '+jourLibre(t):'Pour demain',afaire.filter(d=>d.pour>t&&d.pour<=lim)],['Plus tard',afaire.filter(d=>d.pour>lim)]];
   const faits=dv.filter(d=>d.fait).sort((a,b)=>a.faitLe<b.faitLe?1:-1).slice(0,8);
   const jours=[...Array(7)].map((_,i)=>addDays(t,i));
   return `<h2>Mes devoirs et mon organisation</h2>
@@ -2564,15 +2606,17 @@ function vRecompenses(){
   const b=bilan();const rec=all('recompenses').sort((a,c)=>a.cout-c.cout);const ach=all('achats').sort((a,c)=>c.createdAt-a.createdAt);
   return `<h2>Mes récompenses</h2>
   <section class="card hello"><div><p class="eyebrow">${SK().tresor}</p><h2 class="row">${STAR.replace('width="16" height="16"','width="34" height="34"')} ${b.solde} étoiles</h2><p class="muted small">${b.total} gagnées depuis le début, ${b.spent} échangées.</p></div>
-    <div style="min-width:230px"><div class="row small" style="justify-content:space-between"><span>Niveau ${b.niveau+1} · ${esc(b.nomNiveau)}</span><span class="muted">${b.maxi?'max':`${b.dansNiveau}/${b.coutSuivant}`}</span></div><div class="bar"><i style="width:${b.maxi?100:Math.floor(b.dansNiveau/b.coutSuivant*100)}%"></i></div><p class="small muted" style="margin-top:6px">${!b.maxi?`Prochain niveau : ${esc(SK().niveaux[b.niveau+1])}`:'Niveau maximum atteint !'}</p></div></section>
+    <div style="min-width:230px"><div class="row small" style="justify-content:space-between"><span>Niveau ${b.niveau+1} · ${esc(b.nomNiveau)}</span><span class="muted">${b.maxi?'max':`${b.dansNiveau}/${b.coutSuivant}`}</span></div><div class="bar"><i style="width:${b.maxi?100:Math.floor(b.dansNiveau/b.coutSuivant*100)}%"></i></div><p class="small muted" style="margin-top:6px">${!b.maxi?`Prochain niveau : ${esc(SK().niveaux[b.niveau+1])}${prochainCadeau(b)?`. Cadeau offert au niveau ${prochainCadeau(b)}.`:''}`:'Niveau maximum atteint !'}</p></div></section>
+  ${cadeauxRang(b).map(p=>`<section class="card stack"><h3>🎁 Cadeau du niveau ${p}</h3><p>Bravo ! Choisis une récompense : elle est offerte, sans dépenser tes étoiles. Tes parents la valident ensuite.</p>${rec.length?rec.map(r=>`<div class="reward"><span class="t">${esc(r.titre)}</span><button class="btn primary" data-act="cadeau-rang" data-id="${r.id}" data-v="${p}">Je la choisis</button></div>`).join(''):`<div class="empty">Pas encore de récompense. Demande à tes parents d'en ajouter dans l'espace parents.</div>`}</section>`).join('')}
   <section class="card stack"><h3>Échanger mes étoiles</h3>
     ${rec.length?rec.map(r=>`<div class="reward"><span class="t">${esc(r.titre)}</span><span class="row"><span class="cost">${STAR} ${r.cout}</span><button class="btn ${b.solde>=r.cout?'primary':''}" data-act="demander" data-id="${r.id}" ${b.solde>=r.cout?'':'disabled'}>${b.solde>=r.cout?'Je la demande':`Encore ${r.cout-b.solde}`}</button></span></div>`).join(''):`<div class="empty">Pas encore de récompense. Demande à tes parents d'en ajouter dans l'espace parents.</div>`}
-    ${ach.length?`<p class="eyebrow" style="margin-top:6px">Mes demandes</p>${ach.slice(0,8).map(a=>`<div class="item small"><span class="grow">${esc(a.titre)} · ${esc(shortDate(a.date))}</span><span class="status ${a.statut==='validé'?'ok':a.statut==='refusé'?'no':'wait'}">${a.statut==='demandé'?'En attente des parents':a.statut==='validé'?'Accordée':'Refusée (étoiles rendues)'}</span></div>`).join('')}`:''}</section>
+    ${ach.length?`<p class="eyebrow" style="margin-top:6px">Mes demandes</p>${ach.slice(0,8).map(a=>`<div class="item small"><span class="grow">${esc(a.titre)} · ${esc(shortDate(a.date))}</span><span class="status ${a.statut==='validé'?'ok':a.statut==='refusé'?'no':'wait'}">${a.statut==='demandé'?'En attente des parents':a.statut==='validé'?'Accordée':a.palier?'Refusée (à choisir de nouveau)':'Refusée (étoiles rendues)'}</span></div>`).join('')}`:''}</section>
   <section class="card"><h3>Mes badges</h3><div class="badges">${BADGES.map(x=>{const on=x.test();return `<div class="badge ${on?'':'lock'}">${BADGE_SVG(on)}<b>${esc(nomBadge(x))}</b><span>${esc(x.desc)}</span></div>`}).join('')}</div></section>
   <section class="card"><h3>Comment gagner des étoiles</h3><div class="regles">
     <div class="regle"><b>+1</b><span>pour chaque bonne réponse, dans un quiz ou un défi éclair</span></div>
     <div class="regle"><b>+5</b><span>pour chaque chose finie : un quiz, un défi, un devoir coché, une leçon rangée, une note rentrée, ton ${SK().code} complet, une tâche de vacances</span></div>
     <div class="regle"><b>×2</b><span>sans faute : les étoiles du quiz sont doublées</span></div>
+    <div class="regle"><b>🎁</b><span>chaque niveau te rapporte autant d'étoiles que son numéro, et tous les ${PALIER_CADEAU} niveaux une récompense est offerte</span></div>
     <div class="regle"><b>÷2</b><span>quiz Facile, tables de 2, 5 ou 10, ou quiz déjà réussi cette semaine (le quart si déjà réussi 2 fois)</span></div></div></section>
   <section class="card"><h3>Dernières étoiles gagnées</h3><div class="stack">${b.gains.slice(0,10).map(g=>`<div class="item small"><span class="grow">${esc(g.why)}</span><span class="muted">${esc(shortDate(g.date))}</span><span class="cost">+${g.pts}</span></div>`).join('')||'<div class="empty">Ton premier quiz te rapportera tes premières étoiles.</div>'}</div></section>
 `;
@@ -2677,7 +2721,7 @@ function vParents(){
   const ach=all('achats').filter(a=>a.statut==='demandé');const rec=all('recompenses').sort((a,b)=>a.cout-b.cout);
   return `${vSemaine()}<section class="card stack"><div class="sec-title"><h3>Espace parents</h3><button class="btn ghost" data-act="parent-off">Fermer</button></div>
     <p class="eyebrow">Suivi scolaire</p><div class="row"><button class="btn primary" data-act="tab" data-v="programme">🗺️ Programme CM1 : où en est ${esc(prenom())}</button></div>
-    <p class="eyebrow">Demandes à valider</p>${ach.length?ach.map(a=>`<div class="reward"><span>${esc(a.titre)} <span class="cost">${a.cout}</span></span><span class="row"><button class="btn primary" data-act="valider" data-id="${a.id}">Accorder</button><button class="btn" data-act="refuser" data-id="${a.id}">Refuser</button></span></div>`).join(''):'<p class="small muted">Aucune demande en attente.</p>'}
+    <p class="eyebrow">Demandes à valider</p>${ach.length?ach.map(a=>`<div class="reward"><span>${esc(a.titre)} <span class="cost">${a.palier?'offert':a.cout}</span></span><span class="row"><button class="btn primary" data-act="valider" data-id="${a.id}">Accorder</button><button class="btn" data-act="refuser" data-id="${a.id}">Refuser</button></span></div>`).join(''):'<p class="small muted">Aucune demande en attente.</p>'}
     <p class="eyebrow">Récompenses proposées</p>${rec.map(r=>`<div class="reward"><span>${esc(r.titre)}</span><span class="row"><span class="cost">${r.cout}</span><button class="btn ghost danger" data-act="del-rec" data-id="${r.id}">Retirer</button></span></div>`).join('')}
     <form class="form-grid" data-form="rec"><label class="f">Nouvelle récompense<input type="text" id="rec-t" name="titre" required></label><label class="f">Prix en étoiles<input type="number" id="rec-c" name="cout" min="1" value="50" required></label><div><button class="btn">Ajouter</button></div></form>
     ${!rec.length?`<div><button class="btn" data-act="suggestions">Ajouter des récompenses suggérées</button></div>`:''}
@@ -2720,7 +2764,7 @@ function vAccueil(){
         <li><b>+5</b><span>quand tu finis un quiz, un devoir, ta routine du soir ou quand tu ajoutes une leçon</span></li>
         <li><b>×2</b><span>les étoiles d'un quiz réussi sans faute</span></li>
       </ul>
-      <p>Il faut ${coutNiveau(0)} étoiles pour monter d'un niveau, puis un peu plus à chaque fois : ${SK().niveaux.slice(0,3).map(esc).join(', ')}… jusqu'au niveau ${SK().niveaux.length}, ${esc(SK().niveaux[SK().niveaux.length-1])} ! Chaque niveau atteint te rapporte autant d'étoiles que son numéro : 5 étoiles au niveau 5.</p>
+      <p>Il faut ${coutNiveau(0)} étoiles pour monter d'un niveau, puis un peu plus à chaque fois : ${SK().niveaux.slice(0,3).map(esc).join(', ')}… jusqu'au niveau ${SK().niveaux.length}, ${esc(SK().niveaux[SK().niveaux.length-1])} ! Chaque niveau atteint te rapporte autant d'étoiles que son numéro : 5 étoiles au niveau 5. Et tous les ${PALIER_CADEAU} niveaux, tu choisis une récompense offerte !</p>
       <p>Dans <b>Mon trésor</b>, tu échanges tes étoiles contre une récompense : tu la demandes, et tes parents la valident.${rec.length?' Pour l\'instant :':''}</p>
       ${rec.length?`<div class="stack">${rec.map(r=>`<div class="item"><span class="grow">${esc(r.titre)}</span><span class="cost">${STAR} ${r.cout}</span></div>`).join('')}</div>`:''}
       <div><button class="btn primary" data-act="acc-fin" data-autofocus>C'est parti !</button></div>`}
@@ -2793,6 +2837,7 @@ document.addEventListener('click',async e=>{
         sc.res=r}catch(err){console.warn('agenda',err);sc.err=errMsg(err)}
       sc.busy=false;render();break}
     case 'demander':{const r=S.recompenses.get(id);const b=bilan();if(r&&b.solde>=r.cout){put('achats',uid(),{recompenseId:id,titre:r.titre,cout:r.cout,statut:'demandé',date:TODAY(),createdAt:Date.now()});toast('Demande envoyée à tes parents !');confettis()}break}
+    case 'cadeau-rang':{const r=S.recompenses.get(id),p=Number(v);if(r&&cadeauxRang(bilan()).includes(p)){put('achats',uid(),{recompenseId:id,titre:`Cadeau du niveau ${p} : ${r.titre}`,cout:0,palier:p,statut:'demandé',date:TODAY(),createdAt:Date.now()});toast('Demande envoyée à tes parents !');confettis()}break}
     case 'valider':{const a=S.achats.get(id);if(a)put('achats',id,{...a,statut:'validé'});break}
     case 'refuser':{const a=S.achats.get(id);if(a)put('achats',id,{...a,statut:'refusé'});break}
     case 'del-rec':del('recompenses',id);break;
@@ -2823,7 +2868,7 @@ document.addEventListener('change',e=>{
     const avant=p.jours.find(j=>j.date===el.dataset.id),complet=avant&&missionFaite(p,avant);
     const np={...p,[k]:{...(p[k]||{}),[el.dataset.id]:el.checked}};put('config',p.id,np);
     if(el.checked){const fini=avant&&!complet&&missionFaite(np,avant);const n=ptsVac(k,el.dataset.id)+(fini?bonusMission(el.dataset.id):0);gagne(n,fini?'Mission du jour complète !':k==='lu'?'Bonne lecture !':'')}return}
-  if(el.dataset.act==='routine'){const t=TODAY();const r=S.routine.get(t)||{items:{}};const items={...(r.items||{}),[el.dataset.v]:el.checked};put('routine',t,{items});const nb=o=>ROUTINE.filter(it=>o&&o[it.id]).length,n=ptsRoutine(t,nb(items))-ptsRoutine(t,nb(r.items));if(n>0)gagne(n,nb(items)===ROUTINE.length?`${SK().code[0].toUpperCase()+SK().code.slice(1)} complet !`:'');return}
+  if(el.dataset.act==='routine'){const t=TODAY();const r=S.routine.get(t)||{items:{}};const items={...(r.items||{}),[el.dataset.v]:el.checked};put('routine',t,{items});const nb=o=>routineDu(t).filter(it=>o&&o[it.id]).length,n=ptsRoutine(t,nb(items))-ptsRoutine(t,nb(r.items));if(n>0)gagne(n,nb(items)===routineDu(t).length?`${SK().code[0].toUpperCase()+SK().code.slice(1)} complet !`:'');return}
 });
 document.addEventListener('dragover',e=>{const d=e.target.closest&&e.target.closest('#drop,#scan-drop');if(d){e.preventDefault();d.classList.add('over')}});
 document.addEventListener('dragleave',e=>{const d=e.target.closest&&e.target.closest('#drop,#scan-drop');if(d)d.classList.remove('over')});

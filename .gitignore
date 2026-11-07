@@ -5,3 +5,4 @@ appli/.env
 photos/
 node_modules/
 .claude/tmp/
+.superpowers/
