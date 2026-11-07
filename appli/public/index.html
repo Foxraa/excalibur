@@ -1302,7 +1302,7 @@ function quizPct(q){return q.total?q.score/q.total:0}
    1. chaque bonne réponse (quiz, défi éclair) : +1 ;
    2. chaque chose finie (quiz ou défi terminé, devoir coché, leçon rangée, note rentrée,
       code du chevalier complet, tâche de vacances) : +5 ;
-   3. sans faute : les étoiles du quiz sont doublées.
+   3. sans faute : les étoiles du quiz sont doublées. Aux tables, 10 ou 11 sur 12 donnent 4 étoiles en plus.
    Ce qui a été gagné avant garde l'ancien barème : le trésor ne baisse jamais. */
 const REGLES_3='2026-10-22';
 const neuf=date=>String(date||'')>=REGLES_3;
@@ -1389,6 +1389,8 @@ function calculEtoiles(q){
   const parfait=q.total>0&&q.score===q.total,d=[];
   let pts=q.score+5;d.push(`${q.score} bonne${q.score>1?'s':''} réponse${q.score>1?'s':''} : +${q.score}`,`${q.defi?'Défi':'Quiz'} terminé : +5`);
   if(parfait){pts*=2;d.push('Sans faute : étoiles doublées')}
+  const bonus=q.defi&&q.type==='tables'?bonusTables(q.score,q.total):0;
+  if(bonus){pts+=bonus;d.push(`Presque parfait : +${bonus}`)}
   if(q.defi?q.type==='tables'&&[2,5,10].includes(Number(q.n)):q.niveau==='facile'){pts/=2;d.push(q.defi?'Table facile : moitié des étoiles':'Quiz Facile : moitié des étoiles')}
   const cle=(q.leconIds||[]).join(',');
   const reussis=all('quiz').filter(x=>x.termine&&!x.valide&&(x.leconIds||[]).join(',')===cle&&x.createdAt>Date.now()-7*864e5&&quizPct(x)>=.8).length;
@@ -2635,6 +2637,7 @@ function vRecompenses(){
     <div class="regle"><b>+1</b><span>pour chaque bonne réponse, dans un quiz ou un défi éclair</span></div>
     <div class="regle"><b>+5</b><span>pour chaque chose finie : un quiz, un défi, un devoir coché, une leçon rangée, une note rentrée, ton ${SK().code} complet, une tâche de vacances</span></div>
     <div class="regle"><b>×2</b><span>sans faute : les étoiles du quiz sont doublées</span></div>
+    <div class="regle"><b>+4</b><span>10 ou 11 sur 12 aux tables : 4 étoiles en plus</span></div>
     <div class="regle"><b>🎁</b><span>chaque niveau te rapporte autant d'étoiles que son numéro, et tous les ${PALIER_CADEAU} niveaux une récompense est offerte</span></div>
     <div class="regle"><b>÷2</b><span>quiz Facile, tables de 2, 5 ou 10, ou quiz déjà réussi cette semaine (le quart si déjà réussi 2 fois)</span></div></div></section>
   <section class="card"><h3>Dernières étoiles gagnées</h3><div class="stack">${b.gains.slice(0,10).map(g=>`<div class="item small"><span class="grow">${esc(g.why)}</span><span class="muted">${esc(shortDate(g.date))}</span><span class="cost">+${g.pts}</span></div>`).join('')||'<div class="empty">Ton premier quiz te rapportera tes premières étoiles.</div>'}</div></section>
