@@ -354,6 +354,13 @@ details summary{cursor:pointer;font-weight:700;color:var(--accent);min-height:40
 .tip{background:linear-gradient(135deg,#fff9db,#fff3bf);color:#3d2e00;border:2px solid #ffe066;border-radius:var(--r);padding:16px 18px 16px 70px;position:relative;box-shadow:var(--shadow)}
 .tip::before{content:"💡";position:absolute;left:18px;top:14px;font-size:2rem}
 .tip .eyebrow{color:#a36b00}
+/* L'astuce de la page du jour : juste sous la mission, plus grande que les astuces de liste. */
+.tip-jour{padding:20px 22px 20px 92px;border-width:3px;border-color:var(--star)}
+.tip-jour::before{left:22px;top:50%;transform:translateY(-50%);font-size:3rem;line-height:1}
+.tip-jour.pause::before{content:"🌙"}
+.tip-jour h3{margin:2px 0 6px;font-size:1.35rem;color:inherit}
+.tip-jour p:last-child{font-size:1.08rem;line-height:1.5}
+@media(max-width:560px){.tip-jour{padding:16px 16px 16px 66px}.tip-jour::before{left:14px;font-size:2.2rem}}
 
 /* Quiz */
 .quiz{max-width:760px;width:100%;margin:0 auto}
@@ -732,11 +739,12 @@ const nomBadge=x=>SK().badges[x.id]||x.nom;
 const TIPS=[
   {t:"Apprendre une leçon en 3 tours",d:"1. Je lis la leçon en entier. 2. Je cache et je redis ce que j'ai retenu. 3. Je relis ce que j'avais oublié. Le lendemain, je recommence le tour 2."},
   {t:"Découper un gros travail",d:"Un exposé ou un contrôle, ça se coupe en petits morceaux : un morceau par jour. Note chaque morceau dans tes devoirs."},
-  {t:"Le cartable du soir",d:"Le soir, regarde l'emploi du temps de demain et prépare ton cartable. Le matin, tu n'as plus qu'à partir."},
+  {t:"Le cartable du soir",cartable:true,d:"Le soir, regarde l'emploi du temps de demain et prépare ton cartable. Le matin, tu n'as plus qu'à partir."},
   {t:"Réviser un contrôle",d:"J-3 : je relis la leçon. J-2 : je fais un quiz. J-1 : je revois seulement mes erreurs. Ajoute un contrôle dans Devoirs, je prépare ces étapes pour toi."},
   {t:"Commencer par le plus dur",d:"Fais d'abord le devoir qui te fait le plus peur, quand ton cerveau est encore frais. Le reste ira tout seul."},
   {t:"Le minuteur des 15 minutes",d:"Travaille 15 minutes sans t'arrêter, puis fais une pause de 5 minutes. Deux tours suffisent souvent."},
   {t:"Expliquer pour comprendre",d:"Explique la leçon à quelqu'un de ta famille comme si tu étais le maître. Si tu bloques, c'est le passage à revoir."},
+  {t:"La soirée de pause",pause:true,d:"Le mardi et le vendredi soir, on souffle : joue, lis ce qui te plaît, dors bien. Un cerveau reposé retient mieux."},
 ];
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 
@@ -1875,7 +1883,7 @@ function boutonDefi(id,libelle,attrs){
 const boutonsDefis=()=>`<div class="row">${[2,3,4,5,6,7,8,9].map(n=>boutonDefi('defi:tables-'+n,`× ${n}`,`data-v="tables" data-n="${n}"`)).join('')}${boutonDefi('defi:ortho','Orthographe','data-v="ortho"')}</div>`;
 function vJour(){
   const t=TODAY(),s=serie(),r=S.routine.get(t)||{items:{}};
-  const tip=TIPS[Math.floor(D(t)/86400000)%TIPS.length];
+  const tip=astuceDu(t,TIPS);
   const m=loading()?null:missionDuJour();
   // Déjà travaillé aujourd'hui : mission accomplie (sauf un devoir qui presse ou les bases), une autre seulement s'il la demande.
   const fini=m&&!m.devoir&&!m.base&&s.aujourdhui&&!state.encore;
@@ -1896,8 +1904,8 @@ function vJour(){
   <section class="card"><div class="sec-title"><h3>Mon ${SK().code}</h3><span class="small muted">${nbR}/${rt.length}</span></div>
     <p class="small muted" style="margin:4px 0 8px">+5 étoiles quand tout est coché</p>
     <div class="stack">${rt.map(it=>`<label class="item ${r.items&&r.items[it.id]?'done':''}"><input type="checkbox" class="chk" data-act="routine" data-v="${it.id}" ${r.items&&r.items[it.id]?'checked':''}><span class="grow t">${esc(it.t)}</span></label>`).join('')}</div></section></div>
-  <section class="card"><div class="sec-title"><h3>Défis éclair</h3><span class="small muted">Une fois par jour chacun</span></div>${boutonsDefis()}</section>
-  <section class="tip"><p class="eyebrow">Astuce d'organisation</p><p><strong>${esc(tip.t)}.</strong> ${esc(tip.d)}</p></section>`;
+  <section class="tip tip-jour ${tip.pause?'pause':''}"><p class="eyebrow">Astuce d'organisation</p><h3>${esc(tip.t)}</h3><p>${esc(tip.d)}</p></section>
+  <section class="card"><div class="sec-title"><h3>Défis éclair</h3><span class="small muted">Une fois par jour chacun</span></div>${boutonsDefis()}</section>`;
 }
 
 /* ---- Mes vacances ---- */
