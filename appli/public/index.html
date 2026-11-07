@@ -2139,7 +2139,7 @@ ${its.map(([k,x])=>`- id ${k}:${x.id} (${NOM[k]}, ${M(x.matiere).nom}) : ${x.tit
 Objectifs du programme :
 ${LISTE_COMP(mats.length?mats:null)}
 
-Réponds uniquement en JSON : {"liens":[{"id":"id donné ci-dessus","competences":["identifiant"]}]}`,{modelTier:'default',cache:false});
+Réponds uniquement en JSON : {"liens":[{"id":"id donné ci-dessus","competences":["identifiant"]}]}`,{modelTier:'quick',cache:false});
     let n=0;(r&&Array.isArray(r.liens)?r.liens:[]).forEach(x=>{const [k,id]=String(x.id).split(':');const col=COLL[k],o=col&&S[col].get(id);const cs=compValides(x.competences).slice(0,4);
       if(o&&cs.length){put(col,o.id,{...o,competences:cs,lien:'ia'});n++}else if(o)put(col,o.id,{...o,lien:'ia'})});
     state.relier={};toast(n?`${n} élément${n>1?'s':''} relié${n>1?'s':''} au programme.`:"Je n'ai trouvé aucun lien.");

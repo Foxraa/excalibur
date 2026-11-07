@@ -152,7 +152,7 @@ async function readBody(req, limit = 40e6) {
 }
 
 /* ---------- Claude ---------- */
-// "quick" = petites réponses (vérifier une réponse, réexpliquer) : Haiku, effort bas.
+// "quick" = petites réponses (vérifier une réponse, réexpliquer, relier au programme) : Haiku, effort bas.
 const TIERS = {
   quick: { model: MODEL_QUICK, effort: "low", max_tokens: 4000 },
   default: { model: MODEL, effort: "medium", max_tokens: 32000 },
