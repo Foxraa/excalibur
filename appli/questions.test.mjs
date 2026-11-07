@@ -213,3 +213,30 @@ test("la voix ne donne pas une réponse qu'on entendrait", () => {
 test("sans trou, la voix lit la question sans guillemets", () => {
   assert.equal(texteAEcouter({ type: "vf", question: "Le mot « à » est une **préposition**." }), "Le mot à est une préposition.");
 });
+
+test("le badge du quiz dit où en est la préparation", () => {
+  const { etatBadgeQuiz: b } = globalThis;
+  const q = o => ({ n: 8, i: 0, questions: [], rep: [], attente: true, ...o });
+  const qs = k => Array(k).fill({});
+  assert.equal(b(null), null);
+  assert.equal(b(q({ fini: true })), null);
+  assert.equal(b(q({ gen: true })).texte, "Je prépare ton quiz…");
+  assert.equal(b(q({ questions: qs(3), gen: true })).texte, "Quiz : 3/8 prêtes");
+  assert.deepEqual(b(q({ questions: qs(8) })), { ico: "✅", texte: "Ton quiz est prêt !", ton: "pret" });
+});
+
+test("le badge d'un quiz commencé dit si la question suivante est prête", () => {
+  const { etatBadgeQuiz: b } = globalThis;
+  const q = { n: 8, i: 3, questions: Array(4).fill({}), rep: [{}, {}, {}], attente: false };
+  assert.equal(b(q).texte, "Reprendre mon quiz (question 4/8)");
+  assert.equal(b({ ...q, i: 4, gen: true }).texte, "Question 5/8 en préparation…");
+});
+
+test("le badge signale un échec, sauf si on peut quand même jouer", () => {
+  const { etatBadgeQuiz: b } = globalThis;
+  const q = { n: 8, i: 0, questions: [], rep: [], attente: true };
+  assert.equal(b({ ...q, err: "Oups" }).ton, "souci");
+  assert.equal(b({ ...q, i: 2, questions: Array(2).fill({}), attente: false, genErr: "Oups" }).ton, "souci");
+  assert.equal(b({ ...q, questions: Array(3).fill({}), genErr: "Oups" }).ton, "pret");
+  assert.equal(b({ ...q, i: 2, questions: Array(2).fill({}), attente: false, genErr: "Oups", gen: true }).ton, "attente");
+});

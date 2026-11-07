@@ -156,6 +156,17 @@
     const sansRisque=!!g&&(!qcm||x.choix.some((c,i)=>i!==x.bonne&&g.includes(propre(c))));
     return t.replace(/_{2,}/g,trous.length===1&&sansRisque?bon:'…');
   }
+  // Ce que dit le badge du coin sur le quiz en cours : null s'il n'y a rien à montrer.
+  function etatBadgeQuiz(q){
+    if(!q||q.fini)return null;
+    const k=q.questions.length,commence=!q.attente||q.rep.length>0,echec=!q.gen&&!!q.genErr;
+    if(q.err||(echec&&k<=q.i))return {ico:'⚠️',texte:'Quiz : un souci, appuie ici',ton:'souci'};
+    if(commence)return k>q.i?{ico:'▶️',texte:`Reprendre mon quiz (question ${q.i+1}/${q.n})`,ton:'pret'}:{ico:'⏳',texte:`Question ${q.i+1}/${q.n} en préparation…`,ton:'attente'};
+    if(!k)return {ico:'⏳',texte:'Je prépare ton quiz…',ton:'attente'};
+    if(k>=q.n||echec)return {ico:'✅',texte:'Ton quiz est prêt !',ton:'pret'};
+    return {ico:'⏳',texte:`Quiz : ${k}/${q.n} prêtes`,ton:'attente'};
+  }
+  global.etatBadgeQuiz=etatBadgeQuiz;
   global.controlerQuestion=controlerQuestion;
   global.memeReponse=memeReponse;
   global.texteAEcouter=texteAEcouter;

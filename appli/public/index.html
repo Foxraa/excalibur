@@ -162,13 +162,21 @@ main{padding-block:24px 110px}
 #fab{position:fixed;top:auto;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:40;border-radius:999px;
   --accent:#c2255c;--press:#8a1a42;--accent-ink:#fff;box-shadow:0 4px 0 var(--press),0 12px 24px -8px rgba(0,0,0,.4)}
 #fab[hidden]{display:none}
+/* Le quiz qui se prépare pendant qu'on est ailleurs : en bas à gauche, le coin droit étant pris par le bouton photo. */
+#quiz-badge{position:fixed;top:auto;right:auto;width:auto;left:calc(16px + env(safe-area-inset-left,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:40;border-radius:999px;max-width:calc(100vw - 32px);box-shadow:0 4px 0 var(--press),0 12px 24px -8px rgba(0,0,0,.4)}
+#quiz-badge[hidden]{display:none}
+#quiz-badge[data-ton="attente"]{--accent:#495057;--press:#343a40;--accent-ink:#fff}
+#quiz-badge[data-ton="pret"]{--accent:#2b8a3e;--press:#1e6b2e;--accent-ink:#fff}
+#quiz-badge[data-ton="souci"]{--accent:#c2410c;--press:#8f3009;--accent-ink:#fff}
+@media (prefers-reduced-motion:no-preference){#quiz-badge[data-ton="pret"]{animation:badge-pret .5s cubic-bezier(.2,1.6,.4,1)}}
+@keyframes badge-pret{from{transform:scale(.85)}to{transform:none}}
 /* Accueil d'un cartable neuf : ni onglets ni bouton photo tant qu'il n'est pas terminé */
-[data-accueil] .tabs,[data-accueil] #fab{display:none}
+[data-accueil] .tabs,[data-accueil] #fab,[data-accueil] #quiz-badge{display:none}
 .accueil{max-width:640px;margin:0 auto}
 .accueil .regles{display:grid;gap:8px;margin:0;padding:0;list-style:none}
 .accueil .regles li{display:flex;gap:10px;align-items:baseline}
 .accueil .regles b{flex:none;min-width:2.2em;color:var(--accent)}
-@media (max-width:560px){#fab{padding:12px 18px;min-height:56px;font-size:1rem}}
+@media (max-width:560px){#fab{padding:12px 18px;min-height:56px;font-size:1rem}#quiz-badge{bottom:calc(88px + env(safe-area-inset-bottom,0px))}}
 main .wrap{display:flex;flex-direction:column;gap:22px}
 main .wrap > h2,main .wrap > .sec-title h2{font-size:1.9rem}
 
@@ -620,6 +628,7 @@ html[data-skin="dino"] .fb{border-radius:26px 14px 28px 12px/14px 26px 12px 24px
 </header>
 <main><div class="wrap" id="app"></div></main>
 <button id="fab" class="btn primary big" data-act="tab" data-v="ajouter" hidden><span aria-hidden="true">📷</span> Ajouter une photo</button>
+<button id="quiz-badge" class="btn primary" data-act="quiz-reprendre" hidden></button>
 <div id="toast" aria-live="polite"></div>
 
 <script src="local.js"></script>
@@ -1223,8 +1232,11 @@ async function prepareQuestions(q,jusqua){
   if(state.quiz!==q)return;
   // On ne redessine que si l'enfant attendait cette question : sinon on effacerait ce qu'il est en train d'écrire.
   const attendait=q.loading||q.i>=q.questions.length-(q.genErr?0:1)&&!q.fini;
+  const premieres=q.loading;
   if(q.loading){q.loading=false;if(!q.questions.length)q.err=q.genErr}
-  if(attendait)render();
+  majBadgeQuiz();
+  if(state.view==='quiz'){if(attendait)render()}
+  else if(attendait&&!q.genErr)toast(premieres?'Tes premières questions sont prêtes !':'Ta prochaine question est prête !');
   if(!q.genErr)prefetchQuiz();
 }
 /* Dès que la 1re question est là, on enchaîne la génération des suivantes, une par une,
@@ -1651,7 +1663,7 @@ const MASCOTTE=`<svg class="mascotte" viewBox="0 0 120 120" aria-hidden="true"><
 const MASCOTTE_SKIN={excalibur:MASCOTTE,manga:`<svg class="mascotte" viewBox="0 0 120 120" aria-hidden="true"><ellipse cx="60" cy="112" rx="30" ry="5" fill="#000" opacity=".08"/><path d="M28 30l8 14M92 30l-8 14" stroke="#7048e8" stroke-width="8" stroke-linecap="round"/><ellipse cx="60" cy="68" rx="38" ry="42" fill="#845ef7"/><ellipse cx="60" cy="80" rx="24" ry="26" fill="#e5dbff"/><path d="M44 78q4 3 8 0M56 86q4 3 8 0M68 78q4 3 8 0M50 94q4 3 8 0M62 94q4 3 8 0" stroke="#b197fc" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="44" cy="52" r="15" fill="#fff"/><circle cx="76" cy="52" r="15" fill="#fff"/><g class="oeil"><circle cx="46" cy="53" r="7" fill="#22184a"/><circle cx="48" cy="50" r="2.5" fill="#fff"/></g><g class="oeil"><circle cx="74" cy="53" r="7" fill="#22184a"/><circle cx="76" cy="50" r="2.5" fill="#fff"/></g><path d="M55 64l5 7 5-7z" fill="#ffa94d"/><path d="M22 70q-6 18 10 26M98 70q6 18-10 26" stroke="#7048e8" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M24 36q36-12 72 0v9q-36-12-72 0z" fill="#e03131" stroke="#151417" stroke-width="2.5" stroke-linejoin="round"/><circle cx="60" cy="34" r="5" fill="#fff" stroke="#151417" stroke-width="2"/><path d="M24 38q-10-2-18-10M24 42q-12 2-20-4" stroke="#e03131" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M97 88Q102 62 113 42" stroke="#151417" stroke-width="6" stroke-linecap="round" fill="none"/><path d="M97 88Q102 62 113 42" stroke="#e9ecef" stroke-width="3" stroke-linecap="round" fill="none"/><ellipse cx="96.5" cy="90" rx="7" ry="2.6" transform="rotate(-15 96.5 90)" fill="#151417"/><path d="M95.5 92l-3 12" stroke="#151417" stroke-width="6.5" stroke-linecap="round"/><path d="M95.5 92l-3 12" stroke="#e03131" stroke-width="4" stroke-linecap="round"/></svg>`,fee:`<svg class="mascotte" viewBox="0 0 120 120" aria-hidden="true"><ellipse cx="60" cy="112" rx="30" ry="5" fill="#000" opacity=".08"/><path d="M28 30l8 14M92 30l-8 14" stroke="#7048e8" stroke-width="8" stroke-linecap="round"/><path d="M30 62C4 34-6 70 22 80M90 62c26-28 36 8 8 18" fill="#d0ebff" fill-opacity=".85" stroke="#a5d8ff" stroke-width="2.5"/><ellipse cx="60" cy="68" rx="38" ry="42" fill="#845ef7"/><ellipse cx="60" cy="80" rx="24" ry="26" fill="#e5dbff"/><path d="M44 78q4 3 8 0M56 86q4 3 8 0M68 78q4 3 8 0M50 94q4 3 8 0M62 94q4 3 8 0" stroke="#b197fc" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="44" cy="52" r="15" fill="#fff"/><circle cx="76" cy="52" r="15" fill="#fff"/><g class="oeil"><circle cx="46" cy="53" r="7" fill="#22184a"/><circle cx="48" cy="50" r="2.5" fill="#fff"/></g><g class="oeil"><circle cx="74" cy="53" r="7" fill="#22184a"/><circle cx="76" cy="50" r="2.5" fill="#fff"/></g><path d="M55 64l5 7 5-7z" fill="#ffa94d"/><path d="M22 70q-6 18 10 26M98 70q6 18-10 26" stroke="#7048e8" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M30 34q30-14 60 0" stroke="#69db7c" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="36" cy="31" r="6" fill="#ff8fc7" stroke="#fff" stroke-width="2"/><circle cx="36" cy="31" r="2" fill="#ffd43b"/><circle cx="48" cy="25" r="6" fill="#ffa8a8" stroke="#fff" stroke-width="2"/><circle cx="48" cy="25" r="2" fill="#ffd43b"/><circle cx="60" cy="23" r="6" fill="#ff8fc7" stroke="#fff" stroke-width="2"/><circle cx="60" cy="23" r="2" fill="#ffd43b"/><circle cx="72" cy="25" r="6" fill="#ffa8a8" stroke="#fff" stroke-width="2"/><circle cx="72" cy="25" r="2" fill="#ffd43b"/><circle cx="84" cy="31" r="6" fill="#ff8fc7" stroke="#fff" stroke-width="2"/><circle cx="84" cy="31" r="2" fill="#ffd43b"/><ellipse cx="36" cy="66" rx="5" ry="3" fill="#ff8fc7" opacity=".7"/><ellipse cx="84" cy="66" rx="5" ry="3" fill="#ff8fc7" opacity=".7"/><path d="M100 104V62" stroke="#ae3ec9" stroke-width="5" stroke-linecap="round"/><path d="M100 100V64" stroke="#e599f7" stroke-width="1.6"/><path d="M100 45l3.5 7.3 8 1.1-5.8 5.6 1.4 8-7.1-3.8-7.1 3.8 1.4-8-5.8-5.6 8-1.1z" fill="#ffd43b" stroke="#f08c00" stroke-width="1.8" stroke-linejoin="round"/><path d="M114 44l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1zM86 48l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" fill="#ffd43b"/></svg>`,dino:`<svg class="mascotte" viewBox="0 0 120 120" aria-hidden="true"><ellipse cx="60" cy="112" rx="30" ry="5" fill="#000" opacity=".08"/><path d="M28 30l8 14M92 30l-8 14" stroke="#7048e8" stroke-width="8" stroke-linecap="round"/><ellipse cx="60" cy="68" rx="38" ry="42" fill="#845ef7"/><path d="M24 74q36 14 72 0l-4 34q-32 10-64 0z" fill="#f08c00" stroke="#a35a00" stroke-width="2" stroke-linejoin="round"/><path d="M24 74l8 6 8-6 8 6 8-6 8 6 8-6 8 6 8-6 8 6 8-6" stroke="#a35a00" stroke-width="2" fill="none"/><g fill="#7a4a1f"><ellipse cx="40" cy="90" rx="4" ry="3"/><ellipse cx="58" cy="98" rx="4.5" ry="3"/><ellipse cx="76" cy="90" rx="4" ry="3"/><ellipse cx="66" cy="84" rx="3" ry="2"/><ellipse cx="48" cy="102" rx="3" ry="2"/></g><circle cx="44" cy="52" r="15" fill="#fff"/><circle cx="76" cy="52" r="15" fill="#fff"/><g class="oeil"><circle cx="46" cy="53" r="7" fill="#22184a"/><circle cx="48" cy="50" r="2.5" fill="#fff"/></g><g class="oeil"><circle cx="74" cy="53" r="7" fill="#22184a"/><circle cx="76" cy="50" r="2.5" fill="#fff"/></g><path d="M55 64l5 7 5-7z" fill="#ffa94d"/><path d="M22 70q-6 18 10 26M98 70q6 18-10 26" stroke="#7048e8" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M40 32q4-14 10-6 4-14 10-4 6-12 10 4 8-8 10 6" fill="#5f3dc4"/><g transform="rotate(-14 60 22)"><rect x="44" y="19" width="32" height="6" rx="3" fill="#fff9ec" stroke="#8a6d4b" stroke-width="1.8"/><circle cx="44" cy="18.5" r="4" fill="#fff9ec" stroke="#8a6d4b" stroke-width="1.8"/><circle cx="44" cy="25.5" r="4" fill="#fff9ec" stroke="#8a6d4b" stroke-width="1.8"/><circle cx="76" cy="18.5" r="4" fill="#fff9ec" stroke="#8a6d4b" stroke-width="1.8"/><circle cx="76" cy="25.5" r="4" fill="#fff9ec" stroke="#8a6d4b" stroke-width="1.8"/><rect x="45" y="20" width="30" height="4" fill="#fff9ec"/></g><path d="M100 106V80" stroke="#8d5524" stroke-width="6" stroke-linecap="round"/><path d="M100 84q-11-4-9-18 2-12 9-14 7 2 9 14 2 14-9 18z" fill="#a0652d" stroke="#6b3d16" stroke-width="2" stroke-linejoin="round"/><path d="M95 62l3 2M104 68l-3 2M96 74l3 1" stroke="#6b3d16" stroke-width="1.6" stroke-linecap="round"/><ellipse cx="13" cy="102" rx="9" ry="11" fill="#e9fac8" stroke="#74b816" stroke-width="2.5"/><circle cx="10" cy="98" r="2" fill="#74b816"/><circle cx="16" cy="105" r="2.4" fill="#74b816"/></svg>`};
 const mascotte=()=>MASCOTTE_SKIN[skinId()];
 const state={view:'jour',param:null,quiz:null,add:{images:[],indice:'',date:TODAY(),busy:false,res:null,err:'',sujet:''},scan:{images:[],indice:'',busy:false,res:null,err:''},confirm:null,parent:false,ask:{},chrono:false};
-function go(view,param){state.view=view;state.param=param||null;state.confirm=null;if(view!=='quiz'&&state.quiz&&state.quiz.fini)state.quiz=null;render();window.scrollTo({top:0})}
+function go(view,param){state.view=view;state.param=param||null;state.confirm=null;if(view!=='quiz'){state.nouveauQuiz=null;if(state.quiz&&state.quiz.fini)state.quiz=null}render();window.scrollTo({top:0})}
 let dirty=false;
 function requestRender(force){
   if(!force){
@@ -1678,6 +1690,12 @@ function checkBadges(){
 }
 
 /* ============ Rendu ============ */
+function majBadgeQuiz(){
+  const b=document.getElementById('quiz-badge'),e=state.view==='quiz'?null:etatBadgeQuiz(state.quiz);
+  b.hidden=!e;if(!e)return;
+  const t=`${e.ico} ${e.texte}`;if(b.textContent!==t)b.textContent=t;
+  if(b.dataset.ton!==e.ton)b.dataset.ton=e.ton;
+}
 function renderHeader(){
   renderStrip();
   document.getElementById('devise').textContent=SK().devise();
@@ -1688,6 +1706,7 @@ function renderHeader(){
   document.getElementById('wallet').innerHTML=`<span class="pill or" title="Étoiles disponibles">${STAR}<span>${b.solde}</span></span><span class="pill niv" title="${b.maxi?'Niveau maximum atteint !':`Encore ${b.coutSuivant-b.dansNiveau} étoiles pour devenir ${esc(SK().niveaux[b.niveau+1])}`}"><span>Niv. ${b.niveau+1}<span class="nom"> · ${esc(b.nomNiveau)}</span></span><span class="mini-bar" role="progressbar" aria-label="Vers le niveau suivant" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></span><span class="small muted">${b.maxi?'max':`${b.dansNiveau}/${b.coutSuivant}`}</span></span>`;
   const cur=state.view in GROUPE?GROUPE[state.view]:state.view;
   document.getElementById('fab').hidden=['quiz','defi','ajouter'].includes(state.view);
+  majBadgeQuiz();
   const vac=modeVac();if(vac)document.documentElement.dataset.vac='1';else delete document.documentElement.dataset.vac;
   // La page prend la couleur de l'onglet ouvert (le quiz garde celle d'où l'on vient).
   if(cur)document.documentElement.dataset.sec=cur;
@@ -2327,9 +2346,19 @@ function nouvelleLecon(r,base){
 }
 
 /* ---- Quiz ---- */
+/* La page où revenir si l'enfant fait autre chose pendant que le quiz se prépare. */
+const retourQuiz=()=>state.view==='quiz'?(state.quiz&&state.quiz.retour)||{view:'jour'}:{view:state.view,param:state.param};
 async function lancerQuiz(lecons,niveau,titre,matiere){
   if(!sample){toast("Les quiz ont besoin de l'IA : elle se règle dans l'espace parents.");return}
-  const q=state.quiz={loading:true,attente:true,titre,matiere,niveau,n:NIVEAU_QUIZ[niveau].n,ctx:contexteQuiz(lecons),leconIds:lecons.map(l=>l.id),competences:[...new Set(lecons.flatMap(l=>l.competences||[]))],questions:[],i:0,rep:[],indices:{},extra:{},brouillons:{}};go('quiz');
+  const q=state.quiz;
+  if(q&&!q.fini){
+    if(!q.rep.length&&q.niveau===niveau&&q.leconIds.join()===lecons.map(l=>l.id).join()){go('quiz');return}
+    state.nouveauQuiz={lecons,niveau,titre,matiere,retour:retourQuiz()};go('quiz');return;
+  }
+  return demarrerQuiz(lecons,niveau,titre,matiere);
+}
+async function demarrerQuiz(lecons,niveau,titre,matiere,retour=retourQuiz()){
+  const q=state.quiz={retour,loading:true,attente:true,titre,matiere,niveau,n:NIVEAU_QUIZ[niveau].n,ctx:contexteQuiz(lecons),leconIds:lecons.map(l=>l.id),competences:[...new Set(lecons.flatMap(l=>l.competences||[]))],questions:[],i:0,rep:[],indices:{},extra:{},brouillons:{}};go('quiz');
   await prepareQuestions(q,1);
 }
 /* La leçon à relire pendant que les premières questions se préparent. */
@@ -2353,12 +2382,13 @@ function leconAttente(ids){
 }
 function vQuiz(){
   const q=state.quiz;if(!q)return `<div class="empty">Aucun quiz en cours.</div>`;
+  if(state.nouveauQuiz)return `<div class="quiz card stack"><h2>Un quiz est déjà en cours</h2><p>« ${esc(q.titre)} » n'est pas terminé. Si tu commences « ${esc(state.nouveauQuiz.titre)} », il sera perdu.</p><div class="row"><button class="btn primary" data-act="quiz-garder">Reprendre mon quiz</button><button class="btn" data-act="quiz-remplacer">Commencer le nouveau</button></div></div>`;
   if(q.loading||(q.attente&&!q.err)){
     const lec=leconAttente(q.leconIds);
     if(q.loading||lec){
     const etat=q.loading?attente('Je prépare tes premières questions… En attendant, relis bien ta leçon !')
       :`<div class="row"><button class="btn primary" data-act="quiz-go">C'est prêt ! Je commence le quiz</button></div>`;
-    return `<div class="quiz stack"><div class="card stack"><h2>${esc(q.titre)}</h2>${etat}<button class="btn" data-act="quit-quiz">Annuler</button></div>
+    return `<div class="quiz stack"><div class="card stack"><h2>${esc(q.titre)}</h2>${etat}<div class="row"><button class="btn" data-act="quiz-ailleurs">${q.loading?'Faire autre chose en attendant':'Je reviens plus tard'}</button><button class="btn" data-act="quit-quiz">Annuler</button></div></div>
     ${lec?`<article class="fiche"><div class="stack"><p class="eyebrow">Je relis ma leçon</p>${lec}</div></article>${q.loading?'':`<div class="row"><button class="btn primary" data-act="quiz-go">Je commence le quiz</button></div>`}`:''}</div>`;
     }
   }
@@ -2367,7 +2397,7 @@ function vQuiz(){
   const x=q.questions[q.i],r=q.rep[q.i];
   const dots=Array.from({length:q.n},(_,i)=>`<i class="${q.rep[i]&&!q.rep[i].pending?(q.rep[i].ok?'ok':'ko'):''} ${i===q.i?'cur':''}"></i>`).join('');
   if(!x){
-    const bloc=q.gen||!q.genErr?attente("Je prépare la question suivante, d'après tes réponses…")
+    const bloc=q.gen||!q.genErr?attente("Je prépare la question suivante, d'après tes réponses…")+`<div class="row"><button class="btn" data-act="quiz-ailleurs">Faire autre chose en attendant</button></div>`
       :`<p>${esc(q.genErr)}</p><div class="row"><button class="btn primary" data-act="quiz-regen">Réessayer</button>${q.rep.some(r=>r&&!r.pending)?`<button class="btn" data-act="quiz-finir">Terminer ici</button>`:''}</div>`;
     return `<div class="quiz stack">
     <div class="sec-title"><div><p class="eyebrow">${esc(NIVEAU_QUIZ[q.niveau].label)} · ${esc(M(q.matiere).nom)}</p><h2>${esc(q.titre)}</h2></div><button class="btn ghost" data-act="quit-quiz">Arrêter</button></div>
@@ -2425,7 +2455,7 @@ async function repondre(v){
     if(ok||!sample||dictee)q.rep[q.i]={v,ok};
     else{q.rep[q.i]={v,pending:true};render();const idx=q.i;try{const r=await verifierCourte(x,v,fr);q.rep[idx]={v,ok:r.ok,commentaire:r.commentaire}}catch(e){q.rep[idx]={v,ok:false,commentaire:"Je n'ai pas pu vérifier en détail, compare avec la bonne réponse."}}}
   }
-  render();
+  if(state.view==='quiz')render();else majBadgeQuiz();
   if(state.quiz===q)prefetchQuiz();
 }
 function finirQuiz(){
@@ -2729,8 +2759,12 @@ document.addEventListener('click',async e=>{
     case 'mode-del':state.delMode=!state.delMode;render();break;
     case 'quiz-lecon':{const l=S.lecons.get(id)||refLecon(id);if(l)lancerQuiz([l],el.dataset.niveau||'normal',l.titre,l.matiere);break}
     case 'quiz-matiere':{const ls=all('lecons').filter(l=>l.matiere===v).sort((a,b)=>a.date<b.date?1:-1).slice(0,8);if(ls.length)lancerQuiz(ls,el.dataset.niveau||'normal','Révision : '+M(v).nom,v);break}
+    case 'quiz-reprendre':go('quiz');break;
+    case 'quiz-ailleurs':{const r=state.quiz&&state.quiz.retour||{view:'jour'};go(r.view,r.param);break}
+    case 'quiz-garder':state.nouveauQuiz=null;render();break;
+    case 'quiz-remplacer':{const c=state.nouveauQuiz;state.nouveauQuiz=null;if(c)demarrerQuiz(c.lecons,c.niveau,c.titre,c.matiere,c.retour);break}
     case 'quiz-go':{if(state.quiz)state.quiz.attente=false;render();window.scrollTo(0,0);break}
-    case 'retry-quiz':{const q=state.quiz;const ls=q.leconIds.map(i=>S.lecons.get(i)||progLecon(i)||refLecon(i)).filter(Boolean);if(ls.length)lancerQuiz(ls,q.niveau,q.titre,q.matiere);break}
+    case 'retry-quiz':{const q=state.quiz;const ls=q.leconIds.map(i=>S.lecons.get(i)||progLecon(i)||refLecon(i)).filter(Boolean);if(ls.length)demarrerQuiz(ls,q.niveau,q.titre,q.matiere);break}
     case 'quit-quiz':{const q=state.quiz;state.quiz=null;if(q&&String(q.leconIds[0]).startsWith('prog:')){if(state.parent)go('programme',q.matiere);else go('jour');break}if(q&&String(q.leconIds[0]).startsWith('ref:')){go('cours',String(q.leconIds[0]).slice(4));break}go(q&&q.leconIds.length===1&&S.lecons.has(q.leconIds[0])?'lecon':'jour',q&&q.leconIds[0]);break}
     case 'rep':repondre(v);break;
     case 'indice':state.quiz.indices[state.quiz.i]=true;render();break;
@@ -2742,7 +2776,7 @@ document.addEventListener('click',async e=>{
     case 'quiz-finir':{const q=state.quiz;if(q){finirQuiz();render()}break}
     case 'explique':{const q=state.quiz,x=q.questions[q.i],r=q.rep[q.i],idx=q.i;q.extra[idx]={busy:true};render();
       try{const {text}=await sample(`${ROLE()}\n\n${prenom()} n'a pas bien compris cette question de quiz.\nQuestion : « ${texteQuestion(x)} »\nSa réponse : « ${x.type==='qcm'?x.choix[r.v]:x.type==='vf'?(r.v?'Vrai':'Faux'):r.v} »\nExplication déjà donnée : « ${x.explication} »\nRéexplique autrement, en 120 à 180 mots, avec une autre approche que l'explication déjà donnée : commence par comprendre pourquoi sa réponse lui a semblé juste, puis utilise une image ou un exemple de la vie de tous les jours, déroule le raisonnement pas à pas sur la question, et finis par une astuce pour ne plus se tromper. Pas de titre, pas de liste à puces.`,{modelTier:'quick'});q.extra[idx]={text}}catch(err){q.extra[idx]={};toast(errMsg(err))}
-      if(state.quiz===q)render();break}
+      if(state.quiz===q&&state.view==='quiz')render();break}
     case 'rm-img':state.add.images.splice(Number(v),1);render();break;
     case 'reset-add':state.add={images:[],indice:'',date:TODAY(),busy:false,res:null,err:'',sujet:''};render();break;
     case 'analyser':{const a=state.add;a.indice=(document.getElementById('add-indice')||{}).value||'';a.date=(document.getElementById('add-date')||{}).value||TODAY();a.busy=true;a.debut=Date.now();a.err='';render();
