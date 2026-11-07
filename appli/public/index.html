@@ -1274,9 +1274,9 @@ const ptsNote=n=>{const p=n.valeur/n.sur;return neuf(jourDe(n))?5:p>=.8?10:p>=.6
 const ptsLecon=l=>neuf(jourDe(l))?5:3;
 const ptsVac=(k,date)=>neuf(date)?5:{lu:2,rentree:2,bonus:1}[k];
 const bonusMission=date=>neuf(date)?0:5;
-/* Monter du niveau n au suivant (n compté depuis 0) coûte 150 étoiles, puis 25 de plus à chaque niveau.
-   Le niveau 50 demande 36 750 étoiles au total : plusieurs années de travail. */
-const coutNiveau=n=>150+25*n;
+/* Monter du niveau n au suivant (n compté depuis 0) coûte 150 étoiles, puis 40 de plus à chaque niveau.
+   Le niveau 50 demande 54 390 étoiles au total : plusieurs années de travail. */
+const coutNiveau=n=>150+40*n;
 function niveauDe(total){
   const max=SK().niveaux.length-1;
   let niveau=0,reste=total;
@@ -1292,6 +1292,18 @@ function bonusNiveaux(g,niveau){
     while(n<niveau&&cumul>=palier){n++;bonus.push({pts:n+1,date:x.date,why:`Niveau ${n+1} atteint : ${SK().niveaux[n]}`});palier+=coutNiveau(n)}
   }
   return bonus;
+}
+/* Tous les 10 niveaux, l'enfant choisit une récompense offerte. La demande passe par les parents comme les autres :
+   c'est un achat à 0 étoile marqué du palier. Si elle est refusée, le cadeau reste à choisir. */
+const PALIER_CADEAU=10;
+function cadeauxRang(b){
+  const paliers=[];
+  for(let p=PALIER_CADEAU;p<=b.niveau+1;p+=PALIER_CADEAU)if(!all('achats').some(a=>a.palier===p&&a.statut!=='refusé'))paliers.push(p);
+  return paliers;
+}
+function prochainCadeau(b){
+  const p=(Math.floor((b.niveau+1)/PALIER_CADEAU)+1)*PALIER_CADEAU;
+  return p<=SK().niveaux.length?p:null;
 }
 function bilan(){
   const g=[];
@@ -1685,7 +1697,7 @@ function renderHeader(){
   if(document.documentElement.dataset.skin!==skin){document.documentElement.dataset.skin=skin;document.querySelector('#brand svg').outerHTML=LOGO[skin];majIcone(skin)}
   const b=bilan();
   const pct=b.maxi?100:Math.floor(b.dansNiveau/b.coutSuivant*100);
-  document.getElementById('wallet').innerHTML=`<span class="pill or" title="Étoiles disponibles">${STAR}<span>${b.solde}</span></span><span class="pill niv" title="${b.maxi?'Niveau maximum atteint !':`Encore ${b.coutSuivant-b.dansNiveau} étoiles pour devenir ${esc(SK().niveaux[b.niveau+1])}`}"><span>Niv. ${b.niveau+1}<span class="nom"> · ${esc(b.nomNiveau)}</span></span><span class="mini-bar" role="progressbar" aria-label="Vers le niveau suivant" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></span><span class="small muted">${b.maxi?'max':`${b.dansNiveau}/${b.coutSuivant}`}</span></span>`;
+  document.getElementById('wallet').innerHTML=`<span class="pill or" title="Étoiles disponibles">${STAR}<span>${b.solde}</span></span><span class="pill niv" title="${b.maxi?'Niveau maximum atteint !':`Encore ${b.coutSuivant-b.dansNiveau} étoiles pour devenir ${esc(SK().niveaux[b.niveau+1])}`}"><span>${cadeauxRang(b).length?'<span title="Un cadeau t\'attend dans tes récompenses">🎁</span> ':''}Niv. ${b.niveau+1}<span class="nom"> · ${esc(b.nomNiveau)}</span></span><span class="mini-bar" role="progressbar" aria-label="Vers le niveau suivant" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></span><span class="small muted">${b.maxi?'max':`${b.dansNiveau}/${b.coutSuivant}`}</span></span>`;
   const cur=state.view in GROUPE?GROUPE[state.view]:state.view;
   document.getElementById('fab').hidden=['quiz','defi','ajouter'].includes(state.view);
   const vac=modeVac();if(vac)document.documentElement.dataset.vac='1';else delete document.documentElement.dataset.vac;
@@ -2534,15 +2546,17 @@ function vRecompenses(){
   const b=bilan();const rec=all('recompenses').sort((a,c)=>a.cout-c.cout);const ach=all('achats').sort((a,c)=>c.createdAt-a.createdAt);
   return `<h2>Mes récompenses</h2>
   <section class="card hello"><div><p class="eyebrow">${SK().tresor}</p><h2 class="row">${STAR.replace('width="16" height="16"','width="34" height="34"')} ${b.solde} étoiles</h2><p class="muted small">${b.total} gagnées depuis le début, ${b.spent} échangées.</p></div>
-    <div style="min-width:230px"><div class="row small" style="justify-content:space-between"><span>Niveau ${b.niveau+1} · ${esc(b.nomNiveau)}</span><span class="muted">${b.maxi?'max':`${b.dansNiveau}/${b.coutSuivant}`}</span></div><div class="bar"><i style="width:${b.maxi?100:Math.floor(b.dansNiveau/b.coutSuivant*100)}%"></i></div><p class="small muted" style="margin-top:6px">${!b.maxi?`Prochain niveau : ${esc(SK().niveaux[b.niveau+1])}`:'Niveau maximum atteint !'}</p></div></section>
+    <div style="min-width:230px"><div class="row small" style="justify-content:space-between"><span>Niveau ${b.niveau+1} · ${esc(b.nomNiveau)}</span><span class="muted">${b.maxi?'max':`${b.dansNiveau}/${b.coutSuivant}`}</span></div><div class="bar"><i style="width:${b.maxi?100:Math.floor(b.dansNiveau/b.coutSuivant*100)}%"></i></div><p class="small muted" style="margin-top:6px">${!b.maxi?`Prochain niveau : ${esc(SK().niveaux[b.niveau+1])}${prochainCadeau(b)?`. Cadeau offert au niveau ${prochainCadeau(b)}.`:''}`:'Niveau maximum atteint !'}</p></div></section>
+  ${cadeauxRang(b).map(p=>`<section class="card stack"><h3>🎁 Cadeau du niveau ${p}</h3><p>Bravo ! Choisis une récompense : elle est offerte, sans dépenser tes étoiles. Tes parents la valident ensuite.</p>${rec.length?rec.map(r=>`<div class="reward"><span class="t">${esc(r.titre)}</span><button class="btn primary" data-act="cadeau-rang" data-id="${r.id}" data-v="${p}">Je la choisis</button></div>`).join(''):`<div class="empty">Pas encore de récompense. Demande à tes parents d'en ajouter dans l'espace parents.</div>`}</section>`).join('')}
   <section class="card stack"><h3>Échanger mes étoiles</h3>
     ${rec.length?rec.map(r=>`<div class="reward"><span class="t">${esc(r.titre)}</span><span class="row"><span class="cost">${STAR} ${r.cout}</span><button class="btn ${b.solde>=r.cout?'primary':''}" data-act="demander" data-id="${r.id}" ${b.solde>=r.cout?'':'disabled'}>${b.solde>=r.cout?'Je la demande':`Encore ${r.cout-b.solde}`}</button></span></div>`).join(''):`<div class="empty">Pas encore de récompense. Demande à tes parents d'en ajouter dans l'espace parents.</div>`}
-    ${ach.length?`<p class="eyebrow" style="margin-top:6px">Mes demandes</p>${ach.slice(0,8).map(a=>`<div class="item small"><span class="grow">${esc(a.titre)} · ${esc(shortDate(a.date))}</span><span class="status ${a.statut==='validé'?'ok':a.statut==='refusé'?'no':'wait'}">${a.statut==='demandé'?'En attente des parents':a.statut==='validé'?'Accordée':'Refusée (étoiles rendues)'}</span></div>`).join('')}`:''}</section>
+    ${ach.length?`<p class="eyebrow" style="margin-top:6px">Mes demandes</p>${ach.slice(0,8).map(a=>`<div class="item small"><span class="grow">${esc(a.titre)} · ${esc(shortDate(a.date))}</span><span class="status ${a.statut==='validé'?'ok':a.statut==='refusé'?'no':'wait'}">${a.statut==='demandé'?'En attente des parents':a.statut==='validé'?'Accordée':a.palier?'Refusée (à choisir de nouveau)':'Refusée (étoiles rendues)'}</span></div>`).join('')}`:''}</section>
   <section class="card"><h3>Mes badges</h3><div class="badges">${BADGES.map(x=>{const on=x.test();return `<div class="badge ${on?'':'lock'}">${BADGE_SVG(on)}<b>${esc(nomBadge(x))}</b><span>${esc(x.desc)}</span></div>`}).join('')}</div></section>
   <section class="card"><h3>Comment gagner des étoiles</h3><div class="regles">
     <div class="regle"><b>+1</b><span>pour chaque bonne réponse, dans un quiz ou un défi éclair</span></div>
     <div class="regle"><b>+5</b><span>pour chaque chose finie : un quiz, un défi, un devoir coché, une leçon rangée, une note rentrée, ton ${SK().code} complet, une tâche de vacances</span></div>
     <div class="regle"><b>×2</b><span>sans faute : les étoiles du quiz sont doublées</span></div>
+    <div class="regle"><b>🎁</b><span>chaque niveau te rapporte autant d'étoiles que son numéro, et tous les ${PALIER_CADEAU} niveaux une récompense est offerte</span></div>
     <div class="regle"><b>÷2</b><span>quiz Facile, tables de 2, 5 ou 10, ou quiz déjà réussi cette semaine (le quart si déjà réussi 2 fois)</span></div></div></section>
   <section class="card"><h3>Dernières étoiles gagnées</h3><div class="stack">${b.gains.slice(0,10).map(g=>`<div class="item small"><span class="grow">${esc(g.why)}</span><span class="muted">${esc(shortDate(g.date))}</span><span class="cost">+${g.pts}</span></div>`).join('')||'<div class="empty">Ton premier quiz te rapportera tes premières étoiles.</div>'}</div></section>
 `;
@@ -2647,7 +2661,7 @@ function vParents(){
   const ach=all('achats').filter(a=>a.statut==='demandé');const rec=all('recompenses').sort((a,b)=>a.cout-b.cout);
   return `${vSemaine()}<section class="card stack"><div class="sec-title"><h3>Espace parents</h3><button class="btn ghost" data-act="parent-off">Fermer</button></div>
     <p class="eyebrow">Suivi scolaire</p><div class="row"><button class="btn primary" data-act="tab" data-v="programme">🗺️ Programme CM1 : où en est ${esc(prenom())}</button></div>
-    <p class="eyebrow">Demandes à valider</p>${ach.length?ach.map(a=>`<div class="reward"><span>${esc(a.titre)} <span class="cost">${a.cout}</span></span><span class="row"><button class="btn primary" data-act="valider" data-id="${a.id}">Accorder</button><button class="btn" data-act="refuser" data-id="${a.id}">Refuser</button></span></div>`).join(''):'<p class="small muted">Aucune demande en attente.</p>'}
+    <p class="eyebrow">Demandes à valider</p>${ach.length?ach.map(a=>`<div class="reward"><span>${esc(a.titre)} <span class="cost">${a.palier?'offert':a.cout}</span></span><span class="row"><button class="btn primary" data-act="valider" data-id="${a.id}">Accorder</button><button class="btn" data-act="refuser" data-id="${a.id}">Refuser</button></span></div>`).join(''):'<p class="small muted">Aucune demande en attente.</p>'}
     <p class="eyebrow">Récompenses proposées</p>${rec.map(r=>`<div class="reward"><span>${esc(r.titre)}</span><span class="row"><span class="cost">${r.cout}</span><button class="btn ghost danger" data-act="del-rec" data-id="${r.id}">Retirer</button></span></div>`).join('')}
     <form class="form-grid" data-form="rec"><label class="f">Nouvelle récompense<input type="text" id="rec-t" name="titre" required></label><label class="f">Prix en étoiles<input type="number" id="rec-c" name="cout" min="1" value="50" required></label><div><button class="btn">Ajouter</button></div></form>
     ${!rec.length?`<div><button class="btn" data-act="suggestions">Ajouter des récompenses suggérées</button></div>`:''}
@@ -2690,7 +2704,7 @@ function vAccueil(){
         <li><b>+5</b><span>quand tu finis un quiz, un devoir, ta routine du soir ou quand tu ajoutes une leçon</span></li>
         <li><b>×2</b><span>les étoiles d'un quiz réussi sans faute</span></li>
       </ul>
-      <p>Il faut ${coutNiveau(0)} étoiles pour monter d'un niveau, puis un peu plus à chaque fois : ${SK().niveaux.slice(0,3).map(esc).join(', ')}… jusqu'au niveau ${SK().niveaux.length}, ${esc(SK().niveaux[SK().niveaux.length-1])} ! Chaque niveau atteint te rapporte autant d'étoiles que son numéro : 5 étoiles au niveau 5.</p>
+      <p>Il faut ${coutNiveau(0)} étoiles pour monter d'un niveau, puis un peu plus à chaque fois : ${SK().niveaux.slice(0,3).map(esc).join(', ')}… jusqu'au niveau ${SK().niveaux.length}, ${esc(SK().niveaux[SK().niveaux.length-1])} ! Chaque niveau atteint te rapporte autant d'étoiles que son numéro : 5 étoiles au niveau 5. Et tous les ${PALIER_CADEAU} niveaux, tu choisis une récompense offerte !</p>
       <p>Dans <b>Mon trésor</b>, tu échanges tes étoiles contre une récompense : tu la demandes, et tes parents la valident.${rec.length?' Pour l\'instant :':''}</p>
       ${rec.length?`<div class="stack">${rec.map(r=>`<div class="item"><span class="grow">${esc(r.titre)}</span><span class="cost">${STAR} ${r.cout}</span></div>`).join('')}</div>`:''}
       <div><button class="btn primary" data-act="acc-fin" data-autofocus>C'est parti !</button></div>`}
@@ -2759,6 +2773,7 @@ document.addEventListener('click',async e=>{
         sc.res=r}catch(err){console.warn('agenda',err);sc.err=errMsg(err)}
       sc.busy=false;render();break}
     case 'demander':{const r=S.recompenses.get(id);const b=bilan();if(r&&b.solde>=r.cout){put('achats',uid(),{recompenseId:id,titre:r.titre,cout:r.cout,statut:'demandé',date:TODAY(),createdAt:Date.now()});toast('Demande envoyée à tes parents !');confettis()}break}
+    case 'cadeau-rang':{const r=S.recompenses.get(id),p=Number(v);if(r&&cadeauxRang(bilan()).includes(p)){put('achats',uid(),{recompenseId:id,titre:`Cadeau du niveau ${p} : ${r.titre}`,cout:0,palier:p,statut:'demandé',date:TODAY(),createdAt:Date.now()});toast('Demande envoyée à tes parents !');confettis()}break}
     case 'valider':{const a=S.achats.get(id);if(a)put('achats',id,{...a,statut:'validé'});break}
     case 'refuser':{const a=S.achats.get(id);if(a)put('achats',id,{...a,statut:'refusé'});break}
     case 'del-rec':del('recompenses',id);break;
