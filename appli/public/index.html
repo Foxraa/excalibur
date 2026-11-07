@@ -334,6 +334,10 @@ details summary{cursor:pointer;font-weight:700;color:var(--accent);min-height:40
 .defi .trou{display:inline-block;min-width:3.2em;border-bottom:4px dotted var(--accent);color:var(--accent);font-weight:700}
 .defi input.rep{font-size:2rem;text-align:center;width:7ch;font-variant-numeric:tabular-nums}
 .defi .chrono{font-variant-numeric:tabular-nums}
+/* La barre donne le temps restant : elle reste animée même avec « réduire les animations ». */
+.tempsq{height:12px;border-radius:99px;background:var(--line);overflow:hidden}
+.tempsq i{display:block;height:100%;background:var(--accent);transform-origin:left;animation:tempsq linear forwards}
+@keyframes tempsq{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 .stat{background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:8px 10px;min-width:0;text-align:center}
 .stat:nth-child(1){border-color:#f2c200;background:linear-gradient(180deg,#fffbe6,#fff3bf)} .stat:nth-child(1) b{color:#a36b00}
 .stat:nth-child(2){border-color:#ff922b;background:linear-gradient(180deg,#fff4e6,#ffe8cc)} .stat:nth-child(2) b{color:#c2410c}
@@ -1560,11 +1564,22 @@ function lancerDefi(type,n){
     // 4 calculs d'autres tables pour réviser, tous différents (4 × 2 et 2 × 4 comptent pour un).
     const m=[],vus=new Set();
     while(m.length<4){const a=pick(autres),b=2+Math.floor(Math.random()*8),k=Math.min(a,b)+'x'+Math.max(a,b);if(b===n||vus.has(k))continue;vus.add(k);m.push([a,b])}
-    qs=[...f,...m].sort(()=>Math.random()-.5).map(([a,b])=>Math.random()<.5?[a,b]:[b,a]).map(([a,b])=>({type:'courte',question:`${a} × ${b}`,reponses:[String(a*b)],competence:'maths-4-1'}));
+    const p=periodeDefi(COURS,COURS&&semaineDuJour());
+    qs=[...f,...m].sort(()=>Math.random()-.5).map(([a,b])=>Math.random()<.5?[a,b]:[b,a]).map(([a,b])=>({type:'courte',question:`${a} × ${b}`,reponses:[String(a*b)],competence:'maths-4-1',limite:limiteCalcul(a,b,p)}));
   }else{
     qs=[...ORTHO_VAC].sort(()=>Math.random()-.5).slice(0,10).map(([p,c,b,ex])=>({type:'qcm',question:p,choix:c,bonne:b,explication:ex,competence:'francais-4-6'}));
   }
-  state.defi={type,n,questions:qs,i:0,rep:[],debut:Date.now(),fini:false};go('defi');
+  state.defi={type,n,questions:qs,i:0,rep:[],debut:Date.now(),fini:false};armerDefi(state.defi);go('defi');
+}
+/* Le chrono des tables : un seul minuteur par calcul. Après « Arrêter » ou un nouveau défi, defiActif empêche tout passage automatique. */
+const defiActif=(d,i)=>state.view==='defi'&&state.defi===d&&d.i===i&&!d.fini;
+function armerDefi(d){
+  const x=d.questions[d.i],i=d.i;if(!x.limite)return;
+  d.debutQ=Date.now();
+  d.minuteur=setTimeout(()=>{if(!defiActif(d,i)||d.rep[i])return;d.rep[i]={v:'',ok:false,lent:true};render();enchainerDefi(d)},x.limite*1000);
+}
+function enchainerDefi(d){
+  const i=d.i;setTimeout(()=>{if(defiActif(d,i)){suiteDefi();window.scrollTo({top:0})}},d.rep[i].ok?800:2000);
 }
 function vDefi(){
   const d=state.defi;if(!d)return `<div class="empty">Aucun défi en cours.</div><button class="btn" data-act="tab" data-v="jour">Retour</button>`;
@@ -1574,35 +1589,37 @@ function vDefi(){
       <p class="eyebrow">${esc(titre)}</p><div class="score">${d.score}/${d.total}</div><p style="font-size:1.15rem">${esc(pct===1?pick(SK().bravo.top):pct>=.75?pick(SK().bravo.bien):pct>=.5?pick(SK().bravo.moyen):pick(SK().bravo.bas))}</p>
       <p class="muted">En ${Math.floor(d.duree/60)?Math.floor(d.duree/60)+' min ':''}${d.duree%60} s</p><span class="pill">${STAR} +${d.etoiles} étoiles</span>${detailEtoiles(d)}
       <div class="row" style="justify-content:center"><button class="btn primary" data-act="tab" data-v="jour">Retour à mes vacances</button></div></section>
-      ${d.fautes.length?`<section class="card stack"><h3>Je revois mes erreurs</h3>${d.fautes.map(x=>`<div class="answer"><strong>${x.type==='courte'?esc(x.question)+' = '+esc(x.reponses[0]):esc(x.question.replace('___',x.choix[x.bonne]))}</strong>${x.explication?`<p class="small">${rich(x.explication)}</p>`:''}</div>`).join('')}</section>`:''}</div>`}
+      ${d.fautes.length?`<section class="card stack"><h3>Je revois mes erreurs</h3>${d.fautes.map(x=>`<div class="answer"><strong>${x.type==='courte'?esc(x.question)+' = '+esc(x.reponses[0]):esc(x.question.replace('___',x.choix[x.bonne]))}</strong>${x.lent?' (trop lent)':''}${x.explication?`<p class="small">${rich(x.explication)}</p>`:''}</div>`).join('')}</section>`:''}</div>`}
   const x=d.questions[d.i],r=d.rep[d.i];
   const dots=d.questions.map((_,i)=>`<i class="${d.rep[i]?(d.rep[i].ok?'ok':'ko'):''} ${i===d.i?'cur':''}"></i>`).join('');
   let body;
-  if(x.type==='courte')body=`<p class="big-q">${esc(x.question)} = ${r?`<span style="color:var(--${r.ok?'ok':'bad'})">${esc(r.v)}</span>`:'?'}</p>
+  if(x.type==='courte')body=`<p class="big-q">${esc(x.question)} = ${r?`<span style="color:var(--${r.ok?'ok':'bad'})">${r.lent?'…':esc(r.v)}</span>`:'?'}</p>
     ${r?'':`<form class="row" data-form="defi" style="justify-content:center"><input class="rep" type="text" inputmode="numeric" name="v" autocomplete="off" aria-label="Ta réponse" data-autofocus required><button class="btn primary big">OK</button></form>`}`;
   else body=`<p class="phrase">${esc(x.question).replace('___',`<span class="trou">${r?esc(x.choix[r.v]):'?'}</span>`)}</p>
     <div class="choices" style="grid-template-columns:repeat(${x.choix.length},1fr)">${x.choix.map((c,i)=>`<button class="choice ${r?(i===x.bonne?'right':(r.v===i?'wrong':'')):''}" data-act="defi-rep" data-v="${i}" ${r?'disabled':''}>${esc(c)}</button>`).join('')}</div>`;
-  const fb=r?`<div class="fb ${r.ok?'ok':'ko'}"><span class="h">${r.ok?pick(['Bravo !','Exact !',...SK().touche]):'Pas tout à fait…'}</span>${!r.ok?`<p>La bonne réponse : <strong>${esc(x.type==='courte'?x.reponses[0]:x.choix[x.bonne])}</strong></p>`:''}${x.explication?`<p>${rich(x.explication)}</p>`:''}
-    <div class="row"><button class="btn primary" data-act="defi-suite" data-autofocus>${d.i<d.questions.length-1?'Suivant':'Voir mon résultat'}</button></div></div>`:'';
+  const fb=r?`<div class="fb ${r.ok?'ok':'ko'}"><span class="h">${r.ok?pick(['Bravo !','Exact !',...SK().touche]):r.lent?'Trop lent !':'Pas tout à fait…'}</span>${!r.ok?`<p>La bonne réponse : <strong>${esc(x.type==='courte'?x.reponses[0]:x.choix[x.bonne])}</strong></p>`:''}${x.explication?`<p>${rich(x.explication)}</p>`:''}
+    ${x.limite?'':`<div class="row"><button class="btn primary" data-act="defi-suite" data-autofocus>${d.i<d.questions.length-1?'Suivant':'Voir mon résultat'}</button></div>`}</div>`:'';
+  const barre=x.limite&&!r?`<div class="tempsq" role="presentation"><i style="animation-duration:${x.limite}s;animation-delay:${-(Date.now()-d.debutQ)/1000}s"></i></div>`:'';
   return `<div class="quiz defi stack">
     <div class="sec-title"><div><p class="eyebrow">${d.type==='tables'?`8 calculs de la table de ${d.n}, 4 d'autres tables`:'Rien qu’avec ta tête'}</p><h2>${esc(titre)}</h2></div><button class="btn ghost" data-act="tab" data-v="jour">Arrêter</button></div>
     <div class="dots" aria-label="Question ${d.i+1} sur ${d.questions.length}">${dots}</div>
-    <section class="card stack"><span class="small muted">Question ${d.i+1} / ${d.questions.length}</span>${body}${fb}</section></div>`;
+    <section class="card stack"><span class="small muted">Question ${d.i+1} / ${d.questions.length}</span>${barre}${body}${fb}</section></div>`;
 }
 function repDefi(v){
   const d=state.defi,x=d&&d.questions[d.i];if(!x||d.rep[d.i])return;
   if(x.type==='courte'){const s=String(v).replace(/\s/g,'');d.rep[d.i]={v:s,ok:s===x.reponses[0]}}
   else{v=Number(v);d.rep[d.i]={v,ok:v===x.bonne}}
-  render();
+  clearTimeout(d.minuteur);render();
+  if(x.limite)enchainerDefi(d);
 }
 function suiteDefi(){
   const d=state.defi;if(!d)return;
-  if(d.i<d.questions.length-1){d.i++;render();return}
+  if(d.i<d.questions.length-1){d.i++;armerDefi(d);render();return}
   d.score=d.rep.filter(r=>r.ok).length;d.total=d.questions.length;d.duree=Math.round((Date.now()-d.debut)/1000);
-  const ce=calculEtoiles({...d,defi:true,leconIds:[d.type==='tables'?'defi:tables-'+d.n:'defi:ortho']});d.etoiles=ce.pts;d.detailEtoiles=ce.detail;d.fautes=d.questions.filter((_,i)=>!d.rep[i].ok);d.fini=true;
+  const ce=calculEtoiles({...d,defi:true,leconIds:[d.type==='tables'?'defi:tables-'+d.n:'defi:ortho']});d.etoiles=ce.pts;d.detailEtoiles=ce.detail;d.fautes=d.questions.map((x,i)=>({...x,lent:d.rep[i].lent})).filter((_,i)=>!d.rep[i].ok);d.fini=true;
   const titre=d.type==='tables'?`Défi éclair : table de ${d.n}`:'Défi éclair : orthographe',mv=nbMissions();
   put('quiz',uid(),{leconIds:[d.type==='tables'?'defi:tables-'+d.n:'defi:ortho'],competences:comp([d.type==='tables'?'maths-4-1':'francais-4-6']),matiere:d.type==='tables'?'maths':'francais',titre,niveau:'normal',defi:true,duree:d.duree,
-    date:TODAY(),createdAt:Date.now(),questions:d.questions,reponses:d.rep.map(r=>({v:r.v,ok:r.ok})),score:d.score,total:d.total,etoiles:d.etoiles,detailEtoiles:d.detailEtoiles,pointuesOk:0,termine:true});
+    date:TODAY(),createdAt:Date.now(),questions:d.questions,reponses:d.rep.map(r=>({v:r.v,ok:r.ok,lent:r.lent})),score:d.score,total:d.total,etoiles:d.etoiles,detailEtoiles:d.detailEtoiles,pointuesOk:0,termine:true});
   gagne(d.etoiles,d.score===d.total?'Défi parfait !':'');annonceMission(mv);
 }
 
@@ -1696,15 +1713,16 @@ const mascotte=()=>MASCOTTE_SKIN[skinId()];
 const state={view:'jour',param:null,quiz:null,add:{images:[],indice:'',date:TODAY(),busy:false,res:null,err:'',sujet:''},scan:{images:[],indice:'',busy:false,res:null,err:''},confirm:null,parent:false,ask:{},chrono:false};
 function go(view,param){state.view=view;state.param=param||null;state.confirm=null;if(view!=='quiz'){state.nouveauQuiz=null;if(state.quiz&&state.quiz.fini)state.quiz=null}render();window.scrollTo({top:0})}
 let dirty=false;
+const enExercice=()=>(state.view==='quiz'&&state.quiz&&!state.quiz.fini)||(state.view==='defi'&&state.defi&&!state.defi.fini);
 function requestRender(force){
   if(!force){
-    if(state.view==='quiz'&&state.quiz&&!state.quiz.fini){dirty=true;renderHeader();return}
+    if(enExercice()){dirty=true;renderHeader();return}
     const a=document.activeElement;
     if(a&&app.contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&a.type!=='checkbox'){dirty=true;renderHeader();return}
   }
   render();
 }
-document.addEventListener('focusout',()=>setTimeout(()=>{const a=document.activeElement;if(dirty&&!(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))&&!(state.view==='quiz'&&state.quiz&&!state.quiz.fini)){dirty=false;render()}},150));
+document.addEventListener('focusout',()=>setTimeout(()=>{const a=document.activeElement;if(dirty&&!(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))&&!enExercice()){dirty=false;render()}},150));
 
 function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.getElementById('toast').appendChild(t);setTimeout(()=>t.remove(),3200)}
 function confettis(){const cols=['var(--star)','var(--accent)','var(--marge)','var(--ok)'];for(let i=0;i<36;i++){const c=document.createElement('i');c.className='confetti';c.style.left=Math.random()*100+'vw';c.style.background=cols[i%4];c.style.animationDelay=(Math.random()*.5)+'s';document.body.appendChild(c);setTimeout(()=>c.remove(),2400)}}
