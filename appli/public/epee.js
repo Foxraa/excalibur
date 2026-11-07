@@ -11,8 +11,8 @@
   ];
   const SEUILS={
     reponsesMin:3,        // en dessous, trop peu de réponses pour juger : rouge
-    baclePct:.7,          // un quiz sous ce taux de réussite ...
-    bacleSecParQuestion:10, // ... répondu en moins de ce temps par question est bâclé
+    baclePct:.5,          // un quiz sous ce taux de réussite ...
+    bacleSecParQuestion:12, // ... répondu en moins de ce temps par question est bâclé
     orangePct:.5,         // sous ce taux de réussite : orange
     justessePct:.7,       // sous ce taux : jaune
     tempsSec:900,         // 15 minutes de travail pour passer au vert
