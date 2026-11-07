@@ -29,7 +29,7 @@ Dans l'ordre :
 | 🔵 Bleu | Au moins 85 % de bonnes réponses, 15 minutes de travail et au moins un vrai quiz |
 | 🟢 Vert | Tous les autres cas |
 
-- **Quiz bâclé :** moins de 50 % de bonnes réponses et moins de 12 secondes par question. Les deux sont nécessaires : un 12/12 très rapide sur les tables reste du vrai travail.
+- **Quiz bâclé :** moins de 50 % de bonnes réponses et moins de 12 secondes par question. Les deux sont nécessaires : un 12/12 très rapide sur les tables reste du vrai travail. Un défi chronométré (questions à limite de temps) n'est jamais considéré comme bâclé.
 - **Vrai quiz :** un quiz, pas un défi, ni en mode Facile, ni déjà réussi à 80 % dans les 7 jours.
 - **La couleur ne descend jamais :** l'appli rejoue les quiz du jour un par un et garde la meilleure couleur atteinte.
 - **Temps de travail :** du début à la fin du quiz, sans l'attente de l'IA et avec 3 minutes maximum par question, pour qu'une pause ne compte pas. Pour les défis, on reprend la durée déjà enregistrée.

@@ -669,7 +669,7 @@ const ROUTINE=[
 /* Les skins, choisis dans l'espace parents : le vocabulaire, le logo et la mascotte d'attente changent avec l'habillage.
    Excalibur (chevaliers) est celui par défaut ; les autres ajoutent leur style dans la feuille de style (html[data-skin="…"]). */
 const SKINS={
-  excalibur:{nom:'Excalibur · chevaliers',ico:'⚔️',arme:{nom:'Épée',ton:'ton épée',feminin:true},
+  excalibur:{nom:'Excalibur · chevaliers',ico:'⚔️',arme:{nom:'Épée',pluriel:'épées',ton:'ton épée',feminin:true},
     devise:()=>`L'épée du savoir ${deP()}, chevalier de CM1`,
     niveaux:`Page|Apprenti d'écurie|Porteur de bouclier|Porteur de lance|Écuyer|Écuyer du château|Écuyer d'honneur|Garde du pont-levis|Garde du donjon|Sentinelle des remparts|Archer du roi|Cavalier|Cavalier du royaume|Chevalier|Chevalier de bronze|Chevalier d'acier|Chevalier d'argent|Chevalier d'or|Chevalier du Lion|Chevalier de l'Aigle|Chevalier du Dragon|Chevalier errant|Protecteur des villages|Vainqueur de tournoi|Champion du tournoi|Champion du roi|Élève de Merlin|Compagnon de Merlin|Porteur de bannière|Capitaine de la garde|Commandant du donjon|Baron|Vicomte|Comte|Marquis|Duc|Conseiller du roi|Main droite du roi|Chevalier de la Table ronde|Héros de la Table ronde|Chercheur du Graal|Gardien du Graal|Ami de la Dame du Lac|Protecteur de Camelot|Seigneur de Camelot|Maître des dragons|Gardien d'Excalibur|Porteur d'Excalibur|Héros de Camelot|Légende de Camelot`.split('|'),
   bravo:{
@@ -683,7 +683,7 @@ const SKINS={
     serie:n=>`${n} jours de suite, bravo ! Un vrai chevalier de la Table ronde.`,fier:'Bravo, Camelot est fier de toi !',
     code:'code du chevalier',tresor:'Le trésor du château',accueil:'Bienvenue au château !',heros:'Le chevalier',
     role:'comme un jeune chevalier (quête, épée, dragon à vaincre)',badges:{}},
-  manga:{nom:'Manga · héros',ico:'💥',arme:{nom:'Katana',ton:'ton katana',feminin:false},theme:'en manga',
+  manga:{nom:'Manga · héros',ico:'💥',arme:{nom:'Katana',pluriel:'katanas',ton:'ton katana',feminin:false},theme:'en manga',
     devise:()=>`Le pouvoir du savoir ${deP()}, héros de CM1`,
     niveaux:`Débutant|Balayeur du dojo|Apprenti|Ceinture blanche|Ceinture jaune|Ceinture orange|Ceinture verte|Ceinture bleue|Ceinture marron|Ceinture noire|Disciple|Disciple appliqué|Disciple du sabre|Apprenti ninja|Ninja de l'ombre|Ninja du vent|Héros|Héros de bronze|Héros d'argent|Héros d'or|Héros de platine|Héros du quartier|Héros de la ville|Rival redoutable|Samouraï|Samouraï errant|Samouraï du clan|Champion du tournoi|Capitaine d'équipe|Senpai|Grand senpai|Maître du sabre|Maître du shuriken|Maître des éléments|Esprit du feu|Esprit de la foudre|Protecteur du village|Chef de clan|Sensei|Grand sensei|Gardien du torii|Héros national|Héros du monde|Héros de la galaxie|Maître ultime|Gardien du dojo|Shogun|Grand shogun|Légende vivante|Légende du dojo`.split('|'),
     bravo:{
@@ -697,7 +697,7 @@ const SKINS={
     code:'code du héros',tresor:'Le trésor du dojo',accueil:'Bienvenue au dojo !',heros:'Le héros',
     role:'comme le héros d\'un manga (mission, entraînement, pouvoir, boss à battre)',
     badges:{b1:'Premier chapitre',b2:'Premier combat',b3:'Coup parfait',b4:'Attaque précise',b5:'Entraînement de 3 jours',b6:'Semaine de héros',b7:'Disciple fidèle',b8:'Grand voyageur',b9:'Bibliothèque du sensei',b10:'Code du héros',b11:'Le retour du héros',b12:'Médaille d\'or'}},
-  fee:{nom:'Fée · magie',ico:'🧚',arme:{nom:'Baguette',ton:'ta baguette',feminin:true},theme:'en monde des fées',
+  fee:{nom:'Fée · magie',ico:'🧚',arme:{nom:'Baguette',pluriel:'baguettes',ton:'ta baguette',feminin:true},theme:'en monde des fées',
     devise:()=>`La magie du savoir ${deP()}, fée de CM1`,
     niveaux:`Petite graine|Jeune pousse|Bourgeon|Pétale|Fleur des champs|Goutte de rosée|Papillon|Luciole|Luciole dorée|Lutin|Lutin farceur|Lutin jardinier|Gnome des racines|Ami des écureuils|Ami des licornes|Elfe des bois|Elfe des rivières|Esprit de la forêt|Esprit du vent|Esprit de la pluie|Élève de magie|Baguette de noisetier|Baguette de cristal|Fée de la rosée|Fée des fleurs|Fée des papillons|Fée d'argent|Fée de la pluie|Fée des saisons|Fée d'or|Fée de l'arc-en-ciel|Fée de la lune|Fée du soleil|Fée des étoiles|Fée des comètes|Reine des abeilles|Reine des fleurs|Reine des licornes|Reine de la forêt|Étoile filante|Aurore boréale|Gardienne de la source|Gardienne de la lune|Grande enchanteresse|Reine des fées|Impératrice des fées|Esprit des étoiles|Magie éternelle|Légende de la forêt|Légende enchantée`.split('|'),
     bravo:{
@@ -711,7 +711,7 @@ const SKINS={
     code:'code de la fée',tresor:'Le trésor de la forêt enchantée',accueil:'Bienvenue dans la forêt enchantée !',heros:'La fée',
     role:'comme une petite fée ou un apprenti magicien (baguette, formule magique, sortilège à réussir)',
     badges:{b1:'Premier grimoire',b2:'Premier sortilège',b3:'Baguette parfaite',b4:'Formule précise',b5:'Trois jours de magie',b6:'Semaine enchantée',b7:'Lutin fidèle',b8:'Voyage enchanté',b9:'Bibliothèque des fées',b10:'Code de la fée',b11:'Ailes du courage',b12:'Poussière d\'or'}},
-  dino:{nom:'Préhisto · dinosaures',ico:'🦖',arme:{nom:'Massue',ton:'ta massue',feminin:true},theme:'à l\'âge de pierre, avec des dinosaures',
+  dino:{nom:'Préhisto · dinosaures',ico:'🦖',arme:{nom:'Massue',pluriel:'massues',ton:'ta massue',feminin:true},theme:'à l\'âge de pierre, avec des dinosaures',
     devise:()=>`Le feu du savoir ${deP()}, petit sapiens de CM1`,
     niveaux:`Œuf de dino|Œuf qui craque|Bébé dino|Petit tricératops|Ramasseur de cailloux|Cueilleur|Cueilleur de baies|Pêcheur de la rivière|Pisteur|Chasseur|Chasseur de mammouth|Tailleur de silex|Tailleur de lances|Peintre des cavernes|Conteur des cavernes|Ami des tricératops|Ami des diplodocus|Allumeur de feu|Gardien du feu|Gardien de la grotte|Gardien des œufs|Éclaireur de la vallée|Explorateur du volcan|Chercheur de fossiles|Cavalier de stégosaure|Cavalier de diplodocus|Cavalier de ptérodactyle|Guerrier à massue|Guerrier du volcan|Sage de la tribu|Chamane|Grand chamane|Chef de la tribu|Chef des tribus|Dompteur de vélociraptor|Dompteur de tricératops|Dompteur de ptérodactyle|Dompteur d'ankylosaure|Dompteur de spinosaure|Dompteur de T. rex|Ami du T. rex|Roi de la vallée|Roi du volcan|Maître des glaciers|Maître des dinos|Seigneur du Jurassique|Seigneur du Crétacé|Titan de la préhistoire|Héros de la préhistoire|Légende de la préhistoire`.split('|'),
     bravo:{
@@ -1541,7 +1541,7 @@ function dessinEpee(couleur){
 // Le bloc de la carte « bonjour » : dessin, couleur en toutes lettres, et un conseil encourageant.
 function carteEpee(){
   const note=noteEpee(),arme=SK().arme;
-  return `<div class="epee-carte">${dessinEpee(note&&note.couleur)}<div><b>${note?esc(nomEpee(note,arme)):`${esc(arme.nom)} au repos`}</b><small>${esc(note?conseilEpee(note,arme):'Fais un quiz pour la réveiller.')}</small></div></div>`;
+  return `<div class="epee-carte">${dessinEpee(note&&note.couleur)}<div><b>${note?esc(nomEpee(note,arme)):`${esc(arme.nom)} au repos`}</b><small>${esc(note?conseilEpee(note,arme):'Fais un quiz pour commencer.')}</small></div></div>`;
 }
 const IDEES_VAC=[
   "Aide à préparer une recette : c'est toi qui mesures les grammes et les centilitres.",
@@ -1730,10 +1730,10 @@ function renderStrip(){
 /* Quatre onglets. Les autres écrans vivent dans un onglet (GROUPE), avec des sous-onglets (SOUS). */
 const TABS=[['jour',"Aujourd'hui"],['matieres','Apprendre'],['devoirs','Devoirs'],['recompenses','Mon trésor']];
 const GROUPE={matiere:'matieres',lecon:'matieres',annee:'matieres',cours:'matieres',ajouter:'matieres',notes:'recompenses',epees:'recompenses',parents:'recompenses',programme:'recompenses',defi:'jour',quiz:''};
-const SOUS={matieres:[['matieres','📚 Mes leçons'],['annee','📅 Mon année']],recompenses:[['recompenses','👑 Mes étoiles'],['epees','⚔️ Mes épées'],['notes','📊 Mes notes'],['parents','🔒 Espace parents']]};
+const SOUS={matieres:[['matieres','📚 Mes leçons'],['annee','📅 Mon année']],recompenses:[['recompenses','👑 Mes étoiles'],['epees',()=>`${skinId()==='excalibur'?'⚔️':'✨'} Mes ${SK().arme.pluriel.toLowerCase()}`],['notes','📊 Mes notes'],['parents','🔒 Espace parents']]};
 function sousOnglets(){
   const v=state.view==='programme'?'parents':state.view,g=Object.keys(SOUS).find(k=>SOUS[k].some(([x])=>x===v));if(!g)return '';
-  return `<nav class="matpick sous" aria-label="Dans cet onglet">${SOUS[g].map(([x,l])=>`<button class="btn" style="--m:var(--accent)" data-act="tab" data-v="${x}" aria-pressed="${x===v}">${l}</button>`).join('')}</nav>`;
+  return `<nav class="matpick sous" aria-label="Dans cet onglet">${SOUS[g].map(([x,l])=>`<button class="btn" style="--m:var(--accent)" data-act="tab" data-v="${x}" aria-pressed="${x===v}">${typeof l==='function'?l():l}</button>`).join('')}</nav>`;
 }
 // Pictogramme de chaque onglet : un enfant qui lit encore lentement reconnaît l'image avant le mot.
 const TAB_ICO={jour:'☀️',matieres:'📚',ajouter:'📷',programme:'🗺️',annee:'📅',devoirs:'✏️',notes:'📊',recompenses:'👑'};
@@ -2548,7 +2548,7 @@ async function repondre(v){
     const dictee=x.oral&&fr; // l'orthographe est ce qu'on vérifie : ni tolérance, ni correction par l'IA
     const n=norm(v);const ok=dictee?x.reponses.some(a=>memeEcriture(v,a)):x.reponses.some(a=>{const b=norm(a);return b&&(memeReponse(n,b)||(b.length>3&&n.includes(b))||(!fr&&procheOrtho(v,a)))});
     if(ok||!sample||dictee)q.rep[q.i]={v,ok};
-    else{q.rep[q.i]={v,pending:true};render();const idx=q.i;try{const r=await verifierCourte(x,v,fr);q.rep[idx]={v,ok:r.ok,commentaire:r.commentaire}}catch(e){q.rep[idx]={v,ok:false,commentaire:"Je n'ai pas pu vérifier en détail, compare avec la bonne réponse."}}}
+    else{q.rep[q.i]={v,pending:true};render();const idx=q.i,debut=Date.now();try{const r=await verifierCourte(x,v,fr);q.rep[idx]={v,ok:r.ok,commentaire:r.commentaire}}catch(e){q.rep[idx]={v,ok:false,commentaire:"Je n'ai pas pu vérifier en détail, compare avec la bonne réponse."}}if(q.t0)q.t0+=Date.now()-debut} // l'attente de l'IA ne compte pas dans la durée
   }
   if(state.view==='quiz')render();else majBadgeQuiz();
   if(state.quiz===q)prefetchQuiz();
@@ -2637,10 +2637,11 @@ function chartNotes(ns){
 /* ---- Mes épées : une épée par jour travaillé, et un commentaire sur la dynamique ---- */
 function vEpees(){
   const arme=SK().arme,js=joursEpees(all('quiz'),TODAY(),new Date().getHours()),com=dynamique(js,arme);
-  return `<h2>Mes épées</h2>
+  const mot=arme.pluriel.toLowerCase(),nom=arme.nom.toLowerCase();
+  return `<h2>Mes ${esc(mot)}</h2>
   ${js.length?`${com?`<section class="card"><p>${esc(com)}</p></section>`:''}
-  <section class="card stack">${js.map(j=>`<div class="item" style="gap:12px;align-items:center"><span style="width:30px;flex:none">${dessinEpee(j.note.couleur)}</span><div class="grow"><b>${esc(longDate(j.date))}</b><br><small class="muted">${Math.round(j.note.pct*100)} % de bonnes réponses</small></div><b style="color:${COULEURS_EPEE.find(x=>x.id===j.note.couleur).c}">${esc(nomEpee(j.note,arme))}</b></div>`).join('')}</section>`
-  :`<div class="empty">Ton premier quiz forgera ta première épée.</div>`}`;
+  <section class="card stack">${js.map(j=>`<div class="item" style="gap:12px;align-items:center"><span style="width:30px;flex:none">${dessinEpee(j.note.couleur)}</span><div class="grow"><b>${esc(longDate(j.date))}</b><br><small class="muted">${Math.round(j.note.pct*100)} % de bonnes réponses</small></div><b style="color:var(--ink)">${esc(nomEpee(j.note,arme))}</b></div>`).join('')}</section>`
+  :`<div class="empty">${noteDuJour(all('quiz'),TODAY())?`${esc(arme.ton[0].toUpperCase()+arme.ton.slice(1))} arrive ici ce soir à 18 h.`:`Ton premier quiz forgera ${arme.feminin?'ta première':'ton premier'} ${esc(nom)}.`}</div>`}`;
 }
 function vNotes(){
   const ns=all('notes').sort((a,b)=>a.date<b.date?1:-1);const moy=moyenne(ns);
@@ -2880,8 +2881,9 @@ document.addEventListener('click',async e=>{
     case 'suivant':{const q=state.quiz;if(q.t0)q.ms=(q.ms||0)+tempsQuestion(Date.now()-q.t0);if(q.i<q.n-1){q.i++;render();prefetchQuiz()}else{finirQuiz();render()}window.scrollTo({top:0});break}
     case 'quiz-regen':{const q=state.quiz;if(q){q.genErr=null;render();prepareQuestions(q,q.i+1)}break}
     case 'quiz-finir':{const q=state.quiz;if(q){finirQuiz();render()}break}
-    case 'explique':{const q=state.quiz,x=q.questions[q.i],r=q.rep[q.i],idx=q.i;q.extra[idx]={busy:true};render();
+    case 'explique':{const q=state.quiz,x=q.questions[q.i],r=q.rep[q.i],idx=q.i;q.extra[idx]={busy:true};render();const debut=Date.now();
       try{const {text}=await sample(`${ROLE()}\n\n${prenom()} n'a pas bien compris cette question de quiz.\nQuestion : « ${texteQuestion(x)} »\nSa réponse : « ${x.type==='qcm'?x.choix[r.v]:x.type==='vf'?(r.v?'Vrai':'Faux'):r.v} »\nExplication déjà donnée : « ${x.explication} »\nRéexplique autrement, en 120 à 180 mots, avec une autre approche que l'explication déjà donnée : commence par comprendre pourquoi sa réponse lui a semblé juste, puis utilise une image ou un exemple de la vie de tous les jours, déroule le raisonnement pas à pas sur la question, et finis par une astuce pour ne plus se tromper. Pas de titre, pas de liste à puces.`,{modelTier:'quick'});q.extra[idx]={text}}catch(err){q.extra[idx]={};toast(errMsg(err))}
+      if(q.t0)q.t0+=Date.now()-debut; // l'attente de l'IA ne compte pas dans la durée
       if(state.quiz===q&&state.view==='quiz')render();break}
     case 'rm-img':state.add.images.splice(Number(v),1);render();break;
     case 'reset-add':state.add={images:[],indice:'',date:TODAY(),busy:false,res:null,err:'',sujet:''};render();break;
