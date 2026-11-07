@@ -86,6 +86,25 @@
     return {question:{...x,question:t,reponses:[...corrige,faute]}};
   }
 
+  // « Comment la légende t'aide-t-elle ? » → « En consultant la légende » : relire la question suffit.
+  // En français et en anglais, retrouver un mot dans une phrase est souvent l'exercice lui-même.
+  const MATIERES_SAVOIR=new Set(['maths','sciences','histoire','geographie','emc']);
+  const MOTS_VIDES=new Set("les une des aux dans sur sous avec par pour grâce ce cet cette ces son ses mon mes ton tes elle ils elles nous vous est sont qui que quoi faut regarder regarde regardant lire lit lisant consulter consulte consultant utiliser utilise utilisant observer observe observant chercher cherche cherchant oui non vrai faux".split(' '));
+  const motsCles=s=>(propre(sansDetail(s)).replace(/(?<!\p{L})en \p{L}+ant(?!\p{L})/gu,' ').match(/[\p{L}\p{N}]+/gu)||[]).filter(m=>m.length>2&&!MOTS_VIDES.has(m)).map(m=>m.replace(/[sx]$/,''));
+  function reponseRepetee(x,t,{matiere}={}){
+    if(!MATIERES_SAVOIR.has(matiere))return false;
+    const lus=new Set(motsCles(t));
+    const repete=r=>{const m=motsCles(r);return !/\d/.test(r)&&m.length>0&&m.every(w=>lus.has(w))};
+    if(x.type==='courte'){
+      const reps=(Array.isArray(x.reponses)?x.reponses:[]).map(String).filter(Boolean);
+      return reps.length>0&&reps.every(repete);
+    }
+    if(x.type!=='qcm'||!Array.isArray(x.choix))return false;
+    const bonne=Number(x.bonne),autres=x.choix.filter((_,i)=>i!==bonne);
+    // Une question qui nomme les choix (« une légende et une échelle ») peut en nommer plusieurs : là, il faut réfléchir.
+    return repete(String(x.choix[bonne]??''))&&autres.filter(c=>repete(String(c))).length*2<autres.length;
+  }
+
   function controlerVf(x,t){
     const bonne=x.bonne===true||x.bonne==='true'||x.bonne==='vrai';
     if(CONSIGNE.test(t))return {refus:"c'est une consigne, pas une affirmation à juger vrai ou faux"};
@@ -150,6 +169,7 @@
     if(CHERCHE_FAUTE.test(t)){const f=controlerFaute(x,t,ctx);if(f)return f}
     // En français, passé le premier niveau, une phrase à trou de 4 mots ne fait pas réfléchir.
     if(ctx.matiere==='francais'&&Number(x.difficulte)>=2&&/_{2,}/.test(t)&&(t.match(PHRASE)?.[1]??t).trim().split(/\s+/).length<MOTS_MIN_TROU)return {refus:`phrase à trou trop simple : au moins ${MOTS_MIN_TROU} mots, avec un vrai contexte`};
+    if(reponseRepetee(x,t,ctx))return {refus:'la bonne réponse répète les mots de la question : demander quelque chose qui ne se devine pas en la relisant'};
     if(x.type==='vf')return controlerVf(x,t);
     if(x.type==='courte')return controlerCourte(x,t,ctx);
     if(x.type==='qcm')return controlerQcm(x,t);

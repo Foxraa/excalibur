@@ -302,3 +302,24 @@ test("le badge signale un échec, sauf si on peut quand même jouer", () => {
   assert.equal(b({ ...q, questions: Array(3).fill({}), genErr: "Oups" }).ton, "pret");
   assert.equal(b({ ...q, i: 2, questions: Array(2).fill({}), attente: false, genErr: "Oups", gen: true }).ton, "attente");
 });
+
+const LEGENDE = "Sur une carte, si tu vois une grande rivière bleue, comment la légende t'aide-t-elle à savoir que ce trait représente bien une rivière et non une route ?";
+const qcm = (question, choix, bonne = 0, matiere = "geographie") => c({ type: "qcm", question, choix, bonne }, { matiere });
+
+test("la bonne réponse ne se contente pas de répéter la question", () => {
+  assert.ok(qcm(LEGENDE, ["En consultant la légende", "En utilisant l'échelle", "En mesurant le trait", "En regardant le titre"]).refus);
+  assert.ok(qcm("À quoi sert la légende d'une carte ?", ["À lire la légende", "À mesurer"]).refus);
+  assert.ok(c({ type: "courte", question: "Comment la légende t'aide-t-elle à lire une carte ?", reponses: ["avec la légende"] }, { matiere: "geographie" }).refus);
+});
+
+test("une réponse citée dans la question reste permise si elle n'est pas seule, ou si elle apporte du neuf", () => {
+  assert.ok(qcm("Une carte a une légende et une échelle. Quel outil explique les symboles ?", ["la légende", "l'échelle", "le titre"]).question);
+  assert.ok(qcm("À quoi sert la légende d'une carte ?", ["À expliquer les symboles", "À mesurer les distances"]).question);
+  assert.ok(qcm("Marie court 3 km puis 200 mètres. Quelle distance en mètres ?", ["3 200 mètres", "500 mètres"], 0, "maths").question);
+  assert.ok(qcm("Cette carte a-t-elle une légende ?", ["Oui", "Non"]).question);
+});
+
+test("en français et en anglais, retrouver un mot dans la phrase est l'exercice", () => {
+  assert.ok(qcm("Dans la phrase Le chat dort, quel mot est le verbe ?", ["dort", "chien", "table"], 0, "francais").question);
+  assert.ok(qcm("Which word is a colour in : the red car ?", ["red", "dog"], 0, "anglais").question);
+});
