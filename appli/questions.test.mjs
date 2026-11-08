@@ -337,3 +337,36 @@ test("une image décrite avec des mots reste permise", () => {
   assert.ok(c({ type: "qcm", question: "Sur une photo de campagne, on voit une forêt, un champ de blé et une route. Quel élément est naturel ?", choix: ["la forêt", "la route", "le champ"], bonne: 0 }, geo).question);
   assert.ok(c({ type: "qcm", question: "Sur une carte, où trouves-tu ce que veut dire un trait bleu ?", choix: ["dans la légende", "dans le titre"], bonne: 0 }, geo).question);
 });
+
+const PHOTOS = { matiere: "geographie", photos: ["rural-bocage", "village-gordes"] };
+const surPhoto = (question, image, ctx = PHOTOS) => c({ type: "qcm", question, image, choix: ["des vaches", "des moutons"], bonne: 0 }, ctx);
+
+test("une question peut montrer une photo de la liste", () => {
+  const r = surPhoto("Sur la photo, quels animaux broutent dans le pré ?", "rural-bocage").question;
+  assert.equal(r.image, "rural-bocage");
+  assert.ok(surPhoto("Dans le paysage que tu observes, quels animaux vois-tu au second plan ?", "rural-bocage").question);
+});
+
+test("une photo qui n'existe pas, ou dans une matière sans photos, est refusée", () => {
+  assert.ok(surPhoto("Sur la photo, quels animaux vois-tu ?", "rural-moutons").refus);
+  assert.ok(surPhoto("Sur la photo, quels animaux vois-tu ?", "rural-bocage", { matiere: "sciences", photos: [] }).refus);
+});
+
+test("sans photo choisie, « sur la photo » ne montre rien", () => {
+  assert.ok(surPhoto("Sur la photo, quels animaux broutent dans le pré ?", undefined).refus);
+  assert.ok(surPhoto("Dans cette image, quels animaux vois-tu ?", "").refus);
+});
+
+test("chaque photo de paysage a son fichier, sa description et son auteur", async () => {
+  const fs = await import("node:fs");
+  await import("./public/paysages.js");
+  const { PAYSAGES, photosPour } = globalThis;
+  assert.ok(PAYSAGES.length >= 10);
+  assert.equal(new Set(PAYSAGES.map((p) => p.id)).size, PAYSAGES.length);
+  for (const p of PAYSAGES) {
+    assert.ok(fs.existsSync(new URL(`./public/${p.fichier}`, import.meta.url)), p.fichier);
+    assert.ok(p.description.length > 200 && p.auteur && p.licence && p.source.startsWith("https://commons.wikimedia.org/"), p.id);
+  }
+  assert.equal(photosPour("geographie"), PAYSAGES);
+  assert.deepEqual(photosPour("maths"), []);
+});
