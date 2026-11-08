@@ -14,6 +14,15 @@
     return ids.length === Object.keys(b).length && ids.every(id => id in b && JSON.stringify(a[id]) === JSON.stringify(b[id]));
   };
 
+  // En-têtes d'écriture : le jeton parent (window.claude.parent) part avec chaque écriture quand il existe.
+  const entetes = extra => Object.assign({}, extra, window.claude && window.claude.parent ? { 'x-parent': window.claude.parent } : {});
+  // Erreur d'écriture : le serveur dit « parent » (jeton manquant) ou « invalide » (document incohérent).
+  async function refus(r) {
+    let code = r.status === 413 ? 'quota_exceeded' : 'save_failed';
+    if (r.status === 403 || r.status === 400) { try { code = (await r.json()).code || (r.status === 403 ? 'parent' : 'invalide'); } catch (e) { code = r.status === 403 ? 'parent' : 'invalide'; } }
+    return { code };
+  }
+
   const db = {
     collection(col) {
       return {
@@ -24,15 +33,18 @@
             async set(data) {
               pending++;
               try {
-                const r = await fetch(url, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(data) });
-                if (!r.ok) throw { code: r.status === 413 ? 'quota_exceeded' : 'save_failed' };
+                const r = await fetch(url, { method: 'PUT', headers: entetes({ 'content-type': 'application/json' }), body: JSON.stringify(data) });
+                if (!r.ok) throw await refus(r);
                 (cache[col] = cache[col] || {})[id] = data;
               } finally { pending--; ecritures++; }
             },
             async delete() {
               pending++;
-              try { await fetch(url, { method: 'DELETE' }); if (cache[col]) delete cache[col][id]; }
-              finally { pending--; ecritures++; }
+              try {
+                const r = await fetch(url, { method: 'DELETE', headers: entetes() });
+                if (!r.ok) throw await refus(r);
+                if (cache[col]) delete cache[col][id];
+              } finally { pending--; ecritures++; }
             },
           };
         },

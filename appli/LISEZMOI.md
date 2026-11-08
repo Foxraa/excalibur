@@ -61,6 +61,10 @@ L'épée du jour va du rouge au bleu et ne redescend jamais dans la journée. Ro
 
 Il est gardé haché par le serveur. On ne peut donc pas le lire dans la page, même avec les outils du navigateur. Code oublié : supprimer la ligne `config / pin` de la base, puis en créer un nouveau.
 
+Le bon code ouvre une session de 15 minutes, comptées depuis la dernière action. Le serveur la reconnaît à un jeton que la page garde en mémoire. Elle se ferme quand on quitte l'espace parents, au bout de 15 minutes sans rien faire, ou si le serveur redémarre : la page redemande alors le code. Tant que la session est ouverte, rien d'autre n'est demandé.
+
+Sans session, le serveur refuse ce qui relève des parents : les récompenses, la validation des demandes, les réglages, le programme, et le réglage de l'IA. Les données de l'enfant (leçons, quiz, notes) restent libres. Tant qu'aucun code n'existe, tout est permis.
+
 ## Les calculs des quiz
 
 L'IA donne l'opération de chaque question de calcul, et le cartable refait le calcul lui-même. Si l'IA s'est trompée dans son corrigé, la bonne réponse est rétablie, ou la question est écartée.

@@ -797,11 +797,33 @@ async function initStore(){
 }
 async function put(col,id,data){
   const clean={...data};delete clean.id;
+  const avant=S[col].get(id);
   S[col].set(id,{...clean,id});requestRender(true);
-  if(db){try{await db.collection(col).doc(id).set(JSON.parse(JSON.stringify(clean)))}catch(e){toast(e.code==='quota_exceeded'?"Le cartable est plein : supprime d'anciennes leçons.":"Je n'ai pas pu enregistrer. Vérifie ta connexion.");console.warn(e)}}
+  if(db){try{await db.collection(col).doc(id).set(JSON.parse(JSON.stringify(clean)))}catch(e){refusEcriture(col,id,avant,e)}}
   else saveLocal();
 }
-async function del(col,id){S[col].delete(id);requestRender(true);if(db){try{await db.collection(col).doc(id).delete()}catch(e){console.warn(e)}}else saveLocal()}
+async function del(col,id){
+  const avant=S[col].get(id);
+  S[col].delete(id);requestRender(true);
+  if(db){try{await db.collection(col).doc(id).delete()}catch(e){refusEcriture(col,id,avant,e)}}else saveLocal()
+}
+// Écriture refusée : on remet l'ancienne valeur (sinon la synchro ne la corrigerait jamais), puis on prévient.
+// Jeton parent refusé (expiré ou serveur redémarré) : l'espace parents se ferme, une seule fois même si plusieurs écritures échouent.
+function refusEcriture(col,id,avant,e){
+  console.warn(e);
+  if(avant===undefined)S[col].delete(id);else S[col].set(id,avant);
+  if(e&&e.code==='parent'){if(state.parent||state.jeton)finParent('Code parent demandé à nouveau.')}
+  else toast(e&&e.code==='invalide'?"Ce document n'est pas valide, je ne l'ai pas enregistré.":e&&e.code==='quota_exceeded'?"Le cartable est plein : supprime d'anciennes leçons.":"Je n'ai pas pu enregistrer. Vérifie ta connexion.");
+  requestRender(true);
+}
+// Ferme la session parent : le serveur oublie le jeton, la page aussi. À n'appeler qu'une fois les écritures parents terminées.
+function finParent(message){
+  const j=state.jeton;state.jeton='';if(window.claude)window.claude.parent=null;
+  state.parent=false;state.iaf=null;
+  if(j)fetch('/api/pin',{method:'DELETE',headers:{'x-parent':j}}).catch(()=>{});
+  if(message)toast(message);
+}
+
 const all=c=>[...S[c].values()];
 const cfg=()=>S.config.get('main')||{};
 /* Prénom de l'enfant, réglé dans l'espace parents. deP()/queP() font l'élision : « d'Emma », « de Léa ». */
@@ -2788,8 +2810,9 @@ async function envoyerIA({essai=false,oublierCle=false}={}){
   const fd=Object.fromEntries(new FormData(form));
   f.url=fd.ollamaUrl||f.url;f.modele=fd.ollamaModel||f.modele;f.busy=true;f.msg='';render();
   let r;
-  try{r=await fetch('/api/ia',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({pin:state.pinParent,essai,oublierCle,ia:f.mode==='claude'?'claude':'ollama',ollamaUrl:f.mode==='reseau'?fd.ollamaUrl:'',ollamaModel:fd.ollamaModel||'',cle:fd.cle||''})}).then(x=>x.json())}
+  try{r=await fetch('/api/ia',{method:'POST',headers:{'content-type':'application/json','x-parent':state.jeton||''},body:JSON.stringify({essai,oublierCle,ia:f.mode==='claude'?'claude':'ollama',ollamaUrl:f.mode==='reseau'?fd.ollamaUrl:'',ollamaModel:fd.ollamaModel||'',cle:fd.cle||''})}).then(x=>x.json())}
   catch(e){r={ok:false,code:'network'}}
+  if(r.code==='parent'){finParent('Code parent demandé à nouveau.');render();return}
   f.busy=false;f.ok=!!r.ok;f.msg=oublierCle?'':iaRetour(f,r);if(r.modeles)f.modeles=r.modeles;
   if(r.enregistre){
     await brancherIA();
@@ -2799,6 +2822,11 @@ async function envoyerIA({essai=false,oublierCle=false}={}){
   }
   render();
 }
+// D'où viennent les étoiles : les gains des 7 derniers jours, pour juger une demande en connaissance de cause.
+function etoilesDetail(){
+  const depuis=addDays(TODAY(),-7),g=bilan().gains.filter(x=>x.date>=depuis);
+  return `<details class="small"><summary>D'où viennent les étoiles (7 derniers jours)</summary>${g.length?g.map(x=>`<div class="reward"><span>${esc(x.date)} · ${esc(x.why)}</span><span class="cost">+${x.pts}</span></div>`).join(''):'<p class="small muted">Aucun gain ces 7 derniers jours.</p>'}</details>`;
+}
 function vParents(){
   const c=cfg();
   if(!state.parent)return `<section class="card"><h3>Espace parents</h3><p class="small muted" style="margin-bottom:8px">Pour suivre le programme de CM1, gérer les récompenses et valider les demandes ${esc(deP())}.</p><form class="row" data-form="pin"><input type="password" id="pin" name="pin" inputmode="numeric" placeholder="${pinDefini()?'Code parent':'Choisissez un code (4 chiffres)'}" style="max-width:240px" required><button class="btn">${pinDefini()?'Ouvrir':'Créer le code'}</button></form></section>`;
@@ -2806,6 +2834,7 @@ function vParents(){
   return `${vSemaine()}<section class="card stack"><div class="sec-title"><h3>Espace parents</h3><button class="btn ghost" data-act="parent-off">Fermer</button></div>
     <p class="eyebrow">Suivi scolaire</p><div class="row"><button class="btn primary" data-act="tab" data-v="programme">🗺️ Programme CM1 : où en est ${esc(prenom())}</button></div>
     <p class="eyebrow">Demandes à valider</p>${ach.length?ach.map(a=>`<div class="reward"><span>${esc(a.titre)} <span class="cost">${a.palier?'offert':a.cout}</span></span><span class="row"><button class="btn primary" data-act="valider" data-id="${a.id}">Accorder</button><button class="btn" data-act="refuser" data-id="${a.id}">Refuser</button></span></div>`).join(''):'<p class="small muted">Aucune demande en attente.</p>'}
+    ${etoilesDetail()}
     <p class="eyebrow">Récompenses proposées</p>${rec.map(r=>`<div class="reward"><span>${esc(r.titre)}</span><span class="row"><span class="cost">${r.cout}</span><button class="btn ghost danger" data-act="del-rec" data-id="${r.id}">Retirer</button></span></div>`).join('')}
     <form class="form-grid" data-form="rec"><label class="f">Nouvelle récompense<input type="text" id="rec-t" name="titre" required></label><label class="f">Prix en étoiles<input type="number" id="rec-c" name="cout" min="1" value="50" required></label><div><button class="btn">Ajouter</button></div></form>
     ${!rec.length?`<div><button class="btn" data-act="suggestions">Ajouter des récompenses suggérées</button></div>`:''}
@@ -2926,13 +2955,13 @@ document.addEventListener('click',async e=>{
     case 'valider':{const a=S.achats.get(id);if(a)put('achats',id,{...a,statut:'validé'});break}
     case 'refuser':{const a=S.achats.get(id);if(a)put('achats',id,{...a,statut:'refusé'});break}
     case 'del-rec':del('recompenses',id);break;
-    case 'acc-fin':put('config','main',{...cfg(),accueil:'fait'});state.acc=null;state.parent=false;state.pinParent='';state.iaf=null;confettis();go('jour');break;
+    case 'acc-fin':await put('config','main',{...cfg(),accueil:'fait'});state.acc=null;finParent();confettis();go('jour');break;
     case 'acc-ia-plus-tard':state.iaf=null;state.acc={etape:4};render();break;
     case 'ia-mode':{const f=state.iaf;f.mode=v;f.msg='';f.modeles=null;render();break}
     case 'ia-tester':envoyerIA({essai:true});break;
     case 'ia-oublier':envoyerIA({oublierCle:true});break;
     case 'suggestions':SUGGESTIONS.forEach(([t,c])=>put('recompenses',uid(),{titre:t,cout:c}));break;
-    case 'parent-off':state.parent=false;state.pinParent='';state.iaf=null;render();break;
+    case 'parent-off':finParent();render();break;
     case 'skin':put('config','main',{...cfg(),skin:el.dataset.v});toast(`Habillage ${SKINS[el.dataset.v].nom.split(' ·')[0]} choisi.`);break;
     case 'prog-mat':go('programme',v);break;
     case 'comp-etat':{const c=COMP(id);if(!c)break;const cur=etatComp(c).etat;const next={avenir:'vu',vu:'fragile',fragile:'progres',progres:'acquis',acquis:'avenir'}[cur];put('programme',id,{etat:next,date:TODAY(),ts:Date.now()});break}
@@ -2987,15 +3016,16 @@ document.addEventListener('submit',async e=>{
   // Le code parent est vérifié par le serveur, qui le garde haché : il n'arrive jamais dans la page.
   if(kind==='pin'){const creer=!pinDefini();if(creer&&!/^\d{4,8}$/.test(fd.pin)){toast('Choisissez un code de 4 à 8 chiffres.');return}
     let r;try{r=await fetch('/api/pin',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({pin:fd.pin,creer})}).then(x=>x.json())}catch(e){toast("Le serveur du cartable ne répond pas.");return}
-    if(r.ok){if(creer){S.config.set('pin',{id:'pin',defini:true});toast('Code parent créé.')}state.parent=true;state.pinParent=fd.pin;render()}else toast(r.code==='deja'?'Un code existe déjà.':'Code incorrect.');return}
+    if(r.ok){if(creer){S.config.set('pin',{id:'pin',defini:true});toast('Code parent créé.')}state.parent=true;state.jeton=r.jeton||'';if(window.claude)window.claude.parent=state.jeton||null;render()}else toast(r.code==='deja'?'Un code existe déjà.':'Code incorrect.');return}
   if(kind==='rec'){put('recompenses',uid(),{titre:fd.titre,cout:Math.max(1,Number(fd.cout)||1)});f.reset();return}
   if(kind==='acc-pin'){const creer=!pinDefini();
     if(creer&&!/^\d{4,8}$/.test(fd.pin)){toast('Choisissez un code de 4 à 8 chiffres.');return}
     if(creer&&fd.pin!==fd.pin2){toast('Les deux codes ne sont pas pareils.');return}
     let r;try{r=await fetch('/api/pin',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({pin:fd.pin,creer})}).then(x=>x.json())}catch(e){toast("Le serveur du cartable ne répond pas.");return}
     if(!r.ok){toast('Code incorrect.');return}
-    if(creer){S.config.set('pin',{id:'pin',defini:true});put('config','main',{...cfg(),accueil:'en-cours'})}
-    state.parent=true;state.pinParent=fd.pin;state.acc={etape:(cfg().prenom||'').trim()&&!creer?3:2};render();return}
+    state.jeton=r.jeton||'';if(window.claude)window.claude.parent=state.jeton||null;
+    if(creer){S.config.set('pin',{id:'pin',defini:true});await put('config','main',{...cfg(),accueil:'en-cours'})}
+    state.parent=true;state.acc={etape:(cfg().prenom||'').trim()&&!creer?3:2};render();return}
   if(kind==='acc-prenom'){const p=(fd.prenom||'').trim();if(!p)return;put('config','main',{...cfg(),prenom:p,zone:fd.zone||ZONE_DEFAUT,accueil:'en-cours'});state.acc={etape:3};render();return}
   if(kind==='acc-rec'){
     SUGGESTIONS.forEach(([t,c],i)=>{if(fd['s'+i])put('recompenses',uid(),{titre:t,cout:Math.max(1,Number(fd['c'+i])||c)})});
