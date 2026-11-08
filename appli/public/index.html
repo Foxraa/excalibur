@@ -155,7 +155,7 @@ main{padding-block:24px 110px}
 .sous{margin-bottom:-6px}
 /* Accueil : une seule mission, en grand */
 .mission-jour{text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;padding:28px 20px;border-color:color-mix(in srgb,var(--accent) 45%,var(--line));background:linear-gradient(180deg,var(--tint),var(--surface) 70%)}
-.mission-jour h2{font-size:1.7rem;max-width:30ch}
+.mission-jour h2{font-size:1.7rem;max-width:30ch;text-wrap:balance}
 .mission-jour .mj-ico{font-size:3rem;line-height:1}
 .mission-jour .mj-btns{justify-content:center}
 /* Bouton flottant : ajouter une photo du cahier depuis n'importe quel écran */
@@ -987,7 +987,7 @@ Voici ${images.length>1?images.length+' photos envoyées':'une photo envoyée'} 
 - une évaluation ou un contrôle, corrigé ou non par la maîtresse ;
 - une page d'agenda, de cahier de textes ou une fiche de devoirs ;
 - autre chose : mot aux parents, circulaire, emploi du temps…
-Plusieurs photos peuvent montrer des choses différentes : traite-les toutes.${indice?`\n${prenom()} précise : « ${indice} »`:''}
+Plusieurs photos peuvent montrer des choses différentes : traite-les toutes.${indice?`\n${prenom()} précise : « ${indice} »`:''}
 ${prenom()} dit que c'est du ${longDate(dateSeance||t)}.
 
 Étape 1. Dans "genre", indique le genre principal : "lecon", "exercice", "evaluation", "agenda" ou "autre".
@@ -1055,7 +1055,7 @@ async function lireAgenda(images,indice){
   const cal=[...Array(50)].map((_,i)=>addDays(t,i-14)).map(d=>`${d} : ${longDate(d)}${d===t?" (aujourd'hui)":''}`).join('\n');
   const prompt=`${ROLE()}
 
-Voici ${images.length>1?images.length+' photos':'une photo'} de l'agenda (ou du cahier de textes) ${deP()}, ou d'une fiche de devoirs donnée par la maîtresse.${indice?`\n${prenom()} précise : « ${indice} »`:''}
+Voici ${images.length>1?images.length+' photos':'une photo'} de l'agenda (ou du cahier de textes) ${deP()}, ou d'une fiche de devoirs donnée par la maîtresse.${indice?`\n${prenom()} précise : « ${indice} »`:''}
 
 Ta mission : relever tous les devoirs écrits, même à la main ou abrégés (« apprendre », « réviser », « ex 3 p 42 », « éval », « poésie », « signer », « apporter »…).
 - Dans un agenda, un devoir est en général écrit sur la page du jour où il faut le faire pour (le jour où on le rend). Une mention « pour le… » est prioritaire.
@@ -1081,7 +1081,7 @@ const dejaNote=x=>all('devoirs').some(d=>d.pour===x.pour&&norm(d.titre)===norm(x
 async function coursDepuisSujet(sujet){
   const prompt=`${ROLE()}
 
-${prenom()} a travaillé en classe sur ce sujet : « ${sujet} ». Rédige-lui une leçon complète, détaillée et progressive (3 à 5 sections bien développées), conforme au programme de CM1. Laisse "transcription" vide et "corrections" vide.
+${prenom()} a travaillé en classe sur ce sujet : « ${sujet} ». Rédige-lui une leçon complète, détaillée et progressive (3 à 5 sections bien développées), conforme au programme de CM1. Laisse "transcription" vide et "corrections" vide.
 
 ${SCHEMAS_AIDE}
 
@@ -1341,9 +1341,9 @@ function procheOrtho(v,a){
 async function verifierCourte(q,rep,francais){
   const r=await askJSON(`${ROLE()}
 
-Question posée à ${prenom()} : « ${texteQuestion(q)} »
+Question posée à ${prenom()} : « ${texteQuestion(q)} »
 Réponses attendues : ${q.reponses.join(' / ')}
-Réponse ${deP()} : « ${rep} »
+Réponse ${deP()} : « ${rep} »
 La réponse ${deP()} est-elle juste sur le fond ? Compte-la juste si elle contient ce qui est attendu : avec ou sans le pronom ou le déterminant (« as » ou « tu as », « chat » ou « le chat »), en un mot ou en phrase. ${francais?"Sois bienveillant sur l'orthographe si le sens est bon, mais exigeant sur la notion.":"Ce n'est pas une question de français : ne tiens AUCUN compte de l'orthographe, de la grammaire, de la conjugaison, des accents ni de la ponctuation. Un mot mal écrit mais reconnaissable compte comme juste ; seul le sens compte, et ne parle pas de l'orthographe dans le commentaire."}
 Si c'est faux, le commentaire dit ce qui est juste dans sa réponse, puis où est l'erreur et pourquoi.
 Réponds uniquement en JSON : {"correct":true,"commentaire":"1 ou 2 phrases pour ${prenom()}"}`,{modelTier:'quick'});
@@ -1900,18 +1900,18 @@ function missionDuJour(){
   const d=dv.find(x=>x.pour<=limiteDevoirs(t));
   if(d){const l=['Contrôle','Leçon à apprendre','Révision'].includes(d.type)&&leconsLiees(d)[0];
     return {devoir:true,ico:'✏️',titre:d.titre,detail:`${M(d.matiere).nom} · ${d.type||'Devoir'} ${d.pour<t?'en retard':'pour '+quandDevoir(d.pour,t)}${d.detail?' · '+d.detail:''}`,
-    btn:`${l?`<button class="btn" data-act="lecon" data-id="${l.id}">📖 Relire « ${esc(l.titre)} »</button>${sample?`<button class="btn" data-act="quiz-lecon" data-id="${l.id}" data-niveau="normal">Me tester</button>`:''}`:''}<button class="btn primary big" data-act="devoir-ok" data-id="${d.id}">C'est fait !</button><button class="btn" data-act="tab" data-v="devoirs">Tous mes devoirs</button>`}}
+    btn:`${l?`<button class="btn" data-act="lecon" data-id="${l.id}">📖 Relire « ${esc(l.titre)} »</button>${sample?`<button class="btn" data-act="quiz-lecon" data-id="${l.id}" data-niveau="normal">Me tester</button>`:''}`:''}<button class="btn primary big" data-act="devoir-ok" data-id="${d.id}">C'est fait !</button><button class="btn" data-act="tab" data-v="devoirs">Tous mes devoirs</button>`}}
   if(soireePause(t)&&!state.encore)return {ico:'🌙',titre:'Soirée tranquille',detail:"Pas d'école demain : ce soir, c'est repos. Rien à faire, sauf si tu en as envie.",
     btn:`<button class="btn ghost" data-act="encore">Une mission quand même</button>`};
   const base=baseDuJour(t);if(base)return base;
   const ej=etoileDuJour(),l=ej||(aReviser()[0]||{}).l;
-  if(l)return {ico:'📖',titre:`Relis « ${l.titre} », puis fais le quiz`,detail:`${M(l.matiere).nom} · ${etatLecon(l).raison}${ej?" · leçon du jour":''}`,
+  if(l)return {ico:'📖',titre:`Relis « ${l.titre} », puis fais le quiz`,detail:`${M(l.matiere).nom} · ${etatLecon(l).raison}${ej?" · leçon du jour":''}`,
     btn:`${sample?`<button class="btn primary big" data-act="quiz-lecon" data-id="${l.id}" data-niveau="normal">Faire le quiz</button>`:''}<button class="btn ${sample?'':'primary big'}" data-act="lecon" data-id="${l.id}">Relire d'abord</button>`};
   const p=sample&&planTravail().find(x=>x.e.etat==='fragile');
   if(p){const sp=speciale(p.c.id);return {ico:'🎯',titre:p.c.t,detail:`${M(p.c.m).nom} · un point à retravailler`,
     btn:`<button class="btn primary big" data-act="quiz-comp" data-id="${p.c.id}">M'entraîner</button>${sp?`<button class="btn" data-act="lecon" data-id="${sp.id}">Ma leçon spéciale</button>`:`<button class="btn" data-act="speciale" data-id="${p.c.id}" ${state.special&&state.special.busy?'disabled':''}>Une leçon rien que pour moi</button>`}`}}
   const sd=COURS&&semaineDuJour(),s=sd&&COURS.semaines.find(x=>x.n===sd.n),c=s&&s.items.map(x=>cours(x.id)).find(x=>x&&quizRef(x.id)===null);
-  if(c)return {ico:'📖',titre:`Lis la leçon « ${c.titre} »`,detail:`${M(c.matiere).nom} · prévue ${sd.maintenant?'cette semaine en classe':'à la rentrée'}`,
+  if(c)return {ico:'📖',titre:`Lis la leçon « ${c.titre} »`,detail:`${M(c.matiere).nom} · prévue ${sd.maintenant?'cette semaine en classe':'à la rentrée'}`,
     btn:`<button class="btn primary big" data-act="cours" data-id="${esc(c.id)}">Ouvrir la leçon</button>`};
   return {ico:'📷',titre:'Ajoute ce que tu as fait en classe',detail:"Prends ton cahier en photo : je t'en fais une fiche et un quiz.",
     btn:`<button class="btn primary big" data-act="tab" data-v="ajouter">Prendre une photo</button>`};
@@ -1962,7 +1962,7 @@ function itemTache(p,j,x){
   const ok=x.ok?'done':'';
   if(x.k==='lecon'){
     const ref=String(j.lecon).startsWith('ref:'),l=ref?refLecon(j.lecon):S.lecons.get(j.lecon);if(!l)return '';
-    return `<div class="item ${ok}"><span class="num" aria-hidden="true">${x.ok?'✅':'📖'}</span><div class="grow"><div class="t">Relis « ${esc(l.titre)} », puis fais le quiz</div><div class="small muted">${mchip(l.matiere)} ${x.ok?'Quiz fait, bravo !':esc(ref?'Leçon du programme':etatLecon(l).raison)}</div></div>
+    return `<div class="item ${ok}"><span class="num" aria-hidden="true">${x.ok?'✅':'📖'}</span><div class="grow"><div class="t">Relis « ${esc(l.titre)} », puis fais le quiz</div><div class="small muted">${mchip(l.matiere)} ${x.ok?'Quiz fait, bravo !':esc(ref?'Leçon du programme':etatLecon(l).raison)}</div></div>
       <button class="btn" ${ref?`data-act="cours" data-id="${esc(String(j.lecon).slice(4))}"`:`data-act="lecon" data-id="${esc(l.id)}"`}>Relire</button><button class="btn ${x.ok?'':'primary'}" data-act="quiz-lecon" data-id="${esc(j.lecon)}" data-niveau="normal">${x.ok?'Refaire':'Quiz'}</button></div>`;
   }
   if(x.k==='defi'){const tb=j.defi.type==='tables';
@@ -2040,8 +2040,8 @@ function vMatieres(){
     ${Object.keys(weeks).length?Object.entries(weeks).map(([w,ls])=>`<section class="card"><h3>Semaine du ${esc(D(w).toLocaleDateString('fr-FR',{day:'numeric',month:'long'}))}</h3><div class="stack">${ls.map(itemLecon).join('')}</div></section>`).join(''):`<div class="empty">Aucune leçon pour l'instant.</div>`}`;
   }
   return `<div class="sec-title"><h2>Mes matières</h2><div class="row"><button class="btn primary" data-act="chrono" data-v="0">Par matière</button><button class="btn" data-act="chrono" data-v="1">Chronologie</button></div></div>
-  <div class="grid">${MATIERES.map(m=>{const ls=lec.filter(l=>l.matiere===m.id);const moy=moyenne(all('notes').filter(n=>n.matiere===m.id));const dues=ls.filter(l=>etatLecon(l).due).length;
-    return `<button class="card mcard" style="--m:${m.c}" data-ico="${MAT_ICO[m.id]||'📘'}" data-act="matiere" data-v="${m.id}"><h3>${esc(m.nom)}</h3><div class="k small"><span><b>${ls.length}</b> leçon${ls.length>1?'s':''}</span>${moy!==null?`<span>Moyenne <b>${fmtN(moy)}</b>/20</span>`:''}</div><span class="small muted">${ls.length?(dues?`${dues} à réviser`:'Tout est révisé'):'Rien pour l\'instant'}</span></button>`}).join('')}</div>`;
+  <div class="grid">${MATIERES.map(m=>{const ls=lec.filter(l=>l.matiere===m.id);const moy=moyenne(all('notes').filter(n=>n.matiere===m.id));const sues=ls.filter(l=>(etatLecon(l).best??0)>=.8).length;/* ce qui est su (80 % au meilleur quiz), plutôt que ce qui reste : moins décourageant */
+    return `<button class="card mcard" style="--m:${m.c}" data-ico="${MAT_ICO[m.id]||'📘'}" data-act="matiere" data-v="${m.id}"><h3>${esc(m.nom)}</h3><div class="k small"><span><b>${ls.length}</b> leçon${ls.length>1?'s':''}</span>${moy!==null?`<span>Moyenne <b>${fmtN(moy)}</b>/20</span>`:''}</div><span class="small muted">${ls.length?(sues===ls.length?'Tout est su ✓':sues?`✓ ${sues} déjà sue${sues>1?'s':''}`:'Fais un quiz pour commencer'):'Rien pour l\'instant'}</span></button>`}).join('')}</div>`;
 }
 function itemLecon(l){const e=etatLecon(l);return `<div class="item clickable" data-act="lecon" data-id="${l.id}"><div class="grow"><div class="t">${esc(l.titre)}</div><div class="small muted">${mchip(l.matiere)} ${esc(shortDate(l.date))}${e.best!==null?` · meilleur quiz ${Math.round(e.best*100)} %`:''}${e.due?' · <strong style="color:var(--warn)">à réviser</strong>':''}</div></div><span aria-hidden="true">›</span></div>`}
 function vMatiere(){
@@ -2133,8 +2133,8 @@ async function leconSpeciale(id){
     const erreurs=e.erreurs.slice(0,8);
     const r=await askJSON(`${ROLE()}
 
-${prenom()} ne maîtrise pas encore cet objectif du programme de CM1 : « ${c.t} » (${M(c.m).nom}, ${c.d}).${dom.p?`\nPrécision du programme : ${dom.p}`:''}
-${liees.length?`\nCe qu'il a vu en classe :\n${liees.map(l=>resumeLecon(l,true)).join('\n')}`:''}${faibles.length?`\n\nSes difficultés repérées dans le cahier :\n${faibles.map(x=>'- '+x).join('\n')}`:''}${erreurs.length?`\n\nSes erreurs récentes :\n${erreurs.map(p=>`- « ${String(p.question||'').slice(0,200)} » : il a répondu « ${p.rep??''} », la bonne réponse était « ${p.bonne??''} »`).join('\n')}`:''}
+${prenom()} ne maîtrise pas encore cet objectif du programme de CM1 : « ${c.t} » (${M(c.m).nom}, ${c.d}).${dom.p?`\nPrécision du programme : ${dom.p}`:''}
+${liees.length?`\nCe qu'il a vu en classe :\n${liees.map(l=>resumeLecon(l,true)).join('\n')}`:''}${faibles.length?`\n\nSes difficultés repérées dans le cahier :\n${faibles.map(x=>'- '+x).join('\n')}`:''}${erreurs.length?`\n\nSes erreurs récentes :\n${erreurs.map(p=>`- « ${String(p.question||'').slice(0,200)} » : il a répondu « ${p.rep??''} », la bonne réponse était « ${p.bonne??''} »`).join('\n')}`:''}
 
 Écris une leçon spéciale, rien que pour lui :
 - Pars de ce qu'il sait déjà, puis explique AUTREMENT que le cahier : une image mentale, une manipulation, des étapes numérotées.
@@ -2152,7 +2152,7 @@ Réponds uniquement avec un objet JSON :
     const lid=uid();
     put('lecons',lid,{matiere:c.m,titre:'Leçon spéciale · '+(r.titre||c.t),date:TODAY(),createdAt:Date.now(),special:true,cible:id,competences:[id],
       notions:r.notions||[],resume:r.resume||'',cours:r.cours||{},entrainement:(Array.isArray(r.entrainement)?r.entrainement:[]).filter(x=>x&&x.consigne),
-      pointsFaibles:[...faibles,...erreurs.map(p=>`erreur : « ${String(p.question||'').slice(0,120)} » (il avait répondu ${p.rep??''})`)].slice(0,10),
+      pointsFaibles:[...faibles,...erreurs.map(p=>`erreur : « ${String(p.question||'').slice(0,120)} » (il avait répondu ${p.rep??''})`)].slice(0,10),
       corrections:[],transcription:'',thumbs:[],questions:[]});
     state.special=null;go('lecon',lid);toast('Ta leçon spéciale est prête. Lis-la, puis fais le quiz !');
   }catch(err){state.special={id,err:errMsg(err)};render()}
@@ -2525,7 +2525,7 @@ function leconAttente(ids){
 }
 function vQuiz(){
   const q=state.quiz;if(!q)return `<div class="empty">Aucun quiz en cours.</div>`;
-  if(state.nouveauQuiz)return `<div class="quiz card stack"><h2>Un quiz est déjà en cours</h2><p>« ${esc(q.titre)} » n'est pas terminé. Si tu commences « ${esc(state.nouveauQuiz.titre)} », il sera perdu.</p><div class="row"><button class="btn primary" data-act="quiz-garder">Reprendre mon quiz</button><button class="btn" data-act="quiz-remplacer">Commencer le nouveau</button></div></div>`;
+  if(state.nouveauQuiz)return `<div class="quiz card stack"><h2>Un quiz est déjà en cours</h2><p>« ${esc(q.titre)} » n'est pas terminé. Si tu commences « ${esc(state.nouveauQuiz.titre)} », il sera perdu.</p><div class="row"><button class="btn primary" data-act="quiz-garder">Reprendre mon quiz</button><button class="btn" data-act="quiz-remplacer">Commencer le nouveau</button></div></div>`;
   if(q.loading||(q.attente&&!q.err)){
     const lec=leconAttente(q.leconIds);
     if(q.loading||lec){
@@ -2939,7 +2939,7 @@ document.addEventListener('click',async e=>{
     case 'quiz-regen':{const q=state.quiz;if(q){q.genErr=null;render();prepareQuestions(q,q.i+1)}break}
     case 'quiz-finir':{const q=state.quiz;if(q){finirQuiz();render()}break}
     case 'explique':{const q=state.quiz,x=q.questions[q.i],r=q.rep[q.i],idx=q.i;q.extra[idx]={busy:true};render();const debut=Date.now();
-      try{const {text}=await sample(`${ROLE()}\n\n${prenom()} n'a pas bien compris cette question de quiz.\nQuestion : « ${texteQuestion(x)} »\nSa réponse : « ${x.type==='qcm'?x.choix[r.v]:x.type==='vf'?(r.v?'Vrai':'Faux'):r.v} »\nExplication déjà donnée : « ${x.explication} »\nRéexplique autrement, en 120 à 180 mots, avec une autre approche que l'explication déjà donnée : commence par comprendre pourquoi sa réponse lui a semblé juste, puis utilise une image ou un exemple de la vie de tous les jours, déroule le raisonnement pas à pas sur la question, et finis par une astuce pour ne plus se tromper. Pas de titre, pas de liste à puces.`,{modelTier:'quick'});q.extra[idx]={text}}catch(err){q.extra[idx]={};toast(errMsg(err))}
+      try{const {text}=await sample(`${ROLE()}\n\n${prenom()} n'a pas bien compris cette question de quiz.\nQuestion : « ${texteQuestion(x)} »\nSa réponse : « ${x.type==='qcm'?x.choix[r.v]:x.type==='vf'?(r.v?'Vrai':'Faux'):r.v} »\nExplication déjà donnée : « ${x.explication} »\nRéexplique autrement, en 120 à 180 mots, avec une autre approche que l'explication déjà donnée : commence par comprendre pourquoi sa réponse lui a semblé juste, puis utilise une image ou un exemple de la vie de tous les jours, déroule le raisonnement pas à pas sur la question, et finis par une astuce pour ne plus se tromper. Pas de titre, pas de liste à puces.`,{modelTier:'quick'});q.extra[idx]={text}}catch(err){q.extra[idx]={};toast(errMsg(err))}
       if(q.t0)q.t0+=Date.now()-debut; // l'attente de l'IA ne compte pas dans la durée
       if(state.quiz===q&&state.view==='quiz')render();break}
     case 'rm-img':state.add.images.splice(Number(v),1);render();break;
@@ -3005,7 +3005,7 @@ document.addEventListener('submit',async e=>{
   if(kind==='manuel'){const lignes=(fd.txt||'').split('\n').map(s=>s.trim()).filter(Boolean);const id=nouvelleLecon({cours:{aRetenir:lignes}},{titre:fd.titre,matiere:fd.matiere,date:fd.date});go('lecon',id);return}
   if(kind==='edit-lecon'){const l=S.lecons.get(f.dataset.id);if(l){put('lecons',l.id,{...l,titre:fd.titre||l.titre,matiere:fd.matiere,date:fd.date||l.date});toast('Leçon modifiée.')}return}
   if(kind==='ask'){const l=S.lecons.get(f.dataset.id);if(!l||!sample)return;const q=fd.q;state.ask[l.id]={busy:true,text:''};render();
-    try{const {text}=await sample(`${ROLE()}\n\nVoici la leçon ${deP()} :\n${resumeLecon(l)}\n\n${prenom()} demande : « ${q} »\nRéponds-lui en 100 à 200 mots, pas à pas : explique le pourquoi, donne un exemple concret de sa vie, montre le raisonnement, puis finis par une petite question ou une astuce pour vérifier qu'il a compris. Si la question n'a rien à voir avec l'école, ramène-le gentiment vers sa leçon.`,{modelTier:'default',cache:false,onText:({text})=>{state.ask[l.id].text=text;const el=app.querySelector('.thinking span');if(el)el.innerHTML=rich(text)}});
+    try{const {text}=await sample(`${ROLE()}\n\nVoici la leçon ${deP()} :\n${resumeLecon(l)}\n\n${prenom()} demande : « ${q} »\nRéponds-lui en 100 à 200 mots, pas à pas : explique le pourquoi, donne un exemple concret de sa vie, montre le raisonnement, puis finis par une petite question ou une astuce pour vérifier qu'il a compris. Si la question n'a rien à voir avec l'école, ramène-le gentiment vers sa leçon.`,{modelTier:'default',cache:false,onText:({text})=>{state.ask[l.id].text=text;const el=app.querySelector('.thinking span');if(el)el.innerHTML=rich(text)}});
       const cur=S.lecons.get(l.id)||l;put('lecons',l.id,{...cur,questions:[...(cur.questions||[]),{q,a:text}].slice(-10)});state.ask[l.id]={}}catch(err){state.ask[l.id]={err:errMsg(err)}}
     render();return}
   if(kind==='scan-save'){let n=0,nc=0;
