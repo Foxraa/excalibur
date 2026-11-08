@@ -631,6 +631,40 @@ html[data-skin="dino"] .tab{border-radius:22px 12px 24px 10px/12px 22px 10px 20p
 html[data-skin="dino"] .badge{border-radius:28px 14px 30px 12px/16px 28px 12px 26px;border-color:color-mix(in srgb,var(--roche) 45%,var(--line))}
 html[data-skin="dino"] .hello::after{width:200px;height:200px;right:-40px;top:-60px;background:radial-gradient(circle,color-mix(in srgb,#ff922b 45%,transparent),transparent 65%)}
 html[data-skin="dino"] .fb{border-radius:26px 14px 28px 12px/14px 26px 12px 24px}
+
+/* Accueil allégé : bonjour en une bande, mission seule, code du héros en pastilles, astuce et défis repliables. */
+.hello.mince{grid-template-columns:auto 1fr auto auto;gap:14px;padding:10px 18px}
+.hello.mince .mascotte{width:56px;height:56px}
+.hello.mince h2{font-size:1.5rem;margin:0}
+.hello.mince .eyebrow{font-size:.7rem}
+.hello.mince .serie{margin:0;white-space:nowrap}
+.hello.mince .epee-carte svg{width:26px;height:42px}
+.hello.mince .epee-carte{max-width:230px;gap:8px}
+.hello.mince .epee-carte small{display:none}
+.hello.mince::after{width:120px;height:120px;right:-40px;top:-50px}
+@media (max-width:760px){.hello.mince,.hello.mince:not(:has(.mascotte)){grid-template-columns:1fr auto;gap:8px 12px;padding:10px 14px}.hello.mince .mascotte{display:none}.hello.mince h2{font-size:1.3rem}}
+.mission-large{width:100%}
+.code-bande{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:10px 16px}
+.code-bande h3{margin:0;font-size:1rem}
+.code-bande .pastilles{display:flex;flex-wrap:wrap;gap:8px;flex:1 1 auto}
+.pastille{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;min-height:40px;border:2px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);font-weight:700;cursor:pointer;user-select:none}
+.pastille:hover{border-color:var(--accent)}
+.pastille input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}
+.pastille:has(input:focus-visible){outline:3px solid var(--accent);outline-offset:2px}
+.pastille.done{background:var(--ok-bg);border-color:var(--ok)}
+.pastille.done span::after{content:" ✓";color:var(--ok)}
+.code-bande .compteur{margin-left:auto;white-space:nowrap}
+details.tip-jour{padding:10px 18px 10px 18px;border-width:2px}
+details.tip-jour::before{content:none}
+details.tip-jour summary{cursor:pointer;font-weight:700;font-size:1.05rem;list-style:none}
+details.tip-jour summary::-webkit-details-marker{display:none}
+details.tip-jour summary::before{content:"💡 "}
+details.tip-jour.pause summary::before{content:"🌙 "}
+details.tip-jour p{margin:8px 0 2px;font-size:1.05rem;line-height:1.5}
+details.defis-jour>summary{cursor:pointer;font-weight:800;font-size:1.1rem;color:var(--ink)}
+details.defis-jour[open]>summary{margin-bottom:8px}
+details.defis-jour>p{margin:0 0 8px}
+@media (max-width:560px){.code-bande .compteur{margin-left:0}}
 </style>
 
 <div class="strip" id="strip" aria-label="Mon année et mon travail"></div>
@@ -655,6 +689,7 @@ html[data-skin="dino"] .fb{border-radius:26px 14px 28px 12px/14px 26px 12px 24px
 <script src="questions.js"></script>
 <script src="semaine.js"></script>
 <script src="tables.js"></script>
+<script src="accueil.js"></script>
 <script src="epee.js"></script>
 <script>
 /* ============ Données de référence ============ */
@@ -1930,23 +1965,26 @@ function vJour(){
   const fini=m&&!m.devoir&&!m.base&&s.aujourdhui&&!state.encore;
   const rt=routineDu(t),nbR=rt.filter(it=>r.items&&r.items[it.id]).length;
   return `${vacEnCours()?`<div class="row" style="justify-content:center"><button class="btn primary" data-act="vac-on">🏖️ Revenir à mes vacances</button></div>`:''}
-  <section class="card hello">
+  <section class="card hello mince">
     ${mascotte()}
-    <div><p class="eyebrow">${esc(longDate(t))}</p><h2>Bonjour <span class="nom">${esc(prenom())}</span> !</h2>${s.n>=2?`<p class="small muted">🔥 ${s.n} jours de suite</p>`:''}</div>
+    <div><p class="eyebrow">${esc(longDate(t))}</p><h2>Bonjour <span class="nom">${esc(prenom())}</span> !</h2></div>
+    ${s.n>=2?`<p class="small muted serie">🔥 ${s.n} jours de suite</p>`:''}
     ${carteEpee()}
   </section>
-  <div class="cols"><section class="card mission-jour"><p class="eyebrow">Ma mission du jour</p>
+  <section class="card mission-jour mission-large"><p class="eyebrow">Ma mission du jour</p>
     ${!m?`<p class="muted">J'ouvre ton cartable…</p>`
     :fini?`<div class="mj-ico" aria-hidden="true">✅</div><h2>Mission accomplie !</h2><p class="muted">Tu as déjà travaillé aujourd'hui. ${SK().fier}</p><button class="btn ghost" data-act="encore">J'en veux encore une</button>`
     :`<div class="mj-ico" aria-hidden="true">${m.ico}</div><h2>${esc(m.titre)}</h2><p class="muted">${esc(m.detail)}</p>
       ${state.special&&state.special.busy?attente("J'écris ta leçon spéciale…",{debut:state.special.debut,sous:'Cela prend environ une minute.'}):''}${state.special&&state.special.err?`<p class="small" style="color:var(--bad)">${esc(state.special.err)}</p>`:''}
       <div class="row mj-btns">${m.btn}</div>`}
   </section>
-  <section class="card"><div class="sec-title"><h3>Mon ${SK().code}</h3><span class="small muted">${nbR}/${rt.length}</span></div>
-    <p class="small muted" style="margin:4px 0 8px">+5 étoiles quand tout est coché</p>
-    <div class="stack">${rt.map(it=>`<label class="item ${r.items&&r.items[it.id]?'done':''}"><input type="checkbox" class="chk" data-act="routine" data-v="${it.id}" ${r.items&&r.items[it.id]?'checked':''}><span class="grow t">${esc(it.t)}</span></label>`).join('')}</div></section></div>
-  <section class="tip tip-jour ${tip.pause?'pause':''}"><p class="eyebrow">Astuce d'organisation</p><h3>${esc(tip.t)}</h3><p>${esc(tip.d)}</p></section>
-  <section class="card"><div class="sec-title"><h3>Défis éclair</h3><span class="small muted">Une fois par jour chacun</span></div>${boutonsDefis()}</section>`;
+  <section class="card code-bande" aria-label="Mon ${esc(SK().code)}">
+    <h3>Mon ${SK().code}</h3>
+    <div class="pastilles">${rt.map(it=>{const ok=r.items&&r.items[it.id];return `<label class="pastille ${ok?'done':''}" title="${esc(it.t)}"><input type="checkbox" class="chk" data-act="routine" data-v="${it.id}" aria-label="${esc(it.t)}" ${ok?'checked':''}><span>${esc(libelleCourt(it.id))}</span></label>`}).join('')}</div>
+    <span class="compteur small muted">${nbR}/${rt.length} · +5 ⭐</span>
+  </section>
+  <details class="tip tip-jour ${tip.pause?'pause':''}" id="astuce-jour" ${('astuce-jour' in PLIS?PLIS['astuce-jour']:!!tip.pause)?'open':''}><summary>${esc(tip.t)}</summary><p>${esc(tip.d)}</p></details>
+  <details class="card defis-jour" id="defis-jour" ${defisOuverts({missionFaite:fini,choix:PLIS['defis-jour']})?'open':''}><summary>${fini?'Encore envie ? Un défi éclair':'⚡ Défis éclair'}</summary><p class="small muted">Une fois par jour chacun</p>${boutonsDefis()}</details>`;
 }
 
 /* ---- Mes vacances ---- */
