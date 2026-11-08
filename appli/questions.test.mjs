@@ -370,3 +370,22 @@ test("chaque photo de paysage a son fichier, sa description et son auteur", asyn
   assert.equal(photosPour("geographie"), PAYSAGES);
   assert.deepEqual(photosPour("maths"), []);
 });
+
+test("un faux choix qui sort des homophones travaillés est retiré : il pourrait être juste", () => {
+  const q = "Dans le parc, deux garçons jouent au foot. Complète : Les enfants ___ contents car ___ ballon est tout neuf.";
+  const r = c({ type: "qcm", question: q, choix: ["son / sont", "sont / leur", "sont / son", "son / son"], bonne: 2 }).question;
+  assert.deepEqual(r.choix, ["son / sont", "sont / son", "son / son"]);
+  assert.equal(r.choix[r.bonne], "sont / son");
+  const un = c({ type: "qcm", question: "Les deux sœurs rangent ___ chambre avant de partir en vacances chez leur grand-mère.", choix: ["son", "sont", "leur"], bonne: 0 }).question;
+  assert.deepEqual(un.choix, ["son", "sont"]);
+  assert.ok(c({ type: "qcm", question: "Les enfants ___ contents car ___ ballon est neuf et rouge.", choix: ["sont / son", "sont / leur"], bonne: 0 }).refus);
+});
+
+test("en maths, une bonne réponse recopiée telle quelle depuis la question est refusée", () => {
+  const q = "Une horloge à aiguilles indique 3 h 25 min 40 s. Quelle est la bonne façon d'écrire cette heure avec les unités ?";
+  assert.ok(c({ type: "qcm", question: q, choix: ["3 h 25 min 40 h", "3 min 25 h 40 s", "3 h 25 s 40 min", "3 h 25 min 40 s"], bonne: 3 }, { matiere: "maths" }).refus);
+  assert.ok(c({ type: "courte", question: q, reponses: ["3 h 25 min 40 s"] }, { matiere: "maths" }).refus);
+  // Les deux durées sont dans la question : il faut les comparer.
+  assert.ok(c({ type: "qcm", question: "Qu'est-ce qui dure le plus longtemps : 1 h 10 min ou 75 min ?", choix: ["1 h 10 min", "75 min"], bonne: 1 }, { matiere: "maths" }).question);
+  assert.ok(c({ type: "qcm", question: "Il est 3 h 25. Quelle heure sera-t-il dans 10 minutes ?", choix: ["3 h 35", "3 h 15"], bonne: 0 }, { matiere: "maths" }).question);
+});

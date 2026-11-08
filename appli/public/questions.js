@@ -97,6 +97,17 @@
   const motsCles=s=>(propre(sansDetail(s)).replace(/(?<!\p{L})en \p{L}+ant(?!\p{L})/gu,' ').match(/[\p{L}\p{N}]+/gu)||[]).filter(m=>m.length>2&&!MOTS_VIDES.has(m)).map(m=>m.replace(/[sx]$/,''));
   function reponseRepetee(x,t,{matiere}={}){
     if(!MATIERES_SAVOIR.has(matiere))return false;
+    // « L'horloge indique 3 h 25 min 40 s. Comment l'écrire ? » → « 3 h 25 min 40 s » : la réponse est recopiée telle quelle.
+    // Les nombres comptent ici ; si un faux choix est lui aussi dans la question, il faut bien choisir entre eux.
+    const recopie=r=>{const s=sansDetail(r);return propre(s).split(' ').length>=2&&contient(t,s)};
+    if(x.type==='courte'){
+      const reps=(Array.isArray(x.reponses)?x.reponses:[]).map(String).filter(Boolean);
+      if(reps.length&&reps.every(recopie))return true;
+    }
+    if(x.type==='qcm'&&Array.isArray(x.choix)){
+      const bonne=Number(x.bonne);
+      if(recopie(String(x.choix[bonne]??''))&&!x.choix.some((c,i)=>i!==bonne&&contient(t,String(c))))return true;
+    }
     const lus=new Set(motsCles(t));
     const repete=r=>{const m=motsCles(r);return !/\d/.test(r)&&m.length>0&&m.every(w=>lus.has(w))};
     if(x.type==='courte'){
@@ -141,6 +152,16 @@
     if(PLUSIEURS.test(t))return {refus:'la question demande plusieurs réponses : une seule chose à la fois'};
     return {question:{...x,question:t,reponses:reps}};
   }
+  // « Deux garçons… ___ ballon » avec « son / sont » à départager : un choix qui glisse « leur »
+  // sort de la confusion travaillée, et peut être juste lui aussi. Pour chaque trou, un faux choix
+  // ne garde que des mots qui sonnent comme la bonne réponse.
+  function memesSons(ch,t){
+    const trous=(t.match(/_{2,}/g)||[]).length,bon=ch.find(c=>c.ok);
+    const parts=c=>propre(c.t).split(/\s*\/\s*/);
+    const groupes=parts(bon).map(groupeSon);
+    if(!trous||groupes.length!==trous||!groupes.every(Boolean))return ch;
+    return ch.filter(c=>{const p=parts(c);return c.ok||(p.length===trous&&p.every((m,i)=>groupes[i].includes(m)))});
+  }
   function controlerQcm(x,t){
     const bonne=Number(x.bonne),vus=new Map();
     (Array.isArray(x.choix)?x.choix:[]).forEach((c,i)=>{const k=propre(c);if(!vus.has(k)||i===bonne)vus.set(k,{t:String(c),ok:i===bonne||vus.get(k)?.ok})});
@@ -154,6 +175,8 @@
       if(!nommes.includes(propre(bon.t)))return {refus:'la bonne réponse ne fait pas partie des mots nommés dans la question'};
       ch=[...new Set(nommes)].map(n=>propre(bon.t)===n?bon:{t:n,ok:false});
     }
+    ch=memesSons(ch,t);
+    if(ch.length<2)return {refus:'les choix du qcm sont incomplets'};
     const b=ch.findIndex(c=>c.ok);
     if(phraseInutile(t,ch[b].t))return {refus:REFUS_PHRASE};
     return {question:{...x,question:aTrou(t,ch[b].t)||t,choix:ch.map(c=>c.t),bonne:b}};
