@@ -1,7 +1,7 @@
 // Lancer avec : npm test
 import test from "node:test";
 import assert from "node:assert/strict";
-import { creerSessions, autorise, fileUneParUne } from "./parent.mjs";
+import { creerSessions, autorise, fileUneParUne, delaiEchec } from "./parent.mjs";
 
 const MIN = 60e3;
 const horloge = () => { let t = 1000; return { maintenant: () => t, avance: ms => { t += ms; } }; };
@@ -130,4 +130,29 @@ test("fileUneParUne : une tâche qui échoue ne bloque pas la suivante", async (
   const p2 = run(async () => "ok");
   await assert.rejects(p1, /raté/);
   assert.equal(await p2, "ok");
+});
+
+test("cadeau de niveau : coût 0 avec palier, récompense du catalogue", () => {
+  const cadeau = { recompenseId: "r1", titre: "Cadeau du niveau 5 : Glace", cout: 0, palier: 5, statut: "demandé", date: "2026-11-08", createdAt: 1 };
+  assert.equal(a({ col: "achats", id: "x", data: cadeau }), null);
+  assert.equal(a({ col: "achats", id: "x", data: { ...cadeau, palier: 0 } }), "parent");
+  assert.equal(a({ col: "achats", id: "x", data: { ...cadeau, recompenseId: "inconnue" } }), "parent");
+  assert.equal(a({ col: "achats", id: "x", data: { recompenseId: "inconnue", cout: 30, statut: "demandé" } }), "parent");
+});
+test("anciens quiz : réécrits sans changer score/total/etoiles, ils passent", () => {
+  const vieux = { score: 8, total: 8, etoiles: 35 };
+  assert.equal(a({ col: "quiz", id: "q", existant: vieux, data: { ...vieux, competences: ["x"] } }), null);
+  assert.equal(a({ col: "quiz", id: "q", existant: vieux, data: { ...vieux, etoiles: 36 } }), "invalide");
+  assert.equal(a({ col: "quiz", id: "q", existant: null, data: vieux }), "invalide");
+});
+test("anciennes notes : réécrites sans changer valeur/sur, elles passent", () => {
+  const vieille = { valeur: 25, sur: 20 };
+  assert.equal(a({ col: "notes", id: "n", existant: vieille, data: { ...vieille, matiere: "maths" } }), null);
+  assert.equal(a({ col: "notes", id: "n", existant: vieille, data: { valeur: 26, sur: 20 } }), "invalide");
+});
+test("delaiEchec : double à chaque échec, plafonné à une minute", () => {
+  assert.equal(delaiEchec(1), 1000);
+  assert.equal(delaiEchec(2), 2000);
+  assert.equal(delaiEchec(7), 60000);
+  assert.equal(delaiEchec(10), 60000);
 });

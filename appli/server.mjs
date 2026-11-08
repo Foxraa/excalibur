@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 import Anthropic from "@anthropic-ai/sdk";
 import { DuckDBInstance } from "@duckdb/node-api";
 import { marked } from "marked";
-import { creerSessions, autorise, fileUneParUne } from "./parent.mjs";
+import { creerSessions, autorise, fileUneParUne, delaiEchec } from "./parent.mjs";
 import { avecSchemas, schema } from "./schemas.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -127,10 +127,12 @@ const lireDoc = async (col, id) => {
 const sessions = creerSessions();
 // Les essais passent un par un, attente comprise : des essais en parallèle ne contournent pas la seconde par erreur.
 const unEssai = fileUneParUne();
+let echecsPin = 0;
 const pinCorrect = pin => unEssai(async () => {
   const doc = await lireDoc("config", "pin");
   const ok = !!doc && crypto.timingSafeEqual(Buffer.from(hacher(pin, doc.sel), "hex"), Buffer.from(doc.hash, "hex"));
-  if (!ok) await new Promise(r => setTimeout(r, 1000)); // une seconde par erreur : deviner au hasard devient très long
+  if (ok) echecsPin = 0;
+  else await new Promise(r => setTimeout(r, delaiEchec(++echecsPin))); // l'attente double à chaque erreur de suite : deviner au hasard devient très long
   return ok;
 });
 const enregistrerPin = pin => { const sel = crypto.randomBytes(16).toString("hex"); return ecrire("config", "pin", { sel, hash: hacher(pin, sel) }); };
