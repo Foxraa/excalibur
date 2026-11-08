@@ -11,6 +11,10 @@
   const ORAL=/(?<!\p{L})(dict[ée]e|dicte|je (te |vais (te )?)?(dicte|lis|lire|dire)|tu entends|tu as entendu|à voix haute|à l['’]oral)(?!\p{L})|(?<!\p{L})[ée]coute (bien|attentivement|et |la |le |les |ce |cette |ces )/iu;
   // L'enfant ne voit pas les questions d'avant.
   const BAVARDAGE=/(?<!\p{L})(tu t['’]es tromp[ée]|tu as vu l['’]erreur|tu as dit que|on travaille sur|nous avons travaill[ée]|comme tout à l['’]heure|question pr[ée]c[ée]dente)(?!\p{L})/iu;
+  // Seul le texte s'affiche : « le paysage que tu observes » ou « la carte ci-dessous » renvoient à une image absente.
+  const IMAGES='paysage|photo|photographie|image|illustration|dessin|sch[ée]ma|carte|plan|document|graphique|frise|croquis|figure';
+  const DET="(?:le|la|l['’]|ce|cet|cette|les|ces)\\s*";
+  const IMAGE_ABSENTE=new RegExp(`(?<!\\p{L})(?:${DET}(?:${IMAGES})s?(?!\\p{L})[^.?!]{0,30}?(?<!\\p{L})(?:que tu (?:vois|observes|regardes|as sous les yeux)|ci-(?:dessous|dessus|contre)|suivante?s?)|(?:observe|regarde|examine)\\s+(?:bien\\s+|attentivement\\s+)?${DET}(?:${IMAGES})s?|(?:sur|dans)\\s+(?:la|cette|l['’])\\s*(?:photo|photographie|image|illustration))(?!\\p{L})`,'iu');
   const PIEGE=/\s*\(?\b(?:attention|pense bien)\b[^.!?)]*\bpi[èe]ge\b[^.!?)]*[.!?]?\)?/gi;
   const JUSTIFIER=/\s*\(?\b(?:explique|justifie)\b[^.!?)]*\b(?:choix|réponse|pourquoi)\b[^.!?)]*[.!?]?\)?/gi;
   const OUVERTE=/^(quels?|quelles?|combien|comment|pourquoi|où|ou\b|qui\b|que\b|qu['’]|à quoi|de quoi|dans quel|avec quoi|lequel|laquelle|lesquels|lesquelles)/i;
@@ -161,6 +165,11 @@
     const oral=String(x.oral??'').trim();
     if(!oral&&ORAL.test(t))return {refus:"rien n'est lu à voix haute : il faut le texte à lire dans \"oral\", ou une question écrite"};
     if(BAVARDAGE.test(t))return {refus:'la question parle de ce qui a été fait avant'};
+    // ctx.photos : les photos que cette matière peut montrer (paysages.js).
+    const image=String(x.image??'').trim(),photos=ctx.photos||[];
+    if(image&&!photos.includes(image))return {refus:photos.length?`la photo « ${image} » n'existe pas : choisir un id de la liste des photos`:"il n'y a pas de photo à montrer dans cette matière : décrire avec des mots"};
+    if(!image&&IMAGE_ABSENTE.test(t))return {refus:photos.length?"aucune photo n'est choisie : mettre dans \"image\" l'id d'une photo de la liste, ou décrire avec des mots ce qu'on voit":"aucune image n'est affichée : décrire avec des mots ce qu'on voit (« Sur une photo de campagne, on voit… »)"};
+    x={...x,image:image||undefined};
     if(/soulign/i.test(t)&&!/<u>/i.test(t))return {refus:'il est question d\'un mot souligné, mais rien n\'est souligné'};
     const cite=t.match(/phrase\s*:?\s*[«"“]([^»"”]+)[»"”][^«»"“”]{0,30}\bmot\s+[«"“'‘]\s*([^»"”'’]+?)\s*[»"”'’]/i);
     if(cite&&!contient(cite[1],cite[2]))return {refus:'le mot dont parle la question n\'est pas dans la phrase citée'};

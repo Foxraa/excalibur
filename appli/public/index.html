@@ -368,6 +368,9 @@ details summary{cursor:pointer;font-weight:700;color:var(--accent);min-height:40
 .dots i{width:18px;height:18px;border-radius:50%;background:var(--line);transition:background .2s,transform .2s}
 .dots i.ok{background:var(--ok)} .dots i.ko{background:var(--bad)} .dots i.cur{outline:4px solid var(--accent);outline-offset:2px;transform:scale(1.15)}
 .qtext{font-size:1.45rem;font-weight:700;line-height:1.4;font-family:var(--f-display)}
+.qphoto{margin:0}.qphoto img{display:block;max-width:100%;max-height:320px;margin:0 auto;border-radius:12px}
+.qphoto figcaption{font-size:.75rem;margin-top:4px;opacity:.7;text-align:center}.qphoto figcaption a{color:inherit}
+.qphoto.petite img{max-height:180px;width:auto;max-width:100%}
 .choices{display:grid;gap:12px;counter-reset:ch}
 .choice{counter-increment:ch;display:flex;align-items:center;gap:14px;text-align:left;padding:14px 16px;border:3px solid var(--line);background:var(--surface);border-radius:18px;cursor:pointer;font-size:1.1rem;
   box-shadow:0 4px 0 var(--line);transition:transform .1s,border-color .1s,box-shadow .1s}
@@ -648,6 +651,7 @@ html[data-skin="dino"] .fb{border-radius:26px 14px 28px 12px/14px 26px 12px 24px
 
 <script src="local.js"></script>
 <script src="programme.js"></script>
+<script src="paysages.js"></script>
 <script src="questions.js"></script>
 <script src="semaine.js"></script>
 <script src="tables.js"></script>
@@ -1150,7 +1154,13 @@ const parleOK='speechSynthesis' in window;
 if(parleOK)speechSynthesis.getVoices(); // Chrome charge ses voix au premier appel
 const voixPour=langue=>parleOK?speechSynthesis.getVoices().find(v=>v.localService&&v.lang.toLowerCase().startsWith(langue.slice(0,2))):null;
 const voixQuiz=matiere=>!!(LANGUES_ORAL[matiere]&&voixPour(LANGUES_ORAL[matiere]));
-const texteQuestion=x=>x.oral?`${x.question} (texte lu : ${x.oral})`:x.question;
+// La photo d'une question de quiz, avec l'auteur et la licence que demande Wikimedia Commons.
+function figurePhoto(x,petite){
+  const p=x&&x.image&&photo(x.image);if(!p)return '';
+  return `<figure class="qphoto${petite?' petite':''}"><img src="${esc(p.fichier)}" alt="${esc(p.titre)}">${petite?'':`<figcaption>Photo : ${esc(p.auteur)}, ${esc(p.licence)}, <a href="${esc(p.source)}" target="_blank" rel="noopener">Wikimedia Commons</a></figcaption>`}</figure>`;
+}
+// L'IA ne voit pas la photo : elle reçoit sa description.
+const texteQuestion=x=>`${x.question}${x.oral?` (texte lu : ${x.oral})`:''}${x.image&&photo(x.image)?` (photo montrée : ${photo(x.image).description})`:''}`;
 let lectureAttente=null;
 function dire(texte,langue){
   if(!parleOK)return;
@@ -1177,7 +1187,7 @@ function oralApresRendu(){
   if(b.hasAttribute('data-oral-auto')){q.lus={...q.lus,[q.i]:true};lireOral(q.questions[q.i])}
 }
 async function genererQuestions(q,diffs){
-  const oralOK=voixQuiz(q.matiere);
+  const oralOK=voixQuiz(q.matiere),photos=photosPour(q.matiere);
   const nv=NIVEAU_QUIZ[q.niveau],{erreurs,contenu,faibles,comps,plusieurs}=q.ctx;
   const faites=q.questions.map((x,i)=>({x,r:q.rep[i]}));
   const historique=faites.map((o,i)=>`  ${i+1}. ${o.r&&!o.r.pending?(o.r.ok?'[réussie]':'[ratée]'):'[en cours]'} (difficulte ${o.x.difficulte}) ${texteQuestion(o.x)}`).join('\n');
@@ -1189,7 +1199,7 @@ async function genererQuestions(q,diffs){
 ${prenom()} fait un questionnaire de ${q.n} questions sur ${plusieurs?'ces leçons (révision de la matière)':'cette leçon'}. Niveau : ${nv.label}. Les questions sont créées au fur et à mesure, d'après ses réponses.
 Règles :
 - Chaque question doit être parfaitement claire pour un enfant de 9 ans, sans rien à deviner : une seule chose demandée, tous les renseignements utiles donnés, et ce qu'il faut répondre (un nombre, une unité, un mot…). Précise tout ce qui pourrait se comprendre de deux façons. Par exemple, pour une horloge, dis toujours quelle aiguille montre quoi : « la petite aiguille (celle des heures) est sur le 3, la grande aiguille (celle des minutes) est sur le 6 », jamais seulement « l'aiguille est sur le 6 ».
-- Chaque question se suffit à elle-même : ${prenom()} ne voit ni la leçon ni les questions d'avant. Ne parle jamais de « la solution », « le problème », « l'exercice » ou « le texte » sans les écrire en entier dans la question : un problème de mathématiques donne tout son énoncé (la situation, les nombres, ce qu'on cherche) avant de poser la question.
+- Chaque question se suffit à elle-même : ${prenom()} ne voit ni la leçon ni les questions d'avant. Ne parle jamais de « la solution », « le problème », « l'exercice » ou « le texte » sans les écrire en entier dans la question : un problème de mathématiques donne tout son énoncé (la situation, les nombres, ce qu'on cherche) avant de poser la question. ${photos.length?`Seules les photos de la liste ci-dessous peuvent être affichées : jamais « la carte ci-dessous » ou « le schéma », et sans "image", jamais « la photo » ni « le paysage que tu observes ».`:`Aucune image n'est affichée : jamais « le paysage que tu observes », « observe la photo » ou « la carte ci-dessous » ; décris avec des mots ce qu'on y voit (« Sur une photo de campagne, on voit une forêt, un champ de blé et une route. »).`}
 - La question ne doit jamais contenir ni laisser voir sa réponse. En français surtout : pour faire conjuguer, accorder ou transformer, donne la forme de départ et la consigne, mais pas le résultat attendu (par exemple « Conjugue le verbe chanter au futur avec nous », et non « Conjugue : nous chanterons »). La bonne réponse ne doit pas non plus se deviner en relisant la question, en répétant ses mots : interdit « Comment la légende t'aide-t-elle à lire une carte ? » avec la réponse « En consultant la légende » ; bien « Sur une carte, où trouves-tu ce que veut dire un trait bleu ? ».
 - Écris comme une fiche d'exercices : une consigne courte et directe, en 1 ou 2 phrases. Pas de « Imagine que », pas de bavardage, n'annonce jamais de piège et ne parle pas de ses réponses d'avant.
 - Mets-toi à la place d'un enfant de 9 ans qui découvre la question : il doit comprendre tout de suite quoi faire, la réponse ne doit pas être sous ses yeux, et la consigne doit correspondre exactement aux boutons ou à la case qu'il voit. Si ce n'est pas le cas, réécris la question.
@@ -1200,7 +1210,9 @@ ${oralOK?`- Presque tout se lit à l'écran. Une question est lue à voix haute 
   * "courte" (case à remplir) : une seule réponse à taper, un mot, un nombre ou une petite phrase. Jamais de liste de mots à choisir dans la question, jamais « donne deux mots » ou « trois exemples », jamais « explique ton choix ».
 - difficulte 1 = application directe de la règle, 2 = un peu de réflexion, 3 = question « pointue » qui vérifie la vraie compréhension : piège classique, application à un cas nouveau, raisonnement ou justification.
 - En mathématiques, mets des calculs et de petits problèmes. En français, fais manipuler la langue (transformer, classer, accorder), avec des phrases de CM1 de 8 à 15 mots, jamais de petite phrase évidente. Pour un homophone : difficulte 1, une phrase à un trou ; difficulte 2, une phrase à deux trous, par exemple « Pendant les vacances, ma cousine ___ appris ___ nager dans le lac. », avec des choix comme « a / à » et « à / a » ; difficulte 3, une phrase avec une faute à trouver, en type "courte", par exemple « Quel mot est mal écrit dans : Le chien à faim et il cherche sa gamelle dans le jardin ? », avec "faute":"à" (le mot fautif tel qu'il est écrit dans la phrase) et "reponses":["a"] (sa correction). La faute doit vraiment être dans la phrase. Dans les autres matières, ne pose jamais de question sur l'orthographe. Ne donne jamais la nature du mot en aide, comme « (verbe être) ».
-- Reste dans le programme de CM1 et dans le contenu de la leçon.
+- Reste dans le programme de CM1 et dans le contenu de la leçon.${photos.length?`
+- Tu peux montrer une photo de paysage, pour une question sur trois environ, quand la leçon parle de paysages, de lieux ou de transports : mets son id dans "image" et commence la question par « Sur la photo, ». ${prenom()} voit la photo, mais toi tu n'as que sa description : pose seulement une question dont la réponse est écrite dans cette description (un plan, un élément naturel ou humain, le type de paysage), et n'invente aucun détail. Ne recopie pas la description dans la question. Photos disponibles :
+${photos.map(p=>`  * ${p.id} : ${p.description}`).join('\n')}`:''}
 - "explication" : 2 phrases courtes, 40 mots au plus : la règle, puis pourquoi c'est la bonne réponse ici (ou pourquoi le piège est faux). ${prenom()} peut demander plus de détails ensuite.
 - "indice" : une seule phrase courte (15 mots au plus) qui met sur la piste sans donner la réponse.
 - Choix de QCM et réponses courtes : quelques mots seulement.
@@ -1227,7 +1239,7 @@ ${q.refus.map(e=>'  * « '+e.question+' » : '+e.refus).join('\n')}
 Réponds uniquement avec un objet JSON {"questions":[...]} contenant exactement ${diffs.length} question(s).`;
   const r=await askJSON(prompt,{modelTier:'default',cache:false});
   const deja=new Set(q.questions.map(x=>norm(x.oral||x.question)));
-  const controles=(r&&Array.isArray(r.questions)?r.questions:[]).filter(q=>q&&q.question&&['qcm','vf','courte'].includes(q.type)&&!deja.has(norm(q.oral||q.question))).map(x=>({x,...controlerQuestion(x,{matiere:q.matiere,voix:oralOK})}));
+  const controles=(r&&Array.isArray(r.questions)?r.questions:[]).filter(q=>q&&q.question&&['qcm','vf','courte'].includes(q.type)&&!deja.has(norm(q.oral||q.question))).map(x=>({x,...controlerQuestion(x,{matiere:q.matiere,voix:oralOK,photos:photos.map(p=>p.id)})}));
   controles.filter(c=>c.refus).forEach(c=>{console.warn('Question refusée',c.x.question,'→',c.refus);q.refus=[...(q.refus||[]),{question:String(c.x.question),refus:c.refus}].slice(-3)});
   const qs=controles.filter(c=>c.question&&!(c.question.oral&&deja.has(norm(c.question.oral)))).map(c=>c.question);
   qs.forEach(q=>{
@@ -1250,7 +1262,7 @@ Réponds uniquement avec un objet JSON {"questions":[...]} contenant exactement 
 /* L'IA résout l'exercice sans voir la réponse proposée. En cas de désaccord, on ne sait pas qui a raison :
    la question est écartée, plutôt que de compter faux une bonne réponse. Si l'IA ne répond pas, elle est gardée. */
 async function reponseConfirmee(q,x){
-  let r;try{r=await askJSON(promptResolution(x),{modelTier:'default',cache:false})}catch(e){return true}
+  let r;try{r=await askJSON(promptResolution(x),{modelTier:'quick',cache:false})}catch(e){return true}
   if(accordResolution(x,r)!==false)return true;
   console.warn('Réponse non confirmée',x.question,'→',r);
   q.refus=[...(q.refus||[]),{question:String(x.question),refus:`la réponse indiquée comme bonne est fausse : en résolvant l'exercice, on trouve ${r.choix||r.resultat}`}].slice(-3);
@@ -2525,6 +2537,7 @@ function vQuiz(){
     <div class="dots" aria-label="Question ${q.i+1} sur ${q.n}">${dots}</div>
     <section class="card stack">
       <div class="row"><span class="small muted">Question ${q.i+1} / ${q.n}</span>${x.difficulte>=3?'<span class="tag-hard">Question pointue</span>':''}</div>
+      ${figurePhoto(x)}
       <p class="qtext">${rich(x.question)}</p>
       ${parleOK?`<div><button class="btn" data-act="consigne">🔊 Écouter la consigne</button></div>`:''}
       ${x.oral?`<div><button class="btn" data-act="reecouter" ${!r&&!(q.lus||{})[q.i]?'data-oral-auto':''}>🔊 Réécouter</button></div>`:''}
@@ -2545,7 +2558,7 @@ function vFinQuiz(){
     <p class="eyebrow">${esc(q.titre)}</p><div class="score">${q.score}/${q.total}</div><p style="font-size:1.15rem">${esc(q.msg)}</p>
     <span class="pill">${STAR} +${q.etoiles} étoiles</span>${detailEtoiles(q)}
     <div class="row" style="justify-content:center">${q.leconIds.length===1&&!String(q.leconIds[0]).startsWith('prog:')?(String(q.leconIds[0]).startsWith('ref:')?`<button class="btn" data-act="cours" data-id="${esc(String(q.leconIds[0]).slice(4))}">Relire la leçon</button>`:`<button class="btn" data-act="lecon" data-id="${q.leconIds[0]}">Relire la fiche</button>`):''}<button class="btn primary" data-act="retry-quiz">Nouveau quiz</button><button class="btn" data-act="tab" data-v="jour">Retour à aujourd'hui</button></div></section>
-    ${fautes.length?`<section class="card stack"><h3>Je revois mes erreurs</h3>${fautes.map(({x,r,b})=>`<div class="answer"><p><strong>${rich(x.question)}</strong></p>${x.oral?`<p class="small">J'ai lu : <strong>${esc(x.oral)}</strong></p>`:''}<p class="small">Bonne réponse : <strong>${esc(x.type==='qcm'?x.choix[x.bonne]:x.type==='vf'?(x.bonne?'Vrai':'Faux'):x.reponses[0])}</strong></p><p class="small">${rich(x.explication||'')}</p>${b&&b.trim()?`<p class="small muted" style="margin-top:6px">Mon brouillon :</p><div class="brouillon-vu">${esc(b)}</div>`:''}</div>`).join('')}</section>`:''}</div>`;
+    ${fautes.length?`<section class="card stack"><h3>Je revois mes erreurs</h3>${fautes.map(({x,r,b})=>`<div class="answer">${figurePhoto(x,true)}<p><strong>${rich(x.question)}</strong></p>${x.oral?`<p class="small">J'ai lu : <strong>${esc(x.oral)}</strong></p>`:''}<p class="small">Bonne réponse : <strong>${esc(x.type==='qcm'?x.choix[x.bonne]:x.type==='vf'?(x.bonne?'Vrai':'Faux'):x.reponses[0])}</strong></p><p class="small">${rich(x.explication||'')}</p>${b&&b.trim()?`<p class="small muted" style="margin-top:6px">Mon brouillon :</p><div class="brouillon-vu">${esc(b)}</div>`:''}</div>`).join('')}</section>`:''}</div>`;
 }
 async function repondre(v){
   const q=state.quiz,x=q.questions[q.i];if(q.rep[q.i])return;
