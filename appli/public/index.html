@@ -2881,11 +2881,14 @@ function vParents(){
   const ach=all('achats').filter(a=>a.statut==='demandé');const rec=all('recompenses').sort((a,b)=>a.cout-b.cout);
   // Dans l'ordre de ce qu'on vient faire : valider, suivre, gérer les récompenses, puis les réglages qu'on touche rarement.
   const zone=c.zone||ZONE_DEFAUT;
-  return `<section class="card sec-title" style="padding-block:10px"><h3>Espace parents</h3><button class="btn ghost" data-act="parent-off">Fermer</button></section>
-  <section class="card stack"><h3>À valider</h3>${ach.length?ach.map(a=>`<div class="reward"><span>${esc(titreDemande(a))} <span class="cost">${a.palier?'offert':a.cout}</span></span><span class="row"><button class="btn primary" data-act="valider" data-id="${a.id}">Accorder</button><button class="btn" data-act="refuser" data-id="${a.id}">Refuser</button></span></div>`).join(''):'<p class="small muted">Aucune demande en attente.</p>'}
+  // Deux pages : Suivi (ce qu'on vient voir presque à chaque fois) et Réglages (récompenses et réglages, plus rares).
+  const page=state.pp==='reglages'?'reglages':'suivi';
+  const onglet=(v,l)=>`<button class="btn ${page===v?'primary':''}" data-act="parent-page" data-v="${v}" aria-pressed="${page===v}">${l}</button>`;
+  return `<section class="card sec-title" style="padding-block:10px"><div class="row"><h3>Espace parents</h3>${onglet('suivi','📈 Suivi')}${onglet('reglages','⚙️ Réglages')}</div><button class="btn ghost" data-act="parent-off">Fermer</button></section>
+  ${page==='suivi'?`<section class="card stack"><h3>À valider</h3>${ach.length?ach.map(a=>`<div class="reward"><span>${esc(titreDemande(a))} <span class="cost">${a.palier?'offert':a.cout}</span></span><span class="row"><button class="btn primary" data-act="valider" data-id="${a.id}">Accorder</button><button class="btn" data-act="refuser" data-id="${a.id}">Refuser</button></span></div>`).join(''):'<p class="small muted">Aucune demande en attente.</p>'}
     ${etoilesDetail()}</section>
   ${vSemaine(`<div class="row"><button class="btn primary" data-act="tab" data-v="programme">🗺️ Programme CM1 : où en est ${esc(prenom())}</button></div>`)}
-  <section class="card stack"><h3>Récompenses</h3>${rec.map(r=>`<div class="reward"><span>${esc(r.titre)}</span><span class="row"><span class="cost">${r.cout}</span><button class="btn ghost danger" data-act="del-rec" data-id="${r.id}">Retirer</button></span></div>`).join('')}
+  `:`<section class="card stack"><h3>Récompenses</h3>${rec.map(r=>`<div class="reward"><span>${esc(r.titre)}</span><span class="row"><span class="cost">${r.cout}</span><button class="btn ghost danger" data-act="del-rec" data-id="${r.id}">Retirer</button></span></div>`).join('')}
     <form class="form-grid" data-form="rec"><label class="f">Nouvelle récompense<input type="text" id="rec-t" name="titre" required></label><label class="f">Prix en étoiles<input type="number" id="rec-c" name="cout" min="1" value="50" required></label><div><button class="btn">Ajouter</button></div></form>
     ${!rec.length?`<div><button class="btn" data-act="suggestions">Ajouter des récompenses suggérées</button></div>`:''}
     <p class="small muted">Repère : un quiz de 10 questions rapporte 13 étoiles avec 8 bonnes réponses, 30 sans faute. Une bonne journée complète rapporte 30 à 50 étoiles.</p></section>
@@ -2894,7 +2897,7 @@ function vParents(){
     <label class="f" style="max-width:240px">Zone de vacances<select id="zone-parent">${['A','B','C'].map(z=>`<option value="${z}" ${z===zone?'selected':''}>Zone ${z}</option>`).join('')}</select></label>
     <p class="eyebrow">Habillage du cartable</p><div class="row">${Object.entries(SKINS).map(([id,k])=>`<button class="btn ${skinId()===id?'primary':''}" data-act="skin" data-v="${id}" aria-pressed="${skinId()===id}">${k.ico} ${esc(k.nom)}</button>`).join('')}</div>
     <p class="eyebrow">L'IA du cartable</p>${vIA()}
-  </section>`;
+  </section>`}`;
 }
 
 /* ---- Accueil d'un cartable neuf ----
@@ -3018,7 +3021,8 @@ document.addEventListener('click',async e=>{
     case 'ia-tester':envoyerIA({essai:true});break;
     case 'ia-oublier':envoyerIA({oublierCle:true});break;
     case 'suggestions':SUGGESTIONS.forEach(([t,c])=>put('recompenses',uid(),{titre:t,cout:c}));break;
-    case 'parent-off':finParent();render();break;
+    case 'parent-off':finParent();state.pp=null;render();break;
+    case 'parent-page':state.pp=v;render();window.scrollTo({top:0});break;
     case 'skin':put('config','main',{...cfg(),skin:el.dataset.v});toast(`Habillage ${SKINS[el.dataset.v].nom.split(' ·')[0]} choisi.`);break;
     case 'prog-mat':go('programme',v);break;
     case 'comp-etat':{const c=COMP(id);if(!c)break;const cur=etatComp(c).etat;const next={avenir:'vu',vu:'fragile',fragile:'progres',progres:'acquis',acquis:'avenir'}[cur];put('programme',id,{etat:next,date:TODAY(),ts:Date.now()});break}
