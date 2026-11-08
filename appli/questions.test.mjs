@@ -323,3 +323,17 @@ test("en français et en anglais, retrouver un mot dans la phrase est l'exercice
   assert.ok(qcm("Dans la phrase Le chat dort, quel mot est le verbe ?", ["dort", "chien", "table"], 0, "francais").question);
   assert.ok(qcm("Which word is a colour in : the red car ?", ["red", "dog"], 0, "anglais").question);
 });
+
+test("rien n'est montré à l'écran : pas de paysage, de photo ou de carte à observer", () => {
+  const geo = { matiere: "geographie" };
+  assert.ok(c({ type: "courte", question: "Dans le paysage que tu observes, tu vois une maison construite près d'un grand champ de blé. Quel mot permet de dire que la maison a été faite par l'homme ?", reponses: ["aménagé"] }, geo).refus);
+  assert.ok(c({ type: "qcm", question: "Observe la photo. Quel élément est naturel ?", choix: ["la forêt", "la route"], bonne: 0 }, geo).refus);
+  assert.ok(c({ type: "vf", question: "Sur la carte ci-dessous, le fleuve traverse la ville.", bonne: true }, geo).refus);
+  assert.ok(c({ type: "qcm", question: "Regarde bien le schéma : quel organe pompe le sang ?", choix: ["le cœur", "le foie"], bonne: 0 }, { matiere: "sciences" }).refus);
+});
+
+test("une image décrite avec des mots reste permise", () => {
+  const geo = { matiere: "geographie" };
+  assert.ok(c({ type: "qcm", question: "Sur une photo de campagne, on voit une forêt, un champ de blé et une route. Quel élément est naturel ?", choix: ["la forêt", "la route", "le champ"], bonne: 0 }, geo).question);
+  assert.ok(c({ type: "qcm", question: "Sur une carte, où trouves-tu ce que veut dire un trait bleu ?", choix: ["dans la légende", "dans le titre"], bonne: 0 }, geo).question);
+});
