@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import Anthropic from "@anthropic-ai/sdk";
 import { DuckDBInstance } from "@duckdb/node-api";
 import { marked } from "marked";
+import { creerSessions, autorise, fileUneParUne } from "./parent.mjs";
 import { avecSchemas, schema } from "./schemas.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -122,12 +123,16 @@ const lireDoc = async (col, id) => {
   const rows = (await tour(() => duck.runAndReadAll("SELECT data::VARCHAR FROM docs WHERE col = $1 AND id = $2", [col, id]))).getRows();
   return rows.length ? JSON.parse(rows[0][0]) : null;
 };
-const pinCorrect = async pin => {
+// Jetons de session parent (15 min sans usage) : le code n'est vérifié qu'à l'ouverture, ensuite le jeton suffit.
+const sessions = creerSessions();
+// Les essais passent un par un, attente comprise : des essais en parallèle ne contournent pas la seconde par erreur.
+const unEssai = fileUneParUne();
+const pinCorrect = pin => unEssai(async () => {
   const doc = await lireDoc("config", "pin");
   const ok = !!doc && crypto.timingSafeEqual(Buffer.from(hacher(pin, doc.sel), "hex"), Buffer.from(doc.hash, "hex"));
   if (!ok) await new Promise(r => setTimeout(r, 1000)); // une seconde par erreur : deviner au hasard devient très long
   return ok;
-};
+});
 const enregistrerPin = pin => { const sel = crypto.randomBytes(16).toString("hex"); return ecrire("config", "pin", { sel, hash: hacher(pin, sel) }); };
 // Avant le 21/10/2026, le code était en clair dans config/main : on le range à l'abri.
 {
@@ -207,9 +212,22 @@ async function essaiIA({ ia, url, modele, cle }) {
   } catch { return { ok: false, code: "no_ollama" }; }
 }
 
+// Règles d'écriture (parent.mjs) : renvoie null si permis, sinon la réponse de refus.
+async function verifier(req, col, id, data, suppression) {
+  const verdict = autorise({
+    col, id, data, suppression,
+    existant: await lireDoc(col, id),
+    pinDefini: !!(await lireDoc("config", "pin")),
+    parent: sessions.valide(req.headers["x-parent"]),
+    recompenses: col === "achats" ? (await toutLire()).recompenses : undefined,
+  });
+  if (!verdict) return null;
+  return res => json(res, verdict === "invalide" ? 400 : 403, { code: verdict });
+}
+
 async function reglerIA(req, res) {
-  const { pin = "", essai = false, ia, ollamaUrl = "", ollamaModel = "", cle = "", oublierCle = false } = await readBody(req, 5000);
-  if (!await pinCorrect(pin)) return json(res, 403, { code: "pin" });
+  const { essai = false, ia, ollamaUrl = "", ollamaModel = "", cle = "", oublierCle = false } = await readBody(req, 5000);
+  if (!sessions.valide(req.headers["x-parent"])) return json(res, 403, { code: "parent" });
   if (ia !== "ollama" && ia !== "claude") return json(res, 400, { code: "bad_request" });
   let url = OLLAMA_URL;
   if (ia === "ollama") {
@@ -405,9 +423,14 @@ const server = http.createServer(async (req, res) => {
         if (doc) return json(res, 409, { code: "deja" });
         if (!/^\d{4,8}$/.test(String(pin))) return json(res, 400, { code: "format" });
         await enregistrerPin(pin);
-        return json(res, 200, { ok: true });
+        return json(res, 200, { ok: true, jeton: sessions.ouvrir() });
       }
-      return json(res, 200, { ok: await pinCorrect(pin) });
+      if (!await pinCorrect(pin)) return json(res, 200, { ok: false });
+      return json(res, 200, { ok: true, jeton: sessions.ouvrir() });
+    }
+    if (p === "/api/pin" && req.method === "DELETE") {
+      sessions.fermer(req.headers["x-parent"]);
+      return json(res, 200, { ok: true });
     }
     if (p === "/api/ia" && req.method === "POST") return await reglerIA(req, res);
     if (p === "/api/cours") return json(res, 200, await coursEtProgression());
@@ -419,9 +442,15 @@ const server = http.createServer(async (req, res) => {
       if (req.method === "PUT") {
         const data = await readBody(req);
         if (col === "config" && id === "main") delete data.pin; // un ancien onglet pourrait renvoyer l'ancien code en clair
+        const refus = await verifier(req, col, id, data, false);
+        if (refus) return refus(res);
         await ecrire(col, id, data); return json(res, 200, { ok: true });
       }
-      if (req.method === "DELETE") { await effacer(col, id); return json(res, 200, { ok: true }); }
+      if (req.method === "DELETE") {
+        const refus = await verifier(req, col, id, undefined, true);
+        if (refus) return refus(res);
+        await effacer(col, id); return json(res, 200, { ok: true });
+      }
     }
     if (p === "/api/sample" && req.method === "POST") return await sample(req, res);
     // Schémas proposés par Claude dans les leçons du cahier ; « dessin » (SVG brut) n'est pas permis.
