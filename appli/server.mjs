@@ -24,6 +24,7 @@ const PUBLIC = path.join(here, "public");
 const DATA = path.join(here, "data");
 const DB_FILE = path.join(DATA, "cartable.duckdb");
 const OLD_JSON = path.join(DATA, "db.json");
+const CONSO_FILE = path.join(DATA, "consommation.log");
 const COLS = new Set(["lecons", "quiz", "notes", "devoirs", "routine", "recompenses", "achats", "config", "programme"]);
 const MAX_IMAGES = 4;
 
@@ -152,9 +153,11 @@ async function readBody(req, limit = 40e6) {
 }
 
 /* ---------- Claude ---------- */
-// "quick" = petites réponses (vérifier une réponse, réexpliquer, relier au programme) : Haiku, effort bas.
+// "quick" = petites réponses (vérifier une réponse, résoudre une question de maths pour la confirmer, réexpliquer, relier au programme) : Haiku, effort bas.
 const TIERS = {
   quick: { model: MODEL_QUICK, effort: "low", max_tokens: 4000 },
+  // "light" = travail long mais peu réfléchi (recopier l'agenda, rédiger un cours à partir d'un sujet) : Sonnet, effort bas.
+  light: { model: MODEL, effort: "low", max_tokens: 32000 },
   default: { model: MODEL, effort: "medium", max_tokens: 32000 },
 };
 // Le repli automatique en cas de refus n'existe pas pour Haiku.
@@ -305,6 +308,11 @@ async function sample(req, res) {
       if (ev.type === "content_block_delta" && ev.delta.type === "text_delta") send({ t: "text", text: ev.delta.text });
     }
     const msg = await stream.finalMessage();
+    // Une ligne par appel, dans le terminal et dans data/consommation.log, pour voir ce qui consomme les crédits.
+    const u = msg.usage || {};
+    const ligne = `Claude ${t.model} (${tier}, effort ${t.effort}${images.length ? `, ${images.length} photo${images.length > 1 ? "s" : ""}` : ""}) : ${u.input_tokens ?? "?"} jetons lus, ${u.output_tokens ?? "?"} écrits`;
+    console.log(ligne);
+    fs.appendFile(CONSO_FILE, `${new Date().toLocaleString("fr-FR")}  ${ligne}\n`).catch(e => console.error("Journal de consommation :", e.message));
     if (msg.stop_reason === "refusal") send({ t: "error", code: "refused" });
     else send({ t: "done", truncated: msg.stop_reason === "max_tokens" });
   } catch (e) {
