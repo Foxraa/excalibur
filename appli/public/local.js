@@ -69,7 +69,7 @@
     const images = await Promise.all((opts.images || []).map(b64));
     let r;
     try {
-      r = await fetch('/api/sample', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ prompt, images, tier: opts.modelTier === 'quick' ? 'quick' : 'default' }) });
+      r = await fetch('/api/sample', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ prompt, images, tier: ['quick', 'light'].includes(opts.modelTier) ? opts.modelTier : 'default' }) });
     } catch (e) { throw { code: 'network' }; }
     if (!r.ok) { let code = r.status === 413 ? 'prompt_too_large' : 'api_error'; try { code = (await r.json()).code || code; } catch (e) {} throw { code }; }
     const reader = r.body.getReader(), dec = new TextDecoder();

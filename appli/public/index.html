@@ -1046,7 +1046,7 @@ ${LISTE_COMP()}
 
 Réponds uniquement avec un objet JSON de cette forme :
 {"lisible": true, "devoirs": [{"titre": "...", "detail": "...", "matiere": "un des identifiants: ${MAT_LIST}", "type": "${TYPES_DV.join('" ou "')}", "pour": "AAAA-MM-JJ", "certain": true, "competences": ["identifiant"]}], "remarque": "une phrase pour ${prenom()} si quelque chose était difficile à lire, sinon \\"\\""}`;
-  return askJSON(prompt,{images,modelTier:'default',cache:false},n=>{const el=app.querySelector('[data-progress]');if(el)el.textContent=`Je recopie tes devoirs… (${n} caractères)`});
+  return askJSON(prompt,{images,modelTier:'light',cache:false},n=>{const el=app.querySelector('[data-progress]');if(el)el.textContent=`Je recopie tes devoirs… (${n} caractères)`});
 }
 const dejaNote=x=>all('devoirs').some(d=>d.pour===x.pour&&norm(d.titre)===norm(x.titre));
 async function coursDepuisSujet(sujet){
@@ -1061,7 +1061,7 @@ ${LISTE_COMP()}
 
 Réponds uniquement avec un objet JSON de cette forme :
 ${COURS_SCHEMA}`;
-  return askJSON(prompt,{modelTier:'default',cache:false},progressAdd);
+  return askJSON(prompt,{modelTier:'light',cache:false},progressAdd);
 }
 const NIVEAU_QUIZ={facile:{n:6,dur:1,label:'Facile'},normal:{n:8,dur:2,label:'Normal'},defi:{n:10,dur:4,label:'Défi'}};
 function resumeLecon(l,court){
