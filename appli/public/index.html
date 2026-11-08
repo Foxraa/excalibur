@@ -1787,7 +1787,6 @@ function renderStrip(){
   const el=document.getElementById('strip');if(!el)return;
   // Seulement dans « Mon année » et chez les parents (choix de la zone) : l'accueil reste dégagé.
   el.hidden=!['annee','parents','programme'].includes(state.view);if(el.hidden)return;
-  if(document.activeElement&&document.activeElement.id==='zone-sel')return;
   const t=TODAY(),vac=vacancesAnnee(),zone=cfg().zone||ZONE_DEFAUT;
   const len=daysBetween(ANNEE.debut,ANNEE.fin);
   const P=d=>Math.max(0,Math.min(100,100*daysBetween(ANNEE.debut,d)/len));
@@ -1796,7 +1795,8 @@ function renderStrip(){
   if(t<ANNEE.debut){titre='Bientôt la rentrée';detail=`Rentrée ${dansJours(daysBetween(t,ANNEE.debut))}`}
   else if(enCours){titre=`<span class="vacn">${esc(enCours[0])} !</span>`;detail=enCours[2]>ANNEE.fin?'Bonnes vacances !':`Reprise ${esc(longDate(enCours[2]))} (${dansJours(daysBetween(t,enCours[2]))})`}
   else{const s=semainesClasse(vac);titre=`Semaine ${s.n} sur ${s.total}`;detail=proch?`${esc(proch[0])} ${dansJours(daysBetween(t,proch[1]))}`:''}
-  const zoneSel=`<select id="zone-sel" aria-label="Zone de vacances" title="Zone de vacances scolaires"><option value="">Zone ?</option>${['A','B','C'].map(z=>`<option value="${z}" ${z===zone?'selected':''}>Zone ${z}</option>`).join('')}</select>`;
+  // La zone se règle dans l'espace parents (réglages) : ici, on l'affiche seulement.
+  const zoneSel=`<span class="muted" title="Zone de vacances scolaires, réglée dans l'espace parents">Zone ${esc(zone)}</span>`;
   const seg=vac.filter(([,a])=>a<ANNEE.fin).map(([n,a,b])=>`<i class="vac" style="left:${P(a)}%;width:${P(b)-P(a)}%" title="${esc(n)} : du ${esc(shortDate(a))} au ${esc(shortDate(addDays(b,-1)))}"></i>`).join('');
   const fer=ANNEE.feries.map(([n,a,b])=>daysBetween(a,b)>1?`<i class="vac" style="left:${P(a)}%;width:${P(b)-P(a)}%" title="${esc(n)}"></i>`:`<i class="fer" style="left:${P(a)}%" title="${esc(n)}"></i>`).join('');
   const mois=MOIS.map((m,i)=>{const d=isoDay(new Date(2026,8+i,1,12));return `<span style="left:${P(d)}%">${m}</span>`}).join('');
@@ -2798,7 +2798,7 @@ function bilanSemaine(){
     missions:mis.length?{faites:mis.filter(Boolean).length,total:mis.length}:null,
     progres:evol.filter(x=>rang[x.n]>rang[x.a]&&rang[x.n]>=2),recul:evol.filter(x=>x.n==='fragile'||rang[x.n]<rang[x.a])};
 }
-function vSemaine(){
+function vSemaine(pied=''){
   const w=bilanSemaine(),ecart=(n,a)=>a===n?'pareil que la semaine d\'avant':`${n>a?'+':''}${n-a} par rapport à la semaine d'avant`;
   const ligneComp=x=>`<div class="item small"><span class="grow">${esc(x.c.t)}<br><span class="muted">${mchip(x.c.m)} ${ETATS[x.a]} → <b>${ETATS[x.n]}</b></span></span></div>`;
   return `<section class="card stack sem-parents"><div class="sec-title"><h3>Sa semaine</h3><span class="small muted">du ${esc(shortDate(w.jours[0].d))} au ${esc(shortDate(w.jours[6].d))}</span></div>
@@ -2813,7 +2813,7 @@ function vSemaine(){
     ${w.parMat.length?`<div class="tablewrap"><table class="t"><tr><th>Matière</th><th>Quiz</th><th>Réussite</th></tr>${w.parMat.map(o=>`<tr><td>${mchip(o.m.id)}</td><td>${o.qs.length}</td><td>${w.moyDe(o.qs)} %</td></tr>`).join('')}</table></div>`:'<p class="small muted">Aucun quiz cette semaine.</p>'}
     ${w.progres.length?`<details id="sem-progres" ${ouvert('sem-progres')}><summary>📈 ${w.progres.length} point${w.progres.length>1?'s':''} du programme en progrès</summary><div class="stack" style="margin-top:8px">${w.progres.slice(0,8).map(ligneComp).join('')}</div></details>`:''}
     ${w.recul.length?`<details id="sem-recul" ${ouvert('sem-recul')}><summary>⚠️ ${w.recul.length} point${w.recul.length>1?'s':''} à surveiller</summary><div class="stack" style="margin-top:8px">${w.recul.slice(0,8).map(ligneComp).join('')}</div></details>`:''}
-    <p class="small muted">Chiffres des 7 derniers jours, aujourd'hui compris.</p>
+    <p class="small muted">Chiffres des 7 derniers jours, aujourd'hui compris.</p>${pied}
   </section>`;
 }
 const pinDefini=()=>!!(S.config.get('pin')||{}).defini;
@@ -2879,16 +2879,20 @@ function vParents(){
   const c=cfg();
   if(!state.parent)return `<section class="card"><h3>Espace parents</h3><p class="small muted" style="margin-bottom:8px">Pour suivre le programme de CM1, gérer les récompenses et valider les demandes ${esc(deP())}.</p><form class="row" data-form="pin"><input type="password" id="pin" name="pin" inputmode="numeric" placeholder="${pinDefini()?'Code parent':'Choisissez un code (4 chiffres)'}" style="max-width:240px" required><button class="btn">${pinDefini()?'Ouvrir':'Créer le code'}</button></form></section>`;
   const ach=all('achats').filter(a=>a.statut==='demandé');const rec=all('recompenses').sort((a,b)=>a.cout-b.cout);
-  return `${vSemaine()}<section class="card stack"><div class="sec-title"><h3>Espace parents</h3><button class="btn ghost" data-act="parent-off">Fermer</button></div>
-    <p class="eyebrow">Suivi scolaire</p><div class="row"><button class="btn primary" data-act="tab" data-v="programme">🗺️ Programme CM1 : où en est ${esc(prenom())}</button></div>
-    <p class="eyebrow">Demandes à valider</p>${ach.length?ach.map(a=>`<div class="reward"><span>${esc(titreDemande(a))} <span class="cost">${a.palier?'offert':a.cout}</span></span><span class="row"><button class="btn primary" data-act="valider" data-id="${a.id}">Accorder</button><button class="btn" data-act="refuser" data-id="${a.id}">Refuser</button></span></div>`).join(''):'<p class="small muted">Aucune demande en attente.</p>'}
-    ${etoilesDetail()}
-    <p class="eyebrow">Récompenses proposées</p>${rec.map(r=>`<div class="reward"><span>${esc(r.titre)}</span><span class="row"><span class="cost">${r.cout}</span><button class="btn ghost danger" data-act="del-rec" data-id="${r.id}">Retirer</button></span></div>`).join('')}
+  // Dans l'ordre de ce qu'on vient faire : valider, suivre, gérer les récompenses, puis les réglages qu'on touche rarement.
+  const zone=c.zone||ZONE_DEFAUT;
+  return `<section class="card sec-title" style="padding-block:10px"><h3>Espace parents</h3><button class="btn ghost" data-act="parent-off">Fermer</button></section>
+  <section class="card stack"><h3>À valider</h3>${ach.length?ach.map(a=>`<div class="reward"><span>${esc(titreDemande(a))} <span class="cost">${a.palier?'offert':a.cout}</span></span><span class="row"><button class="btn primary" data-act="valider" data-id="${a.id}">Accorder</button><button class="btn" data-act="refuser" data-id="${a.id}">Refuser</button></span></div>`).join(''):'<p class="small muted">Aucune demande en attente.</p>'}
+    ${etoilesDetail()}</section>
+  ${vSemaine(`<div class="row"><button class="btn primary" data-act="tab" data-v="programme">🗺️ Programme CM1 : où en est ${esc(prenom())}</button></div>`)}
+  <section class="card stack"><h3>Récompenses</h3>${rec.map(r=>`<div class="reward"><span>${esc(r.titre)}</span><span class="row"><span class="cost">${r.cout}</span><button class="btn ghost danger" data-act="del-rec" data-id="${r.id}">Retirer</button></span></div>`).join('')}
     <form class="form-grid" data-form="rec"><label class="f">Nouvelle récompense<input type="text" id="rec-t" name="titre" required></label><label class="f">Prix en étoiles<input type="number" id="rec-c" name="cout" min="1" value="50" required></label><div><button class="btn">Ajouter</button></div></form>
     ${!rec.length?`<div><button class="btn" data-act="suggestions">Ajouter des récompenses suggérées</button></div>`:''}
-    <p class="small muted">Repère : un quiz de 10 questions rapporte 13 étoiles avec 8 bonnes réponses, 30 sans faute. Une bonne journée complète rapporte 30 à 50 étoiles.</p>
-    <p class="eyebrow">Habillage du cartable</p><div class="row">${Object.entries(SKINS).map(([id,k])=>`<button class="btn ${skinId()===id?'primary':''}" data-act="skin" data-v="${id}" aria-pressed="${skinId()===id}">${k.ico} ${esc(k.nom)}</button>`).join('')}</div>
+    <p class="small muted">Repère : un quiz de 10 questions rapporte 13 étoiles avec 8 bonnes réponses, 30 sans faute. Une bonne journée complète rapporte 30 à 50 étoiles.</p></section>
+  <section class="card stack"><h3>Réglages</h3>
     <form class="form-grid" data-form="prenom"><label class="f">Prénom affiché<input type="text" id="cfg-prenom" name="prenom" value="${esc(c.prenom||'')}" required></label><div><button class="btn">Enregistrer</button></div></form>
+    <label class="f" style="max-width:240px">Zone de vacances<select id="zone-parent">${['A','B','C'].map(z=>`<option value="${z}" ${z===zone?'selected':''}>Zone ${z}</option>`).join('')}</select></label>
+    <p class="eyebrow">Habillage du cartable</p><div class="row">${Object.entries(SKINS).map(([id,k])=>`<button class="btn ${skinId()===id?'primary':''}" data-act="skin" data-v="${id}" aria-pressed="${skinId()===id}">${k.ico} ${esc(k.nom)}</button>`).join('')}</div>
     <p class="eyebrow">L'IA du cartable</p>${vIA()}
   </section>`;
 }
@@ -3027,7 +3031,7 @@ document.addEventListener('click',async e=>{
 document.addEventListener('input',e=>{if(e.target.matches&&e.target.matches('[data-brouillon]')&&state.quiz){(state.quiz.brouillons=state.quiz.brouillons||{})[state.quiz.i]=e.target.value}});
 document.addEventListener('change',e=>{
   const el=e.target;
-  if(el.id==='zone-sel'){el.blur();put('config','main',{...cfg(),zone:el.value||null});return}
+  if(el.id==='zone-parent'){el.blur();put('config','main',{...cfg(),zone:el.value||null});return}
   if(el.id==='photo-in'&&el.files){ajouterFichiers(el.files);el.value='';return}
   if(el.id==='scan-in'&&el.files){ajouterFichiers(el.files,state.scan);el.value='';return}
   if(el.dataset.act==='devoir-fait'){marquerDevoir(el.dataset.id,el.checked);return}
