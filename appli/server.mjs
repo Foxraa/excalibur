@@ -22,7 +22,8 @@ const HOST = process.env.HOST || "127.0.0.1";
 const MODEL = process.env.MODEL || "claude-sonnet-5-5";
 const MODEL_QUICK = process.env.MODEL_QUICK || "claude-haiku-5-5";
 const PUBLIC = path.join(here, "public");
-const DATA = path.join(here, "data");
+// DATA_DIR sert au test du parcours : il tourne sur un dossier jetable, jamais sur les vraies données.
+const DATA = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(here, "data");
 const DB_FILE = path.join(DATA, "cartable.duckdb");
 const OLD_JSON = path.join(DATA, "db.json");
 const CONSO_FILE = path.join(DATA, "consommation.log");

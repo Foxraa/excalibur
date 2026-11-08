@@ -6,3 +6,5 @@ photos/
 node_modules/
 .claude/tmp/
 .superpowers/
+appli/test-results/
+appli/playwright-report/

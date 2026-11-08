@@ -86,6 +86,11 @@ Tout est dans `data/cartable.duckdb`. Le serveur y recopie chaque modification a
 
 Fermer le cartable, puis double-cliquer sur **Reinitialiser le cartable.bat** et taper `OUI`. Rien n'est effacé : le dossier `data` est renommé en `data-avant-reinitialisation-<date>`, et le cartable démarre vide au lancement suivant, sur l'accueil (code parent, prénom, récompenses, étoiles). Pour revenir en arrière, supprimer le nouveau dossier `data` et redonner son nom `data` à l'ancien.
 
+## Tester le cartable
+
+- `npm test` vérifie les règles (étoiles, épée, tables, questions, session parent…) en quelques secondes.
+- `npm run test:parcours` joue un cartable neuf de bout en bout dans Edge : accueil, quiz depuis la mission, code du héros, demande de récompense, refus sans code parent, espace parents. Le serveur de test tourne sur le port 3100 avec un dossier de données jetable, et l'IA est simulée : la vraie base n'est jamais touchée, et ni Ollama ni Claude ne sont appelés. Pour utiliser Chrome à la place d'Edge : `E2E_NAVIGATEUR=chrome`.
+
 Le code est suivi par git. Les données, les photos et le fichier `.env` n'y sont pas.
 
 Sources du programme : français et maths, BO n°16 du 17 avril 2025 ; histoire-géographie, BO n°22 du 28 mai 2026. Pour les sciences et l'EMC, la liste est indicative, car le programme officiel n'est pas découpé par année.
