@@ -919,7 +919,7 @@ async function askJSON(prompt,opts={},onProgress){
   return lireJSON(text);
 }
 function progressAdd(n){const el=app.querySelector('[data-progress]');if(el)el.textContent=`J'écris ta fiche… (${n} caractères)`}
-function errMsg(e){return({no_ollama:"Ollama ne répond pas. Vérifie qu'il est lancé, ou demande à un parent de regarder le réglage de l'IA.",no_model:"Le modèle d'Ollama n'est pas installé (voir la fenêtre du cartable).",no_key:"Il manque la clé API de Claude : elle se règle dans l'espace parents.",bad_key:"La clé API est refusée. Vérifiez-la dans l'espace parents.",ocr_bad_key:"Mistral refuse la clé qui sert à lire les photos. Demande à un parent de la vérifier dans l'espace parents.",ocr_network:"Je n'arrive pas à joindre Mistral pour lire les photos. Vérifie la connexion internet.",ocr_error:"Mistral n'a pas réussi à lire les photos. Réessaie dans un instant.",network:"Je n'arrive pas à joindre l'IA. Vérifie la connexion et que le cartable est bien lancé.",bad_request:"L'IA n'a pas compris la demande. Réessaie.",api_error:"L'IA a eu un petit souci. Réessaie dans un instant.",save_failed:"Je n'ai pas pu enregistrer.",rate_limited:"L'IA est très occupée. Réessaie dans quelques minutes.",image_rejected:"Cette photo n'a pas pu être lue. Prends-en une autre, bien éclairée et nette.",images_unavailable:"L'envoi de photos n'est pas possible ici. Ouvre la page dans l'application Claude.",invalid_json:"La réponse est arrivée en désordre. Appuie sur Réessayer.",refused:"L'IA n'a pas pu traiter cette demande. Essaie avec une autre photo ou une autre question.",session_expired:"Reconnecte-toi à Claude puis réessaie.",prompt_too_large:"C'est trop long d'un coup. Envoie moins de photos.",empty_completion:"L'IA n'a rien répondu. Réessaie."}[e&&e.code])||`Petit souci de connexion. Réessaie dans un instant. (code : ${(e&&(e.code||e.message))||'inconnu'})`}
+function errMsg(e){return({no_ollama:"Ollama ne répond pas. Vérifie qu'il est lancé, ou demande à un parent de regarder le réglage de l'IA.",no_model:"Le modèle d'Ollama n'est pas installé (voir la fenêtre du cartable).",no_key:"Il manque la clé API de l'IA : elle se règle dans l'espace parents.",bad_key:"La clé API est refusée. Vérifiez-la dans l'espace parents.",ocr_bad_key:"Mistral refuse la clé qui sert à lire les photos. Demande à un parent de la vérifier dans l'espace parents.",ocr_network:"Je n'arrive pas à joindre Mistral pour lire les photos. Vérifie la connexion internet.",ocr_error:"Mistral n'a pas réussi à lire les photos. Réessaie dans un instant.",network:"Je n'arrive pas à joindre l'IA. Vérifie la connexion et que le cartable est bien lancé.",bad_request:"L'IA n'a pas compris la demande. Réessaie.",api_error:"L'IA a eu un petit souci. Réessaie dans un instant.",save_failed:"Je n'ai pas pu enregistrer.",rate_limited:"L'IA est très occupée. Réessaie dans quelques minutes.",image_rejected:"Cette photo n'a pas pu être lue. Prends-en une autre, bien éclairée et nette.",images_unavailable:"L'envoi de photos n'est pas possible ici. Ouvre la page dans l'application Claude.",invalid_json:"La réponse est arrivée en désordre. Appuie sur Réessayer.",refused:"L'IA n'a pas pu traiter cette demande. Essaie avec une autre photo ou une autre question.",session_expired:"Reconnecte-toi à Claude puis réessaie.",prompt_too_large:"C'est trop long d'un coup. Envoie moins de photos.",empty_completion:"L'IA n'a rien répondu. Réessaie."}[e&&e.code])||`Petit souci de connexion. Réessaie dans un instant. (code : ${(e&&(e.code||e.message))||'inconnu'})`}
 const MAT_LIST=MATIERES.map(m=>`"${m.id}" (${m.nom})`).join(', ');
 const ROLE=()=>`Tu es un professeur des écoles expérimenté, spécialiste du programme officiel de CM1 (cycle 3, Éducation nationale, France), et le compagnon de travail bienveillant ${deP()}, 9 ans, élève de CM1. L'appli s'appelle Excalibur${SK().theme?', habillée '+SK().theme:''} : de temps en temps, tu peux encourager ${prenom()} ${SK().role}, sans que cela gêne l'explication. Tu écris en français, avec des phrases courtes, un vocabulaire simple mais exact, et des exemples tirés de la vie d'un enfant.
 
@@ -2842,30 +2842,35 @@ const pinDefini=()=>!!(S.config.get('pin')||{}).defini;
 const IA_MODES={
   local:{ico:'💻',nom:'Ollama',txt:"Sur ce PC. Gratuit, et rien ne sort de la maison. Lent sur un petit PC : 30 secondes par question de quiz environ."},
   claude:{ico:'✨',nom:'Claude',txt:"Rapide et plus fiable, surtout pour lire les photos. Payant selon les jetons utilisés. Les photos, les leçons et le prénom sont envoyés à Anthropic."},
+  mistral:{ico:'🌬️',nom:'Mistral',txt:"Mistral Small, d'une entreprise française. Rapide, et nettement moins cher que Claude. Les photos, les leçons et le prénom sont envoyés à Mistral AI."},
 };
+// Les IA en ligne, avec la clé qu'il leur faut.
+const IA_CLE={claude:{p:'anthropic',nom:'Anthropic',a:()=>iaInfo.cle},mistral:{p:'mistral',nom:'Mistral',a:()=>iaInfo.cleMistral}};
+const modeIA=ia=>IA_MODES[ia]&&ia!=='ollama'?ia:'local';
 const ICI_CLES=()=>state.acc?'collez-la juste en dessous':'ajoutez-la dans « Clés API » plus bas';
 function vIA(){
   if(!iaInfo)return '';
-  const f=state.iaf||(state.iaf={mode:iaInfo.ia==='claude'?'claude':'local'}),m=IA_MODES[f.mode];
+  const f=state.iaf||(state.iaf={mode:modeIA(iaInfo.ia)}),m=IA_MODES[f.mode],k=IA_CLE[f.mode];
   const liste=f.modeles||[],voulu=f.modele||iaInfo.ollamaModel,modele=liste.includes(voulu+':latest')?voulu+':latest':voulu;
   const boutons=`<button class="btn primary" ${f.busy?'disabled':''}>${f.busy?'Un instant…':state.acc?'Enregistrer et continuer':'Enregistrer'}</button><button type="button" class="btn" data-act="ia-tester" ${f.busy?'disabled':''}>Tester</button>${state.acc?`<button type="button" class="btn ghost" data-act="acc-ia-plus-tard">Régler plus tard</button>`:''}`;
   const choix=Object.entries(IA_MODES).map(([id,x])=>`<button type="button" class="btn ${f.mode===id?'primary':''}" data-act="ia-mode" data-v="${id}" aria-pressed="${f.mode===id}">${x.ico} ${x.nom}</button>`).join('');
   return `<form class="stack" data-form="ia">
-    <div class="row">${choix}${f.mode==='claude'?boutons:''}</div>
-    <p class="small muted">${m.txt}${f.mode==='claude'&&!iaInfo.cle?` Il faut une clé Anthropic : ${ICI_CLES()}.`:''}</p>
+    <div class="row">${choix}${k?boutons:''}</div>
+    <p class="small muted">${m.txt}${k&&!k.a()?` Il faut une clé ${k.nom} : ${ICI_CLES()}.`:''}</p>
     ${f.mode==='local'?`<div class="row ligne"><label class="f">Modèle${liste.length?`<select name="ollamaModel">${(liste.includes(modele)?liste:[modele,...liste]).map(n=>`<option ${n===modele?'selected':''}>${esc(n)}</option>`).join('')}</select>`:`<input type="text" id="ia-modele" name="ollamaModel" value="${esc(modele)}" autocomplete="off" spellcheck="false" required>`}</label>${boutons}</div>`:''}
     ${f.msg?`<p class="small" role="status">${f.ok?'✅':'⚠️'} ${esc(f.msg)}</p>`:''}
   </form>`;
 }
 function iaRetour(f,r){
-  if(r.ok)return f.mode==='claude'?'Claude répond.':'Ollama répond sur ce PC.';
+  const nom=f.mode==='mistral'?'Mistral':'Claude',cle=f.mode==='mistral'?'Mistral':'Anthropic';
+  if(r.ok)return f.mode==='local'?'Ollama répond sur ce PC.':`${nom} répond.`;
   if(r.code==='no_ollama')return "Ollama ne répond pas sur ce PC. S'il vient d'être choisi, fermez la fenêtre noire et relancez le cartable : il sera installé et démarré.";
   if(r.code==='no_model')return r.modeles&&r.modeles.length?"Ce modèle n'est pas sur ce PC : choisissez-en un dans la liste.":"Aucun modèle sur ce PC. Il faut en télécharger un avec « ollama pull ».";
   if(r.code==='bad_model')return "Ce nom de modèle n'est pas valable.";
   if(r.code==='pin')return "Le code parent a changé : fermez puis rouvrez l'espace parents.";
-  if(r.code==='no_key')return `Il n'y a pas encore de clé Anthropic : ${ICI_CLES()}.`;
-  if(r.code==='bad_key')return "La clé Anthropic est refusée.";
-  if(r.code==='network')return "Impossible de joindre Claude. Vérifiez la connexion internet.";
+  if(r.code==='no_key')return `Il n'y a pas encore de clé ${cle} : ${ICI_CLES()}.`;
+  if(r.code==='bad_key')return `La clé ${cle} est refusée.`;
+  if(r.code==='network')return `Impossible de joindre ${nom}. Vérifiez la connexion internet.`;
   return errMsg(r);
 }
 async function envoyerIA({essai=false}={}){
@@ -2873,7 +2878,7 @@ async function envoyerIA({essai=false}={}){
   const fd=Object.fromEntries(new FormData(form));
   f.modele=fd.ollamaModel||f.modele;f.busy=true;f.msg='';render();
   let r;
-  try{r=await fetch('/api/ia',{method:'POST',headers:{'content-type':'application/json','x-parent':state.jeton||''},body:JSON.stringify({essai,ia:f.mode==='claude'?'claude':'ollama',ollamaModel:fd.ollamaModel||''})}).then(x=>x.json())}
+  try{r=await fetch('/api/ia',{method:'POST',headers:{'content-type':'application/json','x-parent':state.jeton||''},body:JSON.stringify({essai,ia:f.mode==='local'?'ollama':f.mode,ollamaModel:fd.ollamaModel||''})}).then(x=>x.json())}
   catch(e){r={ok:false,code:'network'}}
   if(r.code==='parent'){finParent('Code parent demandé à nouveau.');render();return}
   f.busy=false;f.ok=!!r.ok;f.msg=iaRetour(f,r);if(r.modeles)f.modeles=r.modeles;
@@ -2886,9 +2891,9 @@ async function envoyerIA({essai=false}={}){
 }
 /* ---- Lecture des photos : l'IA du cartable, ou Mistral OCR qui recopie le texte avant ---- */
 function ocrModes(){
-  const claude=iaInfo&&iaInfo.ia==='claude';
+  const ia=modeIA(iaInfo&&iaInfo.ia),x=IA_MODES[ia];
   return {
-    ia:{ico:claude?'✨':'💻',nom:claude?'Claude':'Ollama',txt:claude?"Claude regarde les photos lui-même : il voit aussi les couleurs des corrections de la maîtresse.":"Gratuit, et les photos restent à la maison. Lent, et le modèle lit parfois mal l'écriture à la main."},
+    ia:{ico:x.ico,nom:x.nom,txt:ia==='local'?"Gratuit, et les photos restent à la maison. Lent, et le modèle lit parfois mal l'écriture à la main.":`${x.nom} regarde les photos lui-même : il voit aussi les couleurs des corrections de la maîtresse.`},
     mistral:{ico:'📄',nom:'Mistral OCR',txt:"Un logiciel spécialisé recopie le texte des photos, puis l'IA du cartable fait le reste. Payant à la photo : environ 4 $ pour 1 000 photos. Les photos sont envoyées à Mistral AI (entreprise française). Les couleurs des corrections de la maîtresse ne sont pas transmises."},
   };
 }
@@ -2903,7 +2908,7 @@ function vOCR(){
 }
 function ocrRetour(f,r){
   // L'IA du cartable lit les photos : mêmes messages que le « Tester » de l'IA.
-  if(f.mode==='ia')return iaRetour({mode:iaInfo&&iaInfo.ia==='claude'?'claude':'local'},r);
+  if(f.mode==='ia')return iaRetour({mode:modeIA(iaInfo&&iaInfo.ia)},r);
   if(r.ok)return 'Mistral répond.';
   return ({not_found:"Le cartable a été mis à jour : fermez la fenêtre noire, relancez « Démarrer le cartable », puis recommencez.",no_key:"Il n'y a pas encore de clé Mistral : ajoutez-la dans « Clés API » plus bas.",ocr_bad_key:"La clé Mistral est refusée.",ocr_network:"Impossible de joindre Mistral. Vérifiez la connexion internet.",pin:"Le code parent a changé : fermez puis rouvrez l'espace parents."})[r.code]||errMsg(r);
 }
@@ -2925,7 +2930,7 @@ async function envoyerOCR({essai=false}={}){
 /* ---- Clés API, à part du choix : enregistrées seulement si elles marchent ---- */
 const CLES={
   anthropic:{nom:'Anthropic (Claude)',ou:'platform.claude.com',ex:'sk-ant-…',a:()=>iaInfo.cle,qui:'Claude'},
-  mistral:{nom:'Mistral (photos)',ou:'console.mistral.ai',ex:'Collez la clé ici',a:()=>iaInfo.cleMistral,qui:'Mistral'},
+  mistral:{nom:'Mistral',ou:'console.mistral.ai',ex:'Collez la clé ici',a:()=>iaInfo.cleMistral,qui:'Mistral'},
 };
 function vCle(p){
   if(!iaInfo)return '';
@@ -2952,7 +2957,7 @@ async function envoyerCle(p,{essai=false,oublier=false}={}){
   if(r.enregistre){
     await brancherIA();
     if(!state.acc){state.iaf=null;state.ocrf=null} // les choix se relisent : oublier une clé peut les avoir changés
-    if(oublier)f.msg='Clé oubliée.'+(p==='anthropic'&&avant.ia==='claude'?" L'IA du cartable repasse sur Ollama.":'')+(p==='mistral'&&avant.ocr==='mistral'?" L'IA du cartable lit de nouveau les photos.":'');
+    if(oublier)f.msg='Clé oubliée.'+((p==='anthropic'&&avant.ia==='claude')||(p==='mistral'&&avant.ia==='mistral')?" L'IA du cartable repasse sur Ollama.":'')+(p==='mistral'&&avant.ocr==='mistral'?" L'IA du cartable lit de nouveau les photos.":'');
     else{f.msg=`Clé enregistrée : ${k.qui} répond.`;toast('Clé enregistrée.')}
   }
   render();
@@ -3035,7 +3040,7 @@ function vAccueil(){
       <form class="form-grid" data-form="acc-pin"><label class="f">Code parent<input type="password" name="pin" inputmode="numeric" autocomplete="new-password" pattern="\\d{4,8}" required data-autofocus></label><label class="f">Le même code, encore une fois<input type="password" name="pin2" inputmode="numeric" autocomplete="new-password" required></label><div><button class="btn primary">Créer le code</button></div></form>`;
   else if(e===2){const z=cfg().zone||ZONE_DEFAUT;corps=`${tete(SK().heros,'Le prénom apparaît partout dans le cartable. La zone sert au calendrier des vacances scolaires.')}
       <form class="form-grid" data-form="acc-prenom"><label class="f">Prénom de l'enfant<input type="text" name="prenom" value="${esc(cfg().prenom||'')}" autocomplete="off" required data-autofocus></label><label class="f">Zone de vacances<select name="zone">${['A','B','C'].map(x=>`<option value="${x}" ${x===z?'selected':''}>Zone ${x}</option>`).join('')}</select></label><div><button class="btn primary">Continuer</button></div></form>`}
-  else if(e===3)corps=`${tete("L'IA du cartable",`Elle lit les photos, prépare les quiz et explique les erreurs. Choisissez où elle tourne. Vous pourrez changer plus tard dans l'espace parents.`)}${vIA()}${state.iaf&&state.iaf.mode==='claude'?`<p class="eyebrow">Clé Anthropic</p>${vCle('anthropic')}`:''}`;
+  else if(e===3)corps=`${tete("L'IA du cartable",`Elle lit les photos, prépare les quiz et explique les erreurs. Choisissez où elle tourne. Vous pourrez changer plus tard dans l'espace parents.`)}${vIA()}${state.iaf&&IA_CLE[state.iaf.mode]?`<p class="eyebrow">Clé ${IA_CLE[state.iaf.mode].nom}</p>${vCle(IA_CLE[state.iaf.mode].p)}`:''}`;
   else if(e===4){const deja=all('recompenses').sort((a,b)=>a.cout-b.cout),titres=new Set(deja.map(r=>r.titre));
     corps=`${tete('Les récompenses',`${esc(prenom())} gagne des étoiles en travaillant et les échange contre des récompenses, que vous validez. Cochez celles que vous proposez et ajustez leur prix. Vous pourrez tout changer plus tard dans l'espace parents.`)}
       <form class="stack" data-form="acc-rec">

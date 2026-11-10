@@ -1,10 +1,10 @@
 # Excalibur — version locale
 
-L'appli tourne sur ce PC. L'IA est au choix : Ollama sur ce PC ou Claude avec une clé API, et la lecture des photos peut passer par Mistral OCR. Avec Ollama, rien ne part sur internet. Les données sont dans `data/cartable.duckdb`.
+L'appli tourne sur ce PC. L'IA est au choix : Ollama sur ce PC, ou Claude ou Mistral avec une clé API, et la lecture des photos peut passer par Mistral OCR. Avec Ollama, rien ne part sur internet. Les données sont dans `data/cartable.duckdb`.
 
 ## Première installation (une seule fois)
 
-Au premier lancement, **Demarrer le cartable.bat** installe Node.js s'il manque (avec winget ; Windows demande d'accepter l'installation), puis demande quelle IA utiliser : Ollama sur ce PC ou Claude. Avec Ollama, il installe aussi Ollama et télécharge le modèle (`gemma4:e4b`, plusieurs Go). Avec Claude, il n'installe rien de plus.
+Au premier lancement, **Demarrer le cartable.bat** installe Node.js s'il manque (avec winget ; Windows demande d'accepter l'installation), puis demande quelle IA utiliser : Ollama sur ce PC, Claude ou Mistral. Avec Ollama, il installe aussi Ollama et télécharge le modèle (`gemma4:e4b`, plusieurs Go). Avec Claude ou Mistral, il n'installe rien de plus.
 
 Un cartable vide s'ouvre sur un accueil en cinq étapes : le code parent, puis le prénom et la zone de vacances, l'IA, les récompenses, et enfin un écran qui explique les étoiles à l'enfant. Les onglets n'apparaissent qu'à la fin. Si la page est rechargée en cours de route, l'accueil reprend après le code parent.
 
@@ -22,13 +22,14 @@ Les choix se font dans l'**espace parents**, page **Réglages IA**, carte « Int
 - **IA du cartable** :
   - **Ollama** : sur ce PC, gratuit, rien ne sort de la maison. Si Ollama n'était pas encore installé, fermer la fenêtre noire et relancer le cartable.
   - **Claude** : payant selon les jetons utilisés. Plus rapide et plus fiable, surtout pour lire les photos. Les photos, les leçons et le prénom sont alors envoyés à Anthropic.
+  - **Mistral** : le modèle Mistral Small (`mistral-small-latest`, autre modèle possible avec `MISTRAL_MODEL=` dans `.env`). Payant selon les jetons, nettement moins cher que Claude (environ 0,15 $ par million de jetons lus et 0,60 $ par million écrits fin 2026, à vérifier sur mistral.ai). Il voit les photos. Chaque appel est noté dans `data/consommation.log`. Les photos, les leçons et le prénom sont alors envoyés à Mistral AI. Pas encore essayé sur de vrais devoirs : à comparer avec Ollama et Claude.
 - **Lecture des photos** (leçons, exercices, agenda) :
-  - **L'IA du cartable** (Ollama ou Claude) regarde les photos elle-même. C'est le réglage de départ.
+  - **L'IA du cartable** (Ollama, Claude ou Mistral) regarde les photos elle-même. C'est le réglage de départ.
   - **Mistral OCR** : un logiciel spécialisé recopie d'abord le texte des photos, puis l'IA du cartable reçoit ce texte à la place des images. C'est payé à la photo (environ 4 $ pour 1 000 photos fin 2026), et chaque lecture est notée dans `data/consommation.log`. Les photos sont envoyées à Mistral AI. Les couleurs ne passent pas : l'IA ne voit plus les corrections de la maîtresse au stylo rouge ou vert.
 
 ### Clés API
 
-Les clés se règlent à part, dans la carte « Clés API » : **Anthropic** (pour Claude, créée sur [platform.claude.com](https://platform.claude.com)) et **Mistral** (pour la lecture des photos, créée sur [console.mistral.ai](https://console.mistral.ai)). Une clé n'est enregistrée que si elle marche. **Oublier la clé** la retire ; si elle servait, l'IA repasse sur Ollama, ou la lecture des photos sur l'IA du cartable.
+Les clés se règlent à part, dans la carte « Clés API » : **Anthropic** (pour Claude, créée sur [platform.claude.com](https://platform.claude.com)) et **Mistral** (pour l'IA Mistral et pour la lecture des photos, une seule clé pour les deux, créée sur [console.mistral.ai](https://console.mistral.ai)). Une clé n'est enregistrée que si elle marche. **Oublier la clé** la retire ; si elle servait, l'IA repasse sur Ollama, et la lecture des photos sur l'IA du cartable.
 
 Les choix (`IA`, `OCR=mistral`) et les clés (`ANTHROPIC_API_KEY`, `MISTRAL_API_KEY`) sont gardés dans `.env`. Les clés ne reviennent jamais au navigateur et ne sont pas copiées sur une clé USB.
 
