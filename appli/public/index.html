@@ -186,6 +186,13 @@ main .wrap > h2,main .wrap > .sec-title h2{font-size:1.9rem}
 .card h3{color:var(--ink)}
 .card > h3::before,.card .sec-title > h3::before{content:"";display:inline-block;width:10px;height:22px;border-radius:6px;background:var(--accent);margin-right:10px;vertical-align:-3px}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+/* Un champ suivi de ses boutons sur une même ligne ; les boutons passent dessous si la place manque. */
+.ligne{align-items:flex-end}.ligne>label.f,.ligne>input{flex:1 1 220px}
+.reglage{display:grid;grid-template-columns:170px minmax(0,1fr);gap:8px 18px;align-items:start;padding-top:12px;border-top:1px solid var(--line)}
+.card>h3+.reglage{border-top:0;padding-top:0}
+.rg-nom{font-weight:700;padding-top:12px}
+@media (max-width:640px){.reglage{grid-template-columns:1fr}.rg-nom{padding-top:0}}
+.rec-ajout>input[type=text]{flex:1 1 200px}.rec-ajout>input[type=number]{width:90px;flex:none}
 .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
 .cols{display:grid;gap:22px;grid-template-columns:1fr 1fr}
 @media (max-width:760px){.cols{grid-template-columns:1fr}}
@@ -670,6 +677,7 @@ details.defis-jour>p{margin:0 0 8px}
 @media (max-width:560px){.code-bande .compteur{margin-left:0}}
 </style>
 
+<script>try{const t=localStorage.getItem('excalibur-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <div class="strip" id="strip" aria-label="Mon année et mon travail"></div>
 <header class="top">
   <div class="wrap">
@@ -776,6 +784,14 @@ const SKINS={
     badges:{b1:'Première peinture',b2:'Première chasse',b3:'Silex parfait',b4:'Lance précise',b5:'Trois jours de chasse',b6:'Semaine du mammouth',b7:'Cueilleur fidèle',b8:'Grand nomade',b9:'Grotte aux peintures',b10:'Code de la tribu',b11:'Le retour du T. rex',b12:'Pépite d\'ambre'}},
 };
 const skinId=()=>SKINS[cfg().skin]?cfg().skin:'excalibur';
+/* Clair ou sombre, pour tous les habillages : « auto » suit le réglage de l'ordinateur. */
+const THEMES={auto:"🌗 Comme l'ordinateur",clair:'☀️ Clair',sombre:'🌙 Sombre'};
+const themeId=()=>THEMES[cfg().theme]?cfg().theme:'auto';
+function appliquerTheme(){
+  const t={clair:'light',sombre:'dark'}[themeId()],r=document.documentElement;
+  if(t){if(r.dataset.theme!==t)r.dataset.theme=t}else delete r.dataset.theme;
+  try{localStorage.setItem('excalibur-theme',t||'')}catch(e){}
+}
 const SK=()=>SKINS[skinId()];
 const nomBadge=x=>SK().badges[x.id]||x.nom;
 const TIPS=[
@@ -863,7 +879,7 @@ function titreDemande(a){
 }
 function finParent(message){
   const j=state.jeton;state.jeton='';if(window.claude)window.claude.parent=null;
-  state.parent=false;state.iaf=null;
+  state.parent=false;state.iaf=null;state.ocrf=null;state.clef=null;
   if(state.acc)state.acc={etape:1}; // en plein accueil : on redemande le code à l'étape 1
   if(j)fetch('/api/pin',{method:'DELETE',headers:{'x-parent':j}}).catch(()=>{});
   if(message)toast(message);
@@ -901,7 +917,7 @@ async function askJSON(prompt,opts={},onProgress){
   return lireJSON(text);
 }
 function progressAdd(n){const el=app.querySelector('[data-progress]');if(el)el.textContent=`J'écris ta fiche… (${n} caractères)`}
-function errMsg(e){return({no_ollama:"Ollama ne répond pas. Vérifie qu'il est lancé, ou demande à un parent de regarder le réglage de l'IA.",no_model:"Le modèle d'Ollama n'est pas installé (voir la fenêtre du cartable).",no_key:"Il manque la clé API de Claude : elle se règle dans l'espace parents.",bad_key:"La clé API est refusée. Vérifiez-la dans l'espace parents.",network:"Je n'arrive pas à joindre l'IA. Vérifie la connexion et que le cartable est bien lancé.",bad_request:"L'IA n'a pas compris la demande. Réessaie.",api_error:"L'IA a eu un petit souci. Réessaie dans un instant.",save_failed:"Je n'ai pas pu enregistrer.",rate_limited:"L'IA est très occupée. Réessaie dans quelques minutes.",image_rejected:"Cette photo n'a pas pu être lue. Prends-en une autre, bien éclairée et nette.",images_unavailable:"L'envoi de photos n'est pas possible ici. Ouvre la page dans l'application Claude.",invalid_json:"La réponse est arrivée en désordre. Appuie sur Réessayer.",refused:"L'IA n'a pas pu traiter cette demande. Essaie avec une autre photo ou une autre question.",session_expired:"Reconnecte-toi à Claude puis réessaie.",prompt_too_large:"C'est trop long d'un coup. Envoie moins de photos.",empty_completion:"L'IA n'a rien répondu. Réessaie."}[e&&e.code])||`Petit souci de connexion. Réessaie dans un instant. (code : ${(e&&(e.code||e.message))||'inconnu'})`}
+function errMsg(e){return({no_ollama:"Ollama ne répond pas. Vérifie qu'il est lancé, ou demande à un parent de regarder le réglage de l'IA.",no_model:"Le modèle d'Ollama n'est pas installé (voir la fenêtre du cartable).",no_key:"Il manque la clé API de Claude : elle se règle dans l'espace parents.",bad_key:"La clé API est refusée. Vérifiez-la dans l'espace parents.",ocr_bad_key:"Mistral refuse la clé qui sert à lire les photos. Demande à un parent de la vérifier dans l'espace parents.",ocr_network:"Je n'arrive pas à joindre Mistral pour lire les photos. Vérifie la connexion internet.",ocr_error:"Mistral n'a pas réussi à lire les photos. Réessaie dans un instant.",network:"Je n'arrive pas à joindre l'IA. Vérifie la connexion et que le cartable est bien lancé.",bad_request:"L'IA n'a pas compris la demande. Réessaie.",api_error:"L'IA a eu un petit souci. Réessaie dans un instant.",save_failed:"Je n'ai pas pu enregistrer.",rate_limited:"L'IA est très occupée. Réessaie dans quelques minutes.",image_rejected:"Cette photo n'a pas pu être lue. Prends-en une autre, bien éclairée et nette.",images_unavailable:"L'envoi de photos n'est pas possible ici. Ouvre la page dans l'application Claude.",invalid_json:"La réponse est arrivée en désordre. Appuie sur Réessayer.",refused:"L'IA n'a pas pu traiter cette demande. Essaie avec une autre photo ou une autre question.",session_expired:"Reconnecte-toi à Claude puis réessaie.",prompt_too_large:"C'est trop long d'un coup. Envoie moins de photos.",empty_completion:"L'IA n'a rien répondu. Réessaie."}[e&&e.code])||`Petit souci de connexion. Réessaie dans un instant. (code : ${(e&&(e.code||e.message))||'inconnu'})`}
 const MAT_LIST=MATIERES.map(m=>`"${m.id}" (${m.nom})`).join(', ');
 const ROLE=()=>`Tu es un professeur des écoles expérimenté, spécialiste du programme officiel de CM1 (cycle 3, Éducation nationale, France), et le compagnon de travail bienveillant ${deP()}, 9 ans, élève de CM1. L'appli s'appelle Excalibur${SK().theme?', habillée '+SK().theme:''} : de temps en temps, tu peux encourager ${prenom()} ${SK().role}, sans que cela gêne l'explication. Tu écris en français, avec des phrases courtes, un vocabulaire simple mais exact, et des exemples tirés de la vie d'un enfant.
 
@@ -1867,6 +1883,7 @@ function majBadgeQuiz(){
 function renderHeader(){
   renderStrip();
   document.getElementById('devise').textContent=SK().devise();
+  appliquerTheme();
   const skin=skinId();
   if(document.documentElement.dataset.skin!==skin){document.documentElement.dataset.skin=skin;document.querySelector('#brand svg').outerHTML=LOGO[skin];majIcone(skin)}
   const b=bilan();
@@ -2818,55 +2835,120 @@ function vSemaine(pied=''){
 }
 const pinDefini=()=>!!(S.config.get('pin')||{}).defini;
 /* ---- Réglage de l'IA (espace parents et accueil) ----
-   Le code parent reste en mémoire le temps que l'espace est ouvert : le serveur le redemande à chaque changement. */
+   Le code parent reste en mémoire le temps que l'espace est ouvert : le serveur le redemande à chaque changement.
+   Les clés API se règlent à part (vCle) : ici on choisit seulement qui travaille. */
 const IA_MODES={
-  local:{ico:'💻',nom:'Ollama sur ce PC',txt:"Gratuit, et rien ne sort de la maison. Lent sur un petit PC : 30 secondes par question de quiz environ."},
-  reseau:{ico:'🌐',nom:'Ollama sur le réseau',txt:"Un ordinateur plus puissant de la maison fait le travail. Gratuit, et rien ne sort de la maison."},
-  claude:{ico:'✨',nom:'Claude (clé API)',txt:"Rapide et plus fiable, surtout pour lire les photos. Payant selon les jetons utilisés. Les photos, les leçons et le prénom sont envoyés à Anthropic."},
+  local:{ico:'💻',nom:'Ollama',txt:"Sur ce PC. Gratuit, et rien ne sort de la maison. Lent sur un petit PC : 30 secondes par question de quiz environ."},
+  claude:{ico:'✨',nom:'Claude',txt:"Rapide et plus fiable, surtout pour lire les photos. Payant selon les jetons utilisés. Les photos, les leçons et le prénom sont envoyés à Anthropic."},
 };
+const ICI_CLES=()=>state.acc?'collez-la juste en dessous':'ajoutez-la dans « Clés API » plus bas';
 function vIA(){
   if(!iaInfo)return '';
-  const f=state.iaf||(state.iaf={mode:iaInfo.ia==='claude'?'claude':iaInfo.ollamaLocal?'local':'reseau'}),m=IA_MODES[f.mode];
+  const f=state.iaf||(state.iaf={mode:iaInfo.ia==='claude'?'claude':'local'}),m=IA_MODES[f.mode];
   const liste=f.modeles||[],voulu=f.modele||iaInfo.ollamaModel,modele=liste.includes(voulu+':latest')?voulu+':latest':voulu;
+  const boutons=`<button class="btn primary" ${f.busy?'disabled':''}>${f.busy?'Un instant…':state.acc?'Enregistrer et continuer':'Enregistrer'}</button><button type="button" class="btn" data-act="ia-tester" ${f.busy?'disabled':''}>Tester</button>${state.acc?`<button type="button" class="btn ghost" data-act="acc-ia-plus-tard">Régler plus tard</button>`:''}`;
+  const choix=Object.entries(IA_MODES).map(([id,x])=>`<button type="button" class="btn ${f.mode===id?'primary':''}" data-act="ia-mode" data-v="${id}" aria-pressed="${f.mode===id}">${x.ico} ${x.nom}</button>`).join('');
   return `<form class="stack" data-form="ia">
-    <div class="row">${Object.entries(IA_MODES).map(([id,x])=>`<button type="button" class="btn ${f.mode===id?'primary':''}" data-act="ia-mode" data-v="${id}" aria-pressed="${f.mode===id}">${x.ico} ${x.nom}</button>`).join('')}</div>
-    <p class="small muted">${m.txt}</p>
-    ${f.mode==='reseau'?`<label class="f">Adresse de cet ordinateur<input type="text" id="ia-url" name="ollamaUrl" value="${esc(f.url||(iaInfo.ollamaLocal?'':iaInfo.ollamaUrl))}" placeholder="192.168.1.20 ou PC-SALON" autocomplete="off" spellcheck="false" required></label>
-    <p class="small muted">Sur cet ordinateur, Ollama doit accepter le réseau : mettre la variable d'environnement <code>OLLAMA_HOST=0.0.0.0</code>, puis relancer Ollama.</p>`:''}
-    ${f.mode!=='claude'?`<label class="f">Modèle${liste.length?`<select name="ollamaModel">${(liste.includes(modele)?liste:[modele,...liste]).map(n=>`<option ${n===modele?'selected':''}>${esc(n)}</option>`).join('')}</select>`:`<input type="text" id="ia-modele" name="ollamaModel" value="${esc(modele)}" autocomplete="off" spellcheck="false" required>`}</label>`
-    :`<label class="f">Clé API (créée sur platform.claude.com)<input type="password" id="ia-cle" name="cle" autocomplete="off" placeholder="${iaInfo.cle?'Une clé est déjà enregistrée sur ce PC':'sk-ant-…'}" ${iaInfo.cle?'':'required'}></label>`}
+    <div class="row">${choix}${f.mode==='claude'?boutons:''}</div>
+    <p class="small muted">${m.txt}${f.mode==='claude'&&!iaInfo.cle?` Il faut une clé Anthropic : ${ICI_CLES()}.`:''}</p>
+    ${f.mode==='local'?`<div class="row ligne"><label class="f">Modèle${liste.length?`<select name="ollamaModel">${(liste.includes(modele)?liste:[modele,...liste]).map(n=>`<option ${n===modele?'selected':''}>${esc(n)}</option>`).join('')}</select>`:`<input type="text" id="ia-modele" name="ollamaModel" value="${esc(modele)}" autocomplete="off" spellcheck="false" required>`}</label>${boutons}</div>`:''}
     ${f.msg?`<p class="small" role="status">${f.ok?'✅':'⚠️'} ${esc(f.msg)}</p>`:''}
-    <div class="row"><button class="btn primary" ${f.busy?'disabled':''}>${f.busy?'Un instant…':state.acc?'Enregistrer et continuer':'Enregistrer'}</button><button type="button" class="btn" data-act="ia-tester" ${f.busy?'disabled':''}>Tester</button>${f.mode==='claude'&&iaInfo.cle?`<button type="button" class="btn ghost danger" data-act="ia-oublier" ${f.busy?'disabled':''}>Oublier la clé</button>`:''}${state.acc?`<button type="button" class="btn ghost" data-act="acc-ia-plus-tard">Régler plus tard</button>`:''}</div>
   </form>`;
 }
 function iaRetour(f,r){
-  const adr=f.mode==='reseau'?'cet ordinateur':'ce PC';
-  if(r.ok)return f.mode==='claude'?'Claude répond, la clé est bonne.':`Ollama répond sur ${adr}.`;
-  if(r.code==='no_ollama')return f.mode==='reseau'?"Personne ne répond à cette adresse. Vérifiez que l'ordinateur est allumé, qu'Ollama y tourne et qu'il accepte le réseau.":"Ollama ne répond pas sur ce PC. S'il vient d'être choisi, fermez la fenêtre noire et relancez le cartable : il sera installé et démarré.";
-  if(r.code==='no_model')return r.modeles&&r.modeles.length?`Ce modèle n'est pas sur ${adr} : choisissez-en un dans la liste.`:`Aucun modèle sur ${adr}. Il faut en télécharger un avec « ollama pull ».`;
-  if(r.code==='bad_url')return "Cette adresse n'est pas valable. Exemple : 192.168.1.20";
-  if(r.code==='bad_key_format')return "Cette clé n'a pas la bonne forme. Copiez-la de nouveau, en entier.";
+  if(r.ok)return f.mode==='claude'?'Claude répond.':'Ollama répond sur ce PC.';
+  if(r.code==='no_ollama')return "Ollama ne répond pas sur ce PC. S'il vient d'être choisi, fermez la fenêtre noire et relancez le cartable : il sera installé et démarré.";
+  if(r.code==='no_model')return r.modeles&&r.modeles.length?"Ce modèle n'est pas sur ce PC : choisissez-en un dans la liste.":"Aucun modèle sur ce PC. Il faut en télécharger un avec « ollama pull ».";
   if(r.code==='bad_model')return "Ce nom de modèle n'est pas valable.";
   if(r.code==='pin')return "Le code parent a changé : fermez puis rouvrez l'espace parents.";
-  if(r.code==='no_key')return "Il faut coller une clé API.";
-  if(r.code==='bad_key')return "Cette clé est refusée.";
+  if(r.code==='no_key')return `Il n'y a pas encore de clé Anthropic : ${ICI_CLES()}.`;
+  if(r.code==='bad_key')return "La clé Anthropic est refusée.";
   if(r.code==='network')return "Impossible de joindre Claude. Vérifiez la connexion internet.";
   return errMsg(r);
 }
-async function envoyerIA({essai=false,oublierCle=false}={}){
+async function envoyerIA({essai=false}={}){
   const f=state.iaf,form=document.querySelector('[data-form="ia"]');if(!f||!form)return;
   const fd=Object.fromEntries(new FormData(form));
-  f.url=fd.ollamaUrl||f.url;f.modele=fd.ollamaModel||f.modele;f.busy=true;f.msg='';render();
+  f.modele=fd.ollamaModel||f.modele;f.busy=true;f.msg='';render();
   let r;
-  try{r=await fetch('/api/ia',{method:'POST',headers:{'content-type':'application/json','x-parent':state.jeton||''},body:JSON.stringify({essai,oublierCle,ia:f.mode==='claude'?'claude':'ollama',ollamaUrl:f.mode==='reseau'?fd.ollamaUrl:'',ollamaModel:fd.ollamaModel||'',cle:fd.cle||''})}).then(x=>x.json())}
+  try{r=await fetch('/api/ia',{method:'POST',headers:{'content-type':'application/json','x-parent':state.jeton||''},body:JSON.stringify({essai,ia:f.mode==='claude'?'claude':'ollama',ollamaModel:fd.ollamaModel||''})}).then(x=>x.json())}
   catch(e){r={ok:false,code:'network'}}
   if(r.code==='parent'){finParent('Code parent demandé à nouveau.');render();return}
-  f.busy=false;f.ok=!!r.ok;f.msg=oublierCle?'':iaRetour(f,r);if(r.modeles)f.modeles=r.modeles;
+  f.busy=false;f.ok=!!r.ok;f.msg=iaRetour(f,r);if(r.modeles)f.modeles=r.modeles;
   if(r.enregistre){
     await brancherIA();
-    if(oublierCle){f.msg='Clé oubliée.';f.ok=true}
-    else if(r.ok){if(state.acc){state.iaf=null;state.acc={etape:4}}else{f.msg='Enregistré. '+f.msg}toast("Réglage de l'IA enregistré.")}
+    if(r.ok){if(state.acc){state.iaf=null;state.acc={etape:4}}else{f.msg='Enregistré. '+f.msg}toast("Réglage de l'IA enregistré.")}
     else f.msg='Enregistré, mais : '+f.msg;
+  }
+  render();
+}
+/* ---- Lecture des photos : l'IA du cartable, ou Mistral OCR qui recopie le texte avant ---- */
+function ocrModes(){
+  const claude=iaInfo&&iaInfo.ia==='claude';
+  return {
+    ia:{ico:claude?'✨':'💻',nom:claude?'Claude':'Ollama',txt:claude?"Claude regarde les photos lui-même : il voit aussi les couleurs des corrections de la maîtresse.":"Gratuit, et les photos restent à la maison. Lent, et le modèle lit parfois mal l'écriture à la main."},
+    mistral:{ico:'📄',nom:'Mistral OCR',txt:"Un logiciel spécialisé recopie le texte des photos, puis l'IA du cartable fait le reste. Payant à la photo : environ 4 $ pour 1 000 photos. Les photos sont envoyées à Mistral AI (entreprise française). Les couleurs des corrections de la maîtresse ne sont pas transmises."},
+  };
+}
+function vOCR(){
+  if(!iaInfo)return '';
+  const f=state.ocrf||(state.ocrf={mode:iaInfo.ocr==='mistral'?'mistral':'ia'}),modes=ocrModes();
+  return `<form class="stack" data-form="ocr">
+    <div class="row">${Object.entries(modes).map(([id,x])=>`<button type="button" class="btn ${f.mode===id?'primary':''}" data-act="ocr-mode" data-v="${id}" aria-pressed="${f.mode===id}">${x.ico} ${x.nom}</button>`).join('')}<button class="btn primary" ${f.busy?'disabled':''}>${f.busy?'Un instant…':'Enregistrer'}</button></div>
+    <p class="small muted">${modes[f.mode].txt}${f.mode==='mistral'&&!iaInfo.cleMistral?' Il faut une clé Mistral : ajoutez-la dans « Clés API » plus bas.':''}</p>
+    ${f.msg?`<p class="small" role="status">${f.ok?'✅':'⚠️'} ${esc(f.msg)}</p>`:''}
+  </form>`;
+}
+function ocrRetour(f,r){
+  if(r.ok)return f.mode==='mistral'?'Mistral répond.':'';
+  return ({no_key:"Il n'y a pas encore de clé Mistral : ajoutez-la dans « Clés API » plus bas.",ocr_bad_key:"La clé Mistral est refusée.",ocr_network:"Impossible de joindre Mistral. Vérifiez la connexion internet.",pin:"Le code parent a changé : fermez puis rouvrez l'espace parents."})[r.code]||errMsg(r);
+}
+async function envoyerOCR(){
+  const f=state.ocrf;if(!f)return;
+  f.busy=true;f.msg='';render();
+  let r;
+  try{r=await fetch('/api/ocr',{method:'POST',headers:{'content-type':'application/json','x-parent':state.jeton||''},body:JSON.stringify({ocr:f.mode})}).then(x=>x.json())}
+  catch(e){r={ok:false,code:'network'}}
+  if(r.code==='parent'){finParent('Code parent demandé à nouveau.');render();return}
+  f.busy=false;f.ok=!!r.ok;f.msg=ocrRetour(f,r);
+  if(r.enregistre){
+    await brancherIA();
+    if(r.ok){f.msg=('Enregistré. '+f.msg).trim();toast('Réglage de la lecture des photos enregistré.')}
+    else f.msg='Enregistré, mais : '+f.msg;
+  }
+  render();
+}
+/* ---- Clés API, à part du choix : enregistrées seulement si elles marchent ---- */
+const CLES={
+  anthropic:{nom:'Anthropic (Claude)',ou:'platform.claude.com',ex:'sk-ant-…',a:()=>iaInfo.cle,qui:'Claude'},
+  mistral:{nom:'Mistral (photos)',ou:'console.mistral.ai',ex:'Collez la clé ici',a:()=>iaInfo.cleMistral,qui:'Mistral'},
+};
+function vCle(p){
+  if(!iaInfo)return '';
+  const k=CLES[p],f=(state.clef||(state.clef={}))[p]||{},deja=k.a();
+  return `<form class="stack" data-form="cle" data-f="${p}">
+    <div class="row ligne"><input type="password" id="cle-${p}" name="cle" autocomplete="off" placeholder="${deja?'Une clé est déjà enregistrée sur ce PC':k.ex}"><button class="btn primary" ${f.busy?'disabled':''}>${f.busy?'Un instant…':'Enregistrer'}</button><button type="button" class="btn" data-act="cle-tester" data-v="${p}" ${f.busy||!deja?'disabled':''}>Tester</button>${deja?`<button type="button" class="btn ghost danger" data-act="cle-oublier" data-v="${p}" ${f.busy?'disabled':''}>Oublier la clé</button>`:''}</div>
+    <p class="small muted">${deja?'✔ Une clé est enregistrée.':'Pas encore de clé.'} Elle se crée sur ${k.ou}.</p>
+    ${f.msg?`<p class="small" role="status">${f.ok?'✅':'⚠️'} ${esc(f.msg)}</p>`:''}
+  </form>`;
+}
+async function envoyerCle(p,{essai=false,oublier=false}={}){
+  const k=CLES[p],form=document.querySelector(`[data-form="cle"][data-f="${p}"]`);if(!k||!form)return;
+  const cle=String(new FormData(form).get('cle')||'').trim();
+  const avant={ia:iaInfo.ia,ocr:iaInfo.ocr};
+  const f=(state.clef||(state.clef={}))[p]={busy:true};render();
+  let r;
+  try{r=await fetch('/api/cle',{method:'POST',headers:{'content-type':'application/json','x-parent':state.jeton||''},body:JSON.stringify({fournisseur:p,cle:essai?'':cle,essai,oublier})}).then(x=>x.json())}
+  catch(e){r={ok:false,code:'network'}}
+  if(r.code==='parent'){finParent('Code parent demandé à nouveau.');render();return}
+  f.busy=false;f.ok=!!r.ok;
+  f.msg=r.ok?(essai?`${k.qui} répond, la clé est bonne.`:'')
+    :({no_key:"Collez d'abord une clé.",bad_key:'Cette clé est refusée.',ocr_bad_key:'Cette clé est refusée.',network:`Impossible de joindre ${k.qui}. Vérifiez la connexion internet.`,ocr_network:`Impossible de joindre ${k.qui}. Vérifiez la connexion internet.`,bad_key_format:"Cette clé n'a pas la bonne forme. Copiez-la de nouveau, en entier.",pin:"Le code parent a changé : fermez puis rouvrez l'espace parents."})[r.code]||errMsg(r);
+  if(r.enregistre){
+    await brancherIA();
+    if(!state.acc){state.iaf=null;state.ocrf=null} // les choix se relisent : oublier une clé peut les avoir changés
+    if(oublier)f.msg='Clé oubliée.'+(p==='anthropic'&&avant.ia==='claude'?" L'IA du cartable repasse sur Ollama.":'')+(p==='mistral'&&avant.ocr==='mistral'?" L'IA du cartable lit de nouveau les photos.":'');
+    else{f.msg=`Clé enregistrée : ${k.qui} répond.`;toast('Clé enregistrée.')}
   }
   render();
 }
@@ -2875,9 +2957,11 @@ function etoilesDetail(){
   const depuis=addDays(TODAY(),-6),g=bilan().gains.filter(x=>x.date>=depuis);
   return `<details class="small"><summary>D'où viennent les étoiles (7 derniers jours)</summary>${g.length?g.map(x=>`<div class="reward"><span>${esc(x.date)} · ${esc(x.why)}</span><span class="cost">+${x.pts}</span></div>`).join(''):'<p class="small muted">Aucun gain ces 7 derniers jours.</p>'}</details>`;
 }
+// Un réglage par ligne : le nom à gauche, les commandes à droite (dessous sur un écran étroit).
+const reglage=(nom,corps,pour='')=>`<div class="reglage">${pour?`<label class="rg-nom" for="${pour}">${nom}</label>`:`<span class="rg-nom">${nom}</span>`}<div class="rg-corps">${corps}</div></div>`;
 function vParents(){
   const c=cfg();
-  if(!state.parent)return `<section class="card"><h3>Espace parents</h3><p class="small muted" style="margin-bottom:8px">Pour suivre le programme de CM1, gérer les récompenses et valider les demandes ${esc(deP())}.</p><form class="row" data-form="pin"><input type="password" id="pin" name="pin" inputmode="numeric" placeholder="${pinDefini()?'Code parent':'Choisissez un code (4 chiffres)'}" style="max-width:240px" required><button class="btn">${pinDefini()?'Ouvrir':'Créer le code'}</button></form></section>`;
+  if(!state.parent)return `<section class="card"><h3>Espace parents</h3><p class="small muted" style="margin-bottom:8px">Pour suivre le programme de CM1, gérer les récompenses et valider les demandes ${esc(deP())}.</p><form class="row" data-form="pin"><input type="password" id="pin" name="pin" inputmode="numeric" data-autofocus placeholder="${pinDefini()?'Code parent':'Choisissez un code (4 chiffres)'}" style="max-width:240px" required><button class="btn">${pinDefini()?'Ouvrir':'Créer le code'}</button></form></section>`;
   const ach=all('achats').filter(a=>a.statut==='demandé');const rec=all('recompenses').sort((a,b)=>a.cout-b.cout);
   // Dans l'ordre de ce qu'on vient faire : valider, suivre, gérer les récompenses, puis les réglages qu'on touche rarement.
   const zone=c.zone||ZONE_DEFAUT;
@@ -2889,15 +2973,45 @@ function vParents(){
     ${etoilesDetail()}</section>
   ${vSemaine(`<div class="row"><button class="btn primary" data-act="tab" data-v="programme">🗺️ Programme CM1 : où en est ${esc(prenom())}</button></div>`)}
   `:`<section class="card stack"><h3>Récompenses</h3>${rec.map(r=>`<div class="reward"><span>${esc(r.titre)}</span><span class="row"><span class="cost">${r.cout}</span><button class="btn ghost danger" data-act="del-rec" data-id="${r.id}">Retirer</button></span></div>`).join('')}
-    <form class="form-grid" data-form="rec"><label class="f">Nouvelle récompense<input type="text" id="rec-t" name="titre" required></label><label class="f">Prix en étoiles<input type="number" id="rec-c" name="cout" min="1" value="50" required></label><div><button class="btn">Ajouter</button></div></form>
+    <form class="row rec-ajout" data-form="rec"><input type="text" id="rec-t" name="titre" placeholder="Nouvelle récompense" aria-label="Nouvelle récompense" required><input type="number" id="rec-c" name="cout" min="1" value="50" aria-label="Prix en étoiles" required><span aria-hidden="true">⭐</span><button class="btn">Ajouter</button></form>
     ${!rec.length?`<div><button class="btn" data-act="suggestions">Ajouter des récompenses suggérées</button></div>`:''}
     <p class="small muted">Repère : un quiz de 10 questions rapporte 13 étoiles avec 8 bonnes réponses, 30 sans faute. Une bonne journée complète rapporte 30 à 50 étoiles.</p></section>
-  <section class="card stack"><h3>Réglages</h3>
-    <form class="form-grid" data-form="prenom"><label class="f">Prénom affiché<input type="text" id="cfg-prenom" name="prenom" value="${esc(c.prenom||'')}" required></label><div><button class="btn">Enregistrer</button></div></form>
-    <label class="f" style="max-width:240px">Zone de vacances<select id="zone-parent">${['A','B','C'].map(z=>`<option value="${z}" ${z===zone?'selected':''}>Zone ${z}</option>`).join('')}</select></label>
-    <p class="eyebrow">Habillage du cartable</p><div class="row">${Object.entries(SKINS).map(([id,k])=>`<button class="btn ${skinId()===id?'primary':''}" data-act="skin" data-v="${id}" aria-pressed="${skinId()===id}">${k.ico} ${esc(k.nom)}</button>`).join('')}</div>
-    <p class="eyebrow">L'IA du cartable</p>${vIA()}
-  </section>`}`;
+  <section class="card stack"><h3>🧒 L'enfant</h3>
+    ${reglage('Prénom',`<form class="row" data-form="prenom"><input type="text" id="cfg-prenom" name="prenom" value="${esc(c.prenom||'')}" style="flex:1 1 180px;max-width:320px" required><button class="btn">Enregistrer</button></form>`,'cfg-prenom')}
+    ${reglage('Zone de vacances',`<select id="zone-parent" style="max-width:200px">${['A','B','C'].map(z=>`<option value="${z}" ${z===zone?'selected':''}>Zone ${z}</option>`).join('')}</select>`,'zone-parent')}
+  </section>
+  <section class="card stack"><h3>🎨 Apparence</h3>
+    ${reglage('Habillage',`<div class="row">${Object.entries(SKINS).map(([id,k])=>`<button class="btn ${skinId()===id?'primary':''}" data-act="skin" data-v="${id}" aria-pressed="${skinId()===id}">${k.ico} ${esc(k.nom)}</button>`).join('')}</div>`)}
+    ${reglage('Couleurs',`<div class="row">${Object.entries(THEMES).map(([id,l])=>`<button class="btn ${themeId()===id?'primary':''}" data-act="theme" data-v="${id}" aria-pressed="${themeId()===id}">${l}</button>`).join('')}</div>`)}
+  </section>
+  <section class="card stack"><h3>🤖 Intelligence artificielle</h3>
+    ${reglage("IA du cartable",vIA())}
+    ${reglage('Lecture des photos',vOCR())}
+  </section>
+  <section class="card stack"><h3>🔑 Clés API</h3>
+    ${Object.keys(CLES).map(p=>reglage(CLES[p].nom,vCle(p),'cle-'+p)).join('')}
+    <p class="small muted">Une clé n'est gardée que si elle marche. Elle reste sur ce PC (fichier <code>.env</code>), n'est jamais réaffichée et n'est pas copiée sur une clé USB.</p>
+  </section>
+  ${vReseau()}`}`;
+}
+/* Ouvrir le cartable depuis un autre appareil branché sur le même wifi (réglé par HOST dans .env). */
+function vReseau(){
+  const r=iaInfo&&iaInfo.reseau;if(!r)return '';
+  const lien=h=>`<code>http://${esc(h)}:${r.port}</code>`;
+  const etat=r.ouvert
+    ?`<p>✅ Le cartable est ouvert au réseau de la maison. Sur l'autre appareil, connecté au <b>même wifi</b>, ouvrez le navigateur et tapez :</p>
+      <ul class="small">${r.adresses.map(a=>`<li>${lien(a)}</li>`).join('')}<li>${lien(r.nom)} <span class="muted">(le nom de ce PC, si l'adresse ne marche pas)</span></li></ul>
+      ${r.adresses.length?'':'<p class="small muted">Ce PC ne semble connecté à aucun réseau pour le moment.</p>'}`
+    :`<p>Pour l'instant, le cartable ne s'ouvre que sur ce PC. Pour l'ouvrir depuis un autre ordinateur de la maison :</p>
+      <ol class="small">
+        <li>Dans le dossier du cartable, ouvrez le fichier <code>.env</code> avec le Bloc-notes et ajoutez la ligne <code>HOST=0.0.0.0</code>.</li>
+        <li>Fermez la fenêtre noire et relancez <b>Démarrer le cartable</b>.</li>
+        <li>Si Windows demande d'autoriser Node.js, cochez <b>Réseaux privés</b> seulement.</li>
+        <li>Revenez ici : les adresses à taper sur l'autre appareil s'afficheront.</li>
+      </ol>`;
+  return `<section class="card stack"><h3>📶 Depuis un autre appareil</h3>${etat}
+    <p class="small muted">Les deux appareils doivent être sur le même wifi, et ce PC doit rester allumé avec la fenêtre noire ouverte : c'est lui qui garde les données. L'espace parents demande toujours le code. À n'activer que sur le wifi de la maison, jamais sur un réseau public.</p>
+  </section>`;
 }
 
 /* ---- Accueil d'un cartable neuf ----
@@ -2915,7 +3029,7 @@ function vAccueil(){
       <form class="form-grid" data-form="acc-pin"><label class="f">Code parent<input type="password" name="pin" inputmode="numeric" autocomplete="new-password" pattern="\\d{4,8}" required data-autofocus></label><label class="f">Le même code, encore une fois<input type="password" name="pin2" inputmode="numeric" autocomplete="new-password" required></label><div><button class="btn primary">Créer le code</button></div></form>`;
   else if(e===2){const z=cfg().zone||ZONE_DEFAUT;corps=`${tete(SK().heros,'Le prénom apparaît partout dans le cartable. La zone sert au calendrier des vacances scolaires.')}
       <form class="form-grid" data-form="acc-prenom"><label class="f">Prénom de l'enfant<input type="text" name="prenom" value="${esc(cfg().prenom||'')}" autocomplete="off" required data-autofocus></label><label class="f">Zone de vacances<select name="zone">${['A','B','C'].map(x=>`<option value="${x}" ${x===z?'selected':''}>Zone ${x}</option>`).join('')}</select></label><div><button class="btn primary">Continuer</button></div></form>`}
-  else if(e===3)corps=`${tete("L'IA du cartable",`Elle lit les photos, prépare les quiz et explique les erreurs. Choisissez où elle tourne. Vous pourrez changer plus tard dans l'espace parents.`)}${vIA()}`;
+  else if(e===3)corps=`${tete("L'IA du cartable",`Elle lit les photos, prépare les quiz et explique les erreurs. Choisissez où elle tourne. Vous pourrez changer plus tard dans l'espace parents.`)}${vIA()}${state.iaf&&state.iaf.mode==='claude'?`<p class="eyebrow">Clé Anthropic</p>${vCle('anthropic')}`:''}`;
   else if(e===4){const deja=all('recompenses').sort((a,b)=>a.cout-b.cout),titres=new Set(deja.map(r=>r.titre));
     corps=`${tete('Les récompenses',`${esc(prenom())} gagne des étoiles en travaillant et les échange contre des récompenses, que vous validez. Cochez celles que vous proposez et ajustez leur prix. Vous pourrez tout changer plus tard dans l'espace parents.`)}
       <form class="stack" data-form="acc-rec">
@@ -3019,11 +3133,14 @@ document.addEventListener('click',async e=>{
     case 'acc-ia-plus-tard':state.iaf=null;state.acc={etape:4};render();break;
     case 'ia-mode':{const f=state.iaf;f.mode=v;f.msg='';f.modeles=null;render();break}
     case 'ia-tester':envoyerIA({essai:true});break;
-    case 'ia-oublier':envoyerIA({oublierCle:true});break;
+    case 'ocr-mode':{const f=state.ocrf;f.mode=v;f.msg='';render();break}
+    case 'cle-tester':envoyerCle(v,{essai:true});break;
+    case 'cle-oublier':envoyerCle(v,{oublier:true});break;
     case 'suggestions':SUGGESTIONS.forEach(([t,c])=>put('recompenses',uid(),{titre:t,cout:c}));break;
     case 'parent-off':finParent();state.pp=null;render();break;
     case 'parent-page':state.pp=v;render();window.scrollTo({top:0});break;
     case 'skin':put('config','main',{...cfg(),skin:el.dataset.v});toast(`Habillage ${SKINS[el.dataset.v].nom.split(' ·')[0]} choisi.`);break;
+    case 'theme':put('config','main',{...cfg(),theme:v});toast({clair:'Couleurs claires choisies.',sombre:'Couleurs sombres choisies.',auto:"Les couleurs suivent l'ordinateur."}[v]);break;
     case 'prog-mat':go('programme',v);break;
     case 'comp-etat':{const c=COMP(id);if(!c)break;const cur=etatComp(c).etat;const next={avenir:'vu',vu:'fragile',fragile:'progres',progres:'acquis',acquis:'avenir'}[cur];put('programme',id,{etat:next,date:TODAY(),ts:Date.now()});break}
     case 'speciale':leconSpeciale(id);break;
@@ -3093,6 +3210,8 @@ document.addEventListener('submit',async e=>{
     const t=(fd.t||'').trim();if(t)put('recompenses',uid(),{titre:t,cout:Math.max(1,Number(fd.c)||1)});
     state.acc={etape:5};render();return}
   if(kind==='ia'){envoyerIA();return}
+  if(kind==='ocr'){envoyerOCR();return}
+  if(kind==='cle'){envoyerCle(f.dataset.f);return}
   if(kind==='prenom'){put('config','main',{...cfg(),prenom:(fd.prenom||'').trim()});toast('Enregistré.');return}
 });
 const h=(location.hash||'').slice(1);if(TABS.some(t=>t[0]===h))state.view=h;

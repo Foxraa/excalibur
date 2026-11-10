@@ -4,6 +4,7 @@
 import http from "node:http";
 import https from "node:https";
 import crypto from "node:crypto";
+import os from "node:os";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -54,6 +55,10 @@ const OLLAMA_CTX = Number(process.env.OLLAMA_CTX || 16384);
 let IA = (process.env.IA || (client ? "claude" : "ollama")).toLowerCase();
 let IA_QUICK = (process.env.IA_QUICK || IA).toLowerCase();
 const iaPrete = ia => ia === "ollama" || !!client;
+// Lecture des photos : par l'IA du cartable (OCR=ia), ou d'abord par Mistral OCR (OCR=mistral, avec MISTRAL_API_KEY),
+// qui en recopie le texte ; l'IA reçoit alors ce texte au lieu des images.
+let CLE_MISTRAL = process.env.MISTRAL_API_KEY || "";
+let OCR = (process.env.OCR || "").toLowerCase() === "mistral" ? "mistral" : "ia";
 const ollamaLocal = () => OLLAMA_URL.origin === lireUrlOllama(OLLAMA_LOCAL).origin || ["localhost", "127.0.0.1", "[::1]"].includes(OLLAMA_URL.hostname);
 
 // Change les lignes voulues de .env sans toucher au reste ; null retire la ligne.
@@ -215,6 +220,119 @@ async function essaiIA({ ia, url, modele, cle }) {
   } catch { return { ok: false, code: "no_ollama" }; }
 }
 
+/* ---------- Mistral OCR (lecture des photos) ---------- */
+// Payé à la page lue, pas aux jetons. Une demande par photo, toutes en même temps.
+const MISTRAL = "https://api.mistral.ai/v1/";
+const MODELE_OCR = process.env.MISTRAL_OCR_MODEL || "mistral-ocr-latest";
+const erreurOCR = (code, message) => Object.assign(new Error(message), { code });
+async function appelMistral(chemin, cle, { corps, signal, delai = 90000 } = {}) {
+  const limite = AbortSignal.timeout(delai);
+  let r;
+  try {
+    r = await fetch(MISTRAL + chemin, {
+      method: corps ? "POST" : "GET",
+      headers: { authorization: `Bearer ${cle}`, ...(corps ? { "content-type": "application/json" } : {}) },
+      body: corps ? JSON.stringify(corps) : undefined,
+      signal: signal ? AbortSignal.any([signal, limite]) : limite,
+    });
+  } catch (e) {
+    if (signal?.aborted) throw e;
+    throw erreurOCR("ocr_network", e.message);
+  }
+  if (r.status === 401 || r.status === 403) throw erreurOCR("ocr_bad_key", "clé refusée");
+  if (r.status === 429) throw erreurOCR("rate_limited", "trop de demandes");
+  if (!r.ok) throw erreurOCR("ocr_error", `${r.status} ${(await r.text().catch(() => "")).slice(0, 300)}`);
+  return r.json();
+}
+async function lireAvecMistral(images, signal) {
+  const reps = await Promise.all(images.map(im => appelMistral("ocr", CLE_MISTRAL, {
+    signal,
+    corps: { model: MODELE_OCR, document: { type: "image_url", image_url: `data:${im.media_type || "image/jpeg"};base64,${im.data}` } },
+  })));
+  const n = reps.reduce((s, r) => s + (r.usage_info?.pages_processed || 1), 0);
+  noterConso(`Mistral OCR ${MODELE_OCR} : ${n} page${n > 1 ? "s" : ""} lue${n > 1 ? "s" : ""}`);
+  // Le Markdown renvoyé cite les dessins découpés dans la photo (![img-0.jpeg](img-0.jpeg)) : ils ne servent à rien ici.
+  return reps.map((r, i) => {
+    const txt = (r.pages || []).map(p => p.markdown || "").join("\n\n").replace(/!\[[^\]]*\]\([^)]*\)/g, "").trim();
+    return `--- Photo ${i + 1} ---\n${txt || "(rien de lisible)"}`;
+  }).join("\n\n");
+}
+const avecTexteOCR = (prompt, texte) => `${prompt}
+
+Les photos ne te sont pas montrées : un logiciel de lecture (OCR) en a recopié le texte ci-dessous, photo par photo, dans l'ordre. Les couleurs ne sont pas rendues : une correction de la maîtresse (stylo rouge ou vert, croix, coches) peut apparaître comme du texte en plus, ou manquer. Quand tu ne sais pas si une réponse a été corrigée, mets "juste" à null. N'invente pas ce qui est illisible.
+
+${texte}`;
+
+async function reglerOCR(req, res) {
+  const { essai = false, ocr, cle = "", oublierCle = false } = await readBody(req, 5000);
+  if (!sessions.valide(req.headers["x-parent"])) return json(res, 403, { code: "parent" });
+  if (ocr !== "ia" && ocr !== "mistral") return json(res, 400, { code: "bad_request" });
+  const laCle = String(cle).trim();
+  if (laCle && !/^[\w-]{10,300}$/.test(laCle)) return json(res, 400, { code: "bad_key_format" });
+  if (oublierCle) {
+    CLE_MISTRAL = ""; OCR = "ia";
+    await majEnv({ MISTRAL_API_KEY: null, OCR: null });
+    return json(res, 200, { ok: true, enregistre: true });
+  }
+  let resultat = { ok: true };
+  if (ocr === "mistral") {
+    const c = laCle || CLE_MISTRAL;
+    if (!c) return json(res, 200, { ok: false, code: "no_key" });
+    // Lister les modèles ne lit aucune page : l'essai est gratuit.
+    try { await appelMistral("models", c, { delai: 15000 }); }
+    catch (e) { resultat = { ok: false, code: e.code || "ocr_error" }; }
+    // Une clé refusée n'est pas gardée ; Mistral injoignable, si : la connexion est peut-être seulement coupée.
+    if (essai || resultat.code === "ocr_bad_key") return json(res, 200, resultat);
+  } else if (essai) return json(res, 200, resultat);
+  OCR = ocr;
+  const env = { OCR: ocr === "mistral" ? "mistral" : null };
+  if (laCle) { CLE_MISTRAL = laCle; env.MISTRAL_API_KEY = laCle; }
+  await majEnv(env);
+  json(res, 200, { ...resultat, enregistre: true });
+}
+
+// Les clés API se règlent à part du choix de l'IA : on les enregistre (après essai), on les teste ou on les oublie.
+// Oublier la clé de l'outil en service repasse sur l'autre choix : Ollama pour l'IA, l'IA du cartable pour les photos.
+async function reglerCle(req, res) {
+  const { fournisseur, cle = "", essai = false, oublier = false } = await readBody(req, 5000);
+  if (!sessions.valide(req.headers["x-parent"])) return json(res, 403, { code: "parent" });
+  if (fournisseur !== "anthropic" && fournisseur !== "mistral") return json(res, 400, { code: "bad_request" });
+  const anthropic = fournisseur === "anthropic";
+  if (oublier) {
+    if (anthropic) {
+      client = null;
+      const env = { ANTHROPIC_API_KEY: null };
+      if (IA === "claude" || IA_QUICK === "claude") { IA = IA_QUICK = "ollama"; env.IA = "ollama"; env.IA_QUICK = null; }
+      await majEnv(env);
+    } else {
+      CLE_MISTRAL = ""; OCR = "ia";
+      await majEnv({ MISTRAL_API_KEY: null, OCR: null });
+    }
+    return json(res, 200, { ok: true, enregistre: true });
+  }
+  const laCle = String(cle).trim();
+  if (laCle && !/^[\w-]{10,300}$/.test(laCle)) return json(res, 400, { code: "bad_key_format" });
+  if (!laCle && !essai) return json(res, 200, { ok: false, code: "no_key" });
+  let resultat;
+  if (anthropic) resultat = await essaiIA({ ia: "claude", cle: laCle });
+  else {
+    const c = laCle || CLE_MISTRAL;
+    if (!c) return json(res, 200, { ok: false, code: "no_key" });
+    try { await appelMistral("models", c, { delai: 15000 }); resultat = { ok: true }; }
+    catch (e) { resultat = { ok: false, code: e.code || "ocr_error" }; }
+  }
+  if (essai || !resultat.ok) return json(res, 200, resultat); // une clé n'est gardée que si elle marche
+  if (anthropic) { client = clientClaude(laCle); await majEnv({ ANTHROPIC_API_KEY: laCle }); }
+  else { CLE_MISTRAL = laCle; await majEnv({ MISTRAL_API_KEY: laCle }); }
+  json(res, 200, { ...resultat, enregistre: true });
+}
+
+// Une ligne par appel payant, dans le terminal et dans data/consommation.log, pour voir ce qui consomme les crédits.
+function noterConso(ligne) {
+  console.log(ligne);
+  fs.appendFile(CONSO_FILE, `${new Date().toLocaleString("fr-FR")}  ${ligne}\n`).catch(e => console.error("Journal de consommation :", e.message));
+}
+
 // Règles d'écriture (parent.mjs) : renvoie null si permis, sinon la réponse de refus.
 async function verifier(req, col, id, data, suppression) {
   const verdict = autorise({
@@ -295,28 +413,32 @@ async function sample(req, res) {
   if (typeof prompt !== "string" || !prompt) return json(res, 400, { code: "bad_request" });
   const ia = tier === "quick" ? IA_QUICK : IA;
   if (!iaPrete(ia)) return json(res, 503, { code: "no_key" });
-  if (ia === "ollama") {
-    res.writeHead(200, { "content-type": "application/x-ndjson; charset=utf-8", "cache-control": "no-store" });
-    const ac = new AbortController();
-    res.on("close", () => { if (!res.writableEnded) ac.abort(); });
-    const t = TIERS[tier] || TIERS.default;
-    try { await sampleOllama({ prompt, images, max_tokens: t.max_tokens }, o => res.write(JSON.stringify(o) + "\n"), ac.signal); }
-    catch (e) {
-      if (!ac.signal.aborted) { console.error("Ollama :", e.message); res.write(JSON.stringify({ t: "error", code: "no_ollama" }) + "\n"); }
-    }
-    return res.end();
-  }
-  const content = [
-    ...images.slice(0, MAX_IMAGES).map(im => ({ type: "image", source: { type: "base64", media_type: im.media_type || "image/jpeg", data: im.data } })),
-    { type: "text", text: prompt },
-  ];
   // Réponse en NDJSON : une ligne {t:"text"} par morceau, puis {t:"done"} ou {t:"error"}.
   res.writeHead(200, { "content-type": "application/x-ndjson; charset=utf-8", "cache-control": "no-store" });
   const send = o => res.write(JSON.stringify(o) + "\n");
   const ac = new AbortController();
   res.on("close", () => { if (!res.writableEnded) ac.abort(); });
+  const t = TIERS[tier] || TIERS.default;
+  let photos = images.slice(0, MAX_IMAGES), texte = prompt;
+  if (photos.length && OCR === "mistral" && CLE_MISTRAL) {
+    try { texte = avecTexteOCR(prompt, await lireAvecMistral(photos, ac.signal)); photos = []; }
+    catch (e) {
+      if (!ac.signal.aborted) { console.error("Mistral OCR :", e.message); send({ t: "error", code: e.code || "ocr_error" }); }
+      return res.end();
+    }
+  }
+  if (ia === "ollama") {
+    try { await sampleOllama({ prompt: texte, images: photos, max_tokens: t.max_tokens }, send, ac.signal); }
+    catch (e) {
+      if (!ac.signal.aborted) { console.error("Ollama :", e.message); send({ t: "error", code: "no_ollama" }); }
+    }
+    return res.end();
+  }
+  const content = [
+    ...photos.map(im => ({ type: "image", source: { type: "base64", media_type: im.media_type || "image/jpeg", data: im.data } })),
+    { type: "text", text: texte },
+  ];
   try {
-    const t = TIERS[tier] || TIERS.default;
     const stream = client.beta.messages.stream({
       model: t.model,
       max_tokens: t.max_tokens,
@@ -329,11 +451,8 @@ async function sample(req, res) {
       if (ev.type === "content_block_delta" && ev.delta.type === "text_delta") send({ t: "text", text: ev.delta.text });
     }
     const msg = await stream.finalMessage();
-    // Une ligne par appel, dans le terminal et dans data/consommation.log, pour voir ce qui consomme les crédits.
     const u = msg.usage || {};
-    const ligne = `Claude ${t.model} (${tier}, effort ${t.effort}${images.length ? `, ${images.length} photo${images.length > 1 ? "s" : ""}` : ""}) : ${u.input_tokens ?? "?"} jetons lus, ${u.output_tokens ?? "?"} écrits`;
-    console.log(ligne);
-    fs.appendFile(CONSO_FILE, `${new Date().toLocaleString("fr-FR")}  ${ligne}\n`).catch(e => console.error("Journal de consommation :", e.message));
+    noterConso(`Claude ${t.model} (${tier}, effort ${t.effort}${photos.length ? `, ${photos.length} photo${photos.length > 1 ? "s" : ""}` : ""}) : ${u.input_tokens ?? "?"} jetons lus, ${u.output_tokens ?? "?"} écrits`);
     if (msg.stop_reason === "refusal") send({ t: "error", code: "refused" });
     else send({ t: "done", truncated: msg.stop_reason === "max_tokens" });
   } catch (e) {
@@ -403,14 +522,26 @@ async function coursEtProgression() {
   return { lecons, periodes, semaines };
 }
 
+/* ---------- Ouverture aux autres appareils de la maison ---------- */
+// HOST=0.0.0.0 dans .env : le cartable répond aussi sur le wifi. On donne au parent les adresses à taper.
+function reseauMaison() {
+  const ouvert = HOST === "0.0.0.0" || HOST === "::";
+  const adresses = Object.values(os.networkInterfaces()).flat()
+    .filter(i => i && i.family === "IPv4" && !i.internal && !i.address.startsWith("169.254."))
+    .map(i => i.address);
+  return { ouvert, port: PORT, nom: os.hostname(), adresses };
+}
+
 /* ---------- Routes ---------- */
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://x");
   const p = decodeURIComponent(url.pathname);
   try {
     if (p === "/api/status") return json(res, 200, {
+      reseau: reseauMaison(),
       ai: iaPrete(IA) && iaPrete(IA_QUICK), ia: IA, iaQuick: IA_QUICK, maxImages: MAX_IMAGES,
       ollamaUrl: OLLAMA_URL.origin, ollamaLocal: ollamaLocal(), ollamaModel: OLLAMA_MODEL, cle: !!client,
+      ocr: OCR, cleMistral: !!CLE_MISTRAL,
       model: IA === "ollama" ? OLLAMA_MODEL : MODEL, modelQuick: IA_QUICK === "ollama" ? OLLAMA_MODEL : MODEL_QUICK,
     });
     if (p === "/api/db" && req.method === "GET") {
@@ -436,6 +567,8 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { ok: true });
     }
     if (p === "/api/ia" && req.method === "POST") return await reglerIA(req, res);
+    if (p === "/api/ocr" && req.method === "POST") return await reglerOCR(req, res);
+    if (p === "/api/cle" && req.method === "POST") return await reglerCle(req, res);
     if (p === "/api/cours") return json(res, 200, await coursEtProgression());
     const m = p.match(/^\/api\/db\/([a-z]+)\/([^/]+)$/);
     if (m) {

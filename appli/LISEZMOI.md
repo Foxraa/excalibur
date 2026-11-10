@@ -1,10 +1,10 @@
 # Excalibur — version locale
 
-L'appli tourne sur ce PC. L'IA est au choix : Ollama sur ce PC, Ollama sur un autre ordinateur de la maison, ou Claude avec une clé API. Avec Ollama, rien ne part sur internet. Les données sont dans `data/cartable.duckdb`.
+L'appli tourne sur ce PC. L'IA est au choix : Ollama sur ce PC ou Claude avec une clé API, et la lecture des photos peut passer par Mistral OCR. Avec Ollama, rien ne part sur internet. Les données sont dans `data/cartable.duckdb`.
 
 ## Première installation (une seule fois)
 
-Au premier lancement, **Demarrer le cartable.bat** installe Node.js s'il manque (avec winget ; Windows demande d'accepter l'installation), puis demande où tourne l'IA. Si c'est sur ce PC, il installe aussi Ollama et télécharge le modèle (`gemma4:e4b`, plusieurs Go). Sinon, il n'installe rien de plus.
+Au premier lancement, **Demarrer le cartable.bat** installe Node.js s'il manque (avec winget ; Windows demande d'accepter l'installation), puis demande quelle IA utiliser : Ollama sur ce PC ou Claude. Avec Ollama, il installe aussi Ollama et télécharge le modèle (`gemma4:e4b`, plusieurs Go). Avec Claude, il n'installe rien de plus.
 
 Un cartable vide s'ouvre sur un accueil en cinq étapes : le code parent, puis le prénom et la zone de vacances, l'IA, les récompenses, et enfin un écran qui explique les étoiles à l'enfant. Les onglets n'apparaissent qu'à la fin. Si la page est rechargée en cours de route, l'accueil reprend après le code parent.
 
@@ -17,13 +17,22 @@ Sur un petit PC, Ollama est lent : une question de quiz prend 30 à 40 secondes,
 
 ## Choisir l'IA
 
-Le choix se fait dans l'**espace parents**, rubrique « L'IA du cartable » (aussi à l'accueil d'un cartable neuf). Le bouton **Tester** essaie le réglage sans le garder ; **Enregistrer** l'applique tout de suite, sans relancer.
+Les choix se font dans l'**espace parents**, page **Réglages**, carte « Intelligence artificielle » (l'IA se choisit aussi à l'accueil d'un cartable neuf). Le bouton **Tester** essaie le réglage sans le garder ; **Enregistrer** l'applique tout de suite, sans relancer.
 
-- **Ollama sur ce PC** : gratuit, rien ne sort de la maison. Si Ollama n'était pas encore installé, fermer la fenêtre noire et relancer le cartable.
-- **Ollama sur le réseau** : un ordinateur plus puissant de la maison fait le travail. On donne son adresse (`192.168.1.20`, `PC-SALON`, ou une adresse complète ; le port 11434 est ajouté tout seul). Sur cet ordinateur, Ollama doit accepter le réseau : mettre la variable d'environnement `OLLAMA_HOST=0.0.0.0`, relancer Ollama et autoriser le port 11434 dans le pare-feu. Ollama n'a pas de mot de passe : à réserver au réseau de la maison.
-- **Claude** : payant selon les jetons utilisés, avec une clé API créée sur [platform.claude.com](https://platform.claude.com). Plus rapide et plus fiable, surtout pour lire les photos. Les photos, les leçons et le prénom sont alors envoyés à Anthropic.
+- **IA du cartable** :
+  - **Ollama** : sur ce PC, gratuit, rien ne sort de la maison. Si Ollama n'était pas encore installé, fermer la fenêtre noire et relancer le cartable.
+  - **Claude** : payant selon les jetons utilisés. Plus rapide et plus fiable, surtout pour lire les photos. Les photos, les leçons et le prénom sont alors envoyés à Anthropic.
+- **Lecture des photos** (leçons, exercices, agenda) :
+  - **L'IA du cartable** (Ollama ou Claude) regarde les photos elle-même. C'est le réglage de départ.
+  - **Mistral OCR** : un logiciel spécialisé recopie d'abord le texte des photos, puis l'IA du cartable reçoit ce texte à la place des images. C'est payé à la photo (environ 4 $ pour 1 000 photos fin 2026), et chaque lecture est notée dans `data/consommation.log`. Les photos sont envoyées à Mistral AI. Les couleurs ne passent pas : l'IA ne voit plus les corrections de la maîtresse au stylo rouge ou vert.
 
-Le choix et la clé sont gardés dans `.env`. La clé ne revient jamais au navigateur et n'est pas copiée sur une clé USB. Le bouton **Oublier la clé** la retire.
+### Clés API
+
+Les clés se règlent à part, dans la carte « Clés API » : **Anthropic** (pour Claude, créée sur [platform.claude.com](https://platform.claude.com)) et **Mistral** (pour la lecture des photos, créée sur [console.mistral.ai](https://console.mistral.ai)). Une clé n'est enregistrée que si elle marche. **Oublier la clé** la retire ; si elle servait, l'IA repasse sur Ollama, ou la lecture des photos sur l'IA du cartable.
+
+Les choix (`IA`, `OCR=mistral`) et les clés (`ANTHROPIC_API_KEY`, `MISTRAL_API_KEY`) sont gardés dans `.env`. Les clés ne reviennent jamais au navigateur et ne sont pas copiées sur une clé USB.
+
+Ollama sur un autre ordinateur de la maison n'est plus proposé, ni dans l'espace parents ni par le lanceur. Une ligne `OLLAMA_URL=` ajoutée à la main dans `.env` reste prise en compte (et le lanceur n'installe alors pas Ollama), mais enregistrer « Ollama » dans l'espace parents la retire.
 
 ## Les quatre onglets
 
@@ -49,6 +58,8 @@ Dans l'espace parents, « Habillage du cartable » propose quatre skins :
 
 Le skin change les couleurs et les formes, le logo et l'icône de l'onglet, les hiboux, le nom des niveaux et des badges, les encouragements et le ton de l'IA. Les étoiles, les niveaux atteints et les données restent les mêmes. Il y a 50 niveaux dans chaque skin : le premier coûte 150 étoiles, chaque suivant 40 de plus (54 390 étoiles au total pour le niveau 50). Atteindre le niveau N rapporte N étoiles, qui comptent pour les récompenses mais pas pour monter de niveau. Tous les 10 niveaux, l'enfant choisit une récompense offerte, que les parents valident comme les autres ; si elle est refusée, il peut en choisir une autre. Les couleurs des onglets ne changent pas, pour que l'enfant se repère toujours.
 
+Chaque habillage existe en clair et en sombre. Dans les réglages, « Couleurs » propose *Comme l'ordinateur* (par défaut, suit le mode clair ou sombre de Windows), *Clair* ou *Sombre*. Le choix vaut pour tous les habillages.
+
 ## Les étoiles
 
 +1 par bonne réponse, +5 par chose finie, ×2 sans faute, +4 pour 10 ou 11 sur 12 au défi des tables. On gagne moitié moins pour un quiz Facile, les tables de 2, 5 ou 10, ou un quiz déjà réussi dans la semaine (le quart si déjà réussi deux fois).
@@ -69,10 +80,11 @@ Sans session, le serveur refuse ce qui relève des parents : les récompenses, l
 
 L'IA donne l'opération de chaque question de calcul, et le cartable refait le calcul lui-même. Si l'IA s'est trompée dans son corrigé, la bonne réponse est rétablie, ou la question est écartée.
 
-## Depuis une tablette de la maison
+## Depuis un autre appareil de la maison (même wifi)
 
-Ajouter `HOST=0.0.0.0` dans `.env`, relancer, puis ouvrir `http://<nom-ou-IP-du-PC>:3000` sur la tablette.
-Windows demandera d'autoriser Node.js sur le réseau privé.
+Ajouter `HOST=0.0.0.0` dans `.env`, relancer, puis ouvrir `http://<nom-ou-IP-du-PC>:3000` sur l'autre appareil.
+Windows demandera d'autoriser Node.js : cocher seulement les réseaux privés.
+L'espace parents, onglet Réglages, bloc « Depuis un autre appareil », rappelle ces étapes et affiche les adresses à taper.
 
 ## Sur une clé USB (autre PC, sans rien installer)
 

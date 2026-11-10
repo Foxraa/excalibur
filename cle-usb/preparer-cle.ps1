@@ -68,7 +68,7 @@ Copier (Join-Path $depot 'appli') "$cible\appli" (@('/MIR', '/XD') + $exclus)
 # La cle se perd facilement : pas de cle API dessus, et l'IA y reste l'Ollama de la cle.
 $envCle = "$cible\appli\.env"
 if (Test-Path $envCle) {
-  (Get-Content $envCle) -notmatch '^\s*(ANTHROPIC_API_KEY|IA|IA_QUICK|OLLAMA_URL)\s*=' | Set-Content $envCle -Encoding ascii
+  (Get-Content $envCle) -notmatch '^\s*(ANTHROPIC_API_KEY|MISTRAL_API_KEY|OCR|IA|IA_QUICK|OLLAMA_URL)\s*=' | Set-Content $envCle -Encoding ascii
 }
 Copier (Join-Path $depot 'programme_cm1') "$cible\programme_cm1" @('/MIR')
 Write-Host '- Node'
