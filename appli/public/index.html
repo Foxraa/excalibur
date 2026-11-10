@@ -191,6 +191,8 @@ main .wrap > h2,main .wrap > .sec-title h2{font-size:1.9rem}
 .reglage{display:grid;grid-template-columns:170px minmax(0,1fr);gap:8px 18px;align-items:start;padding-top:12px;border-top:1px solid var(--line)}
 .card>h3+.reglage{border-top:0;padding-top:0}
 .rg-nom{font-weight:700;padding-top:12px}
+/* Clés API : le nom, puis le champ seul sur sa ligne, puis les boutons. */
+.cle-bloc .rg-nom{padding-top:0}.cle-bloc+.cle-bloc{border-top:1px solid var(--line);padding-top:12px}
 @media (max-width:640px){.reglage{grid-template-columns:1fr}.rg-nom{padding-top:0}}
 .rec-ajout>input[type=text]{flex:1 1 200px}.rec-ajout>input[type=number]{width:90px;flex:none}
 .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
@@ -2927,7 +2929,8 @@ function vCle(p){
   if(!iaInfo)return '';
   const k=CLES[p],f=(state.clef||(state.clef={}))[p]||{},deja=k.a();
   return `<form class="stack" data-form="cle" data-f="${p}">
-    <div class="row ligne"><input type="password" id="cle-${p}" name="cle" autocomplete="off" placeholder="${deja?'Une clé est déjà enregistrée sur ce PC':k.ex}"><button class="btn primary" ${f.busy?'disabled':''}>${f.busy?'Un instant…':'Enregistrer'}</button><button type="button" class="btn" data-act="cle-tester" data-v="${p}" ${f.busy||!deja?'disabled':''}>Tester</button>${deja?`<button type="button" class="btn ghost danger" data-act="cle-oublier" data-v="${p}" ${f.busy?'disabled':''}>Oublier la clé</button>`:''}</div>
+    <input type="password" id="cle-${p}" name="cle" autocomplete="off" placeholder="${deja?'Une clé est déjà enregistrée sur ce PC':k.ex}">
+    <div class="row"><button class="btn primary" ${f.busy?'disabled':''}>${f.busy?'Un instant…':'Enregistrer'}</button><button type="button" class="btn" data-act="cle-tester" data-v="${p}" ${f.busy||!deja?'disabled':''}>Tester</button>${deja?`<button type="button" class="btn ghost danger" data-act="cle-oublier" data-v="${p}" ${f.busy?'disabled':''}>Oublier la clé</button>`:''}</div>
     <p class="small muted">${deja?'✔ Une clé est enregistrée.':'Pas encore de clé.'} Elle se crée sur ${k.ou}.</p>
     ${f.msg?`<p class="small" role="status">${f.ok?'✅':'⚠️'} ${esc(f.msg)}</p>`:''}
   </form>`;
@@ -2965,14 +2968,23 @@ function vParents(){
   const ach=all('achats').filter(a=>a.statut==='demandé');const rec=all('recompenses').sort((a,b)=>a.cout-b.cout);
   // Dans l'ordre de ce qu'on vient faire : valider, suivre, gérer les récompenses, puis les réglages qu'on touche rarement.
   const zone=c.zone||ZONE_DEFAUT;
-  // Deux pages : Suivi (ce qu'on vient voir presque à chaque fois) et Réglages (récompenses et réglages, plus rares).
-  const page=state.pp==='reglages'?'reglages':'suivi';
+  // Trois pages : Suivi (ce qu'on vient voir presque à chaque fois), Réglages (récompenses, enfant, apparence, wifi)
+  // et Réglages 2 (l'IA, la lecture des photos et les clés API).
+  const page=['reglages','reglages2'].includes(state.pp)?state.pp:'suivi';
   const onglet=(v,l)=>`<button class="btn ${page===v?'primary':''}" data-act="parent-page" data-v="${v}" aria-pressed="${page===v}">${l}</button>`;
-  return `<section class="card sec-title" style="padding-block:10px"><div class="row"><h3>Espace parents</h3>${onglet('suivi','📈 Suivi')}${onglet('reglages','⚙️ Réglages')}</div><button class="btn ghost" data-act="parent-off">Fermer</button></section>
+  return `<section class="card sec-title" style="padding-block:10px"><div class="row"><h3>Espace parents</h3>${onglet('suivi','📈 Suivi')}${onglet('reglages','⚙️ Réglages')}${onglet('reglages2','🤖 Réglages 2')}</div><button class="btn ghost" data-act="parent-off">Fermer</button></section>
   ${page==='suivi'?`<section class="card stack"><h3>À valider</h3>${ach.length?ach.map(a=>`<div class="reward"><span>${esc(titreDemande(a))} <span class="cost">${a.palier?'offert':a.cout}</span></span><span class="row"><button class="btn primary" data-act="valider" data-id="${a.id}">Accorder</button><button class="btn" data-act="refuser" data-id="${a.id}">Refuser</button></span></div>`).join(''):'<p class="small muted">Aucune demande en attente.</p>'}
     ${etoilesDetail()}</section>
   ${vSemaine(`<div class="row"><button class="btn primary" data-act="tab" data-v="programme">🗺️ Programme CM1 : où en est ${esc(prenom())}</button></div>`)}
-  `:`<section class="card stack"><h3>Récompenses</h3>${rec.map(r=>`<div class="reward"><span>${esc(r.titre)}</span><span class="row"><span class="cost">${r.cout}</span><button class="btn ghost danger" data-act="del-rec" data-id="${r.id}">Retirer</button></span></div>`).join('')}
+  `:page==='reglages2'?`<section class="card stack"><h3>🤖 Intelligence artificielle</h3>
+    ${reglage("IA du cartable",vIA())}
+    ${reglage('Lecture des photos',vOCR())}
+  </section>
+  <section class="card stack"><h3>🔑 Clés API</h3>
+    ${Object.keys(CLES).map(p=>`<div class="cle-bloc stack"><label class="rg-nom" for="cle-${p}">${CLES[p].nom}</label>${vCle(p)}</div>`).join('')}
+    <p class="small muted">Une clé n'est gardée que si elle marche. Elle reste sur ce PC (fichier <code>.env</code>), n'est jamais réaffichée et n'est pas copiée sur une clé USB.</p>
+  </section>`
+  :`<section class="card stack"><h3>Récompenses</h3>${rec.map(r=>`<div class="reward"><span>${esc(r.titre)}</span><span class="row"><span class="cost">${r.cout}</span><button class="btn ghost danger" data-act="del-rec" data-id="${r.id}">Retirer</button></span></div>`).join('')}
     <form class="row rec-ajout" data-form="rec"><input type="text" id="rec-t" name="titre" placeholder="Nouvelle récompense" aria-label="Nouvelle récompense" required><input type="number" id="rec-c" name="cout" min="1" value="50" aria-label="Prix en étoiles" required><span aria-hidden="true">⭐</span><button class="btn">Ajouter</button></form>
     ${!rec.length?`<div><button class="btn" data-act="suggestions">Ajouter des récompenses suggérées</button></div>`:''}
     <p class="small muted">Repère : un quiz de 10 questions rapporte 13 étoiles avec 8 bonnes réponses, 30 sans faute. Une bonne journée complète rapporte 30 à 50 étoiles.</p></section>
@@ -2983,14 +2995,6 @@ function vParents(){
   <section class="card stack"><h3>🎨 Apparence</h3>
     ${reglage('Habillage',`<div class="row">${Object.entries(SKINS).map(([id,k])=>`<button class="btn ${skinId()===id?'primary':''}" data-act="skin" data-v="${id}" aria-pressed="${skinId()===id}">${k.ico} ${esc(k.nom)}</button>`).join('')}</div>`)}
     ${reglage('Couleurs',`<div class="row">${Object.entries(THEMES).map(([id,l])=>`<button class="btn ${themeId()===id?'primary':''}" data-act="theme" data-v="${id}" aria-pressed="${themeId()===id}">${l}</button>`).join('')}</div>`)}
-  </section>
-  <section class="card stack"><h3>🤖 Intelligence artificielle</h3>
-    ${reglage("IA du cartable",vIA())}
-    ${reglage('Lecture des photos',vOCR())}
-  </section>
-  <section class="card stack"><h3>🔑 Clés API</h3>
-    ${Object.keys(CLES).map(p=>reglage(CLES[p].nom,vCle(p),'cle-'+p)).join('')}
-    <p class="small muted">Une clé n'est gardée que si elle marche. Elle reste sur ce PC (fichier <code>.env</code>), n'est jamais réaffichée et n'est pas copiée sur une clé USB.</p>
   </section>
   ${vReseau()}`}`;
 }

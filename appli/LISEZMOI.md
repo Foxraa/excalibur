@@ -17,7 +17,7 @@ Sur un petit PC, Ollama est lent : une question de quiz prend 30 à 40 secondes,
 
 ## Choisir l'IA
 
-Les choix se font dans l'**espace parents**, page **Réglages**, carte « Intelligence artificielle » (l'IA se choisit aussi à l'accueil d'un cartable neuf). Le bouton **Tester** essaie le réglage sans le garder ; **Enregistrer** l'applique tout de suite, sans relancer.
+Les choix se font dans l'**espace parents**, page **Réglages 2**, carte « Intelligence artificielle », avec les clés API juste en dessous. L'IA se choisit aussi à l'accueil d'un cartable neuf. Le bouton **Tester** essaie le réglage sans le garder ; **Enregistrer** l'applique tout de suite, sans relancer.
 
 - **IA du cartable** :
   - **Ollama** : sur ce PC, gratuit, rien ne sort de la maison. Si Ollama n'était pas encore installé, fermer la fenêtre noire et relancer le cartable.
