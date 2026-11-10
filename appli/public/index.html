@@ -2868,6 +2868,8 @@ function iaRetour(f,r){
   if(r.code==='no_model')return r.modeles&&r.modeles.length?"Ce modèle n'est pas sur ce PC : choisissez-en un dans la liste.":"Aucun modèle sur ce PC. Il faut en télécharger un avec « ollama pull ».";
   if(r.code==='bad_model')return "Ce nom de modèle n'est pas valable.";
   if(r.code==='pin')return "Le code parent a changé : fermez puis rouvrez l'espace parents.";
+  // Un serveur lancé avant une mise à jour ne connaît pas encore le nouveau choix (Mistral) et le refuse.
+  if(r.code==='bad_request'||r.code==='not_found')return "Le cartable a été mis à jour : fermez la fenêtre noire, relancez « Démarrer le cartable », puis recommencez.";
   if(r.code==='no_key')return `Il n'y a pas encore de clé ${cle} : ${ICI_CLES()}.`;
   if(r.code==='bad_key')return `La clé ${cle} est refusée.`;
   if(r.code==='network')return `Impossible de joindre ${nom}. Vérifiez la connexion internet.`;
