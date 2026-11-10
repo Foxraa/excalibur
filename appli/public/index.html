@@ -2896,20 +2896,22 @@ function vOCR(){
   if(!iaInfo)return '';
   const f=state.ocrf||(state.ocrf={mode:iaInfo.ocr==='mistral'?'mistral':'ia'}),modes=ocrModes();
   return `<form class="stack" data-form="ocr">
-    <div class="row">${Object.entries(modes).map(([id,x])=>`<button type="button" class="btn ${f.mode===id?'primary':''}" data-act="ocr-mode" data-v="${id}" aria-pressed="${f.mode===id}">${x.ico} ${x.nom}</button>`).join('')}<button class="btn primary" ${f.busy?'disabled':''}>${f.busy?'Un instant…':'Enregistrer'}</button></div>
+    <div class="row">${Object.entries(modes).map(([id,x])=>`<button type="button" class="btn ${f.mode===id?'primary':''}" data-act="ocr-mode" data-v="${id}" aria-pressed="${f.mode===id}">${x.ico} ${x.nom}</button>`).join('')}<button class="btn primary" ${f.busy?'disabled':''}>${f.busy?'Un instant…':'Enregistrer'}</button><button type="button" class="btn" data-act="ocr-tester" ${f.busy?'disabled':''}>Tester</button></div>
     <p class="small muted">${modes[f.mode].txt}${f.mode==='mistral'&&!iaInfo.cleMistral?' Il faut une clé Mistral : ajoutez-la dans « Clés API » plus bas.':''}</p>
     ${f.msg?`<p class="small" role="status">${f.ok?'✅':'⚠️'} ${esc(f.msg)}</p>`:''}
   </form>`;
 }
 function ocrRetour(f,r){
-  if(r.ok)return f.mode==='mistral'?'Mistral répond.':'';
-  return ({no_key:"Il n'y a pas encore de clé Mistral : ajoutez-la dans « Clés API » plus bas.",ocr_bad_key:"La clé Mistral est refusée.",ocr_network:"Impossible de joindre Mistral. Vérifiez la connexion internet.",pin:"Le code parent a changé : fermez puis rouvrez l'espace parents."})[r.code]||errMsg(r);
+  // L'IA du cartable lit les photos : mêmes messages que le « Tester » de l'IA.
+  if(f.mode==='ia')return iaRetour({mode:iaInfo&&iaInfo.ia==='claude'?'claude':'local'},r);
+  if(r.ok)return 'Mistral répond.';
+  return ({not_found:"Le cartable a été mis à jour : fermez la fenêtre noire, relancez « Démarrer le cartable », puis recommencez.",no_key:"Il n'y a pas encore de clé Mistral : ajoutez-la dans « Clés API » plus bas.",ocr_bad_key:"La clé Mistral est refusée.",ocr_network:"Impossible de joindre Mistral. Vérifiez la connexion internet.",pin:"Le code parent a changé : fermez puis rouvrez l'espace parents."})[r.code]||errMsg(r);
 }
-async function envoyerOCR(){
+async function envoyerOCR({essai=false}={}){
   const f=state.ocrf;if(!f)return;
   f.busy=true;f.msg='';render();
   let r;
-  try{r=await fetch('/api/ocr',{method:'POST',headers:{'content-type':'application/json','x-parent':state.jeton||''},body:JSON.stringify({ocr:f.mode})}).then(x=>x.json())}
+  try{r=await fetch('/api/ocr',{method:'POST',headers:{'content-type':'application/json','x-parent':state.jeton||''},body:JSON.stringify({ocr:f.mode,essai})}).then(x=>x.json())}
   catch(e){r={ok:false,code:'network'}}
   if(r.code==='parent'){finParent('Code parent demandé à nouveau.');render();return}
   f.busy=false;f.ok=!!r.ok;f.msg=ocrRetour(f,r);
@@ -2946,7 +2948,7 @@ async function envoyerCle(p,{essai=false,oublier=false}={}){
   if(r.code==='parent'){finParent('Code parent demandé à nouveau.');render();return}
   f.busy=false;f.ok=!!r.ok;
   f.msg=r.ok?(essai?`${k.qui} répond, la clé est bonne.`:'')
-    :({no_key:"Collez d'abord une clé.",bad_key:'Cette clé est refusée.',ocr_bad_key:'Cette clé est refusée.',network:`Impossible de joindre ${k.qui}. Vérifiez la connexion internet.`,ocr_network:`Impossible de joindre ${k.qui}. Vérifiez la connexion internet.`,bad_key_format:"Cette clé n'a pas la bonne forme. Copiez-la de nouveau, en entier.",pin:"Le code parent a changé : fermez puis rouvrez l'espace parents."})[r.code]||errMsg(r);
+    :({not_found:"Le cartable a été mis à jour : fermez la fenêtre noire, relancez « Démarrer le cartable », puis recommencez.",no_key:"Collez d'abord une clé.",bad_key:'Cette clé est refusée.',ocr_bad_key:'Cette clé est refusée.',network:`Impossible de joindre ${k.qui}. Vérifiez la connexion internet.`,ocr_network:`Impossible de joindre ${k.qui}. Vérifiez la connexion internet.`,bad_key_format:"Cette clé n'a pas la bonne forme. Copiez-la de nouveau, en entier.",pin:"Le code parent a changé : fermez puis rouvrez l'espace parents."})[r.code]||errMsg(r);
   if(r.enregistre){
     await brancherIA();
     if(!state.acc){state.iaf=null;state.ocrf=null} // les choix se relisent : oublier une clé peut les avoir changés
@@ -3138,6 +3140,7 @@ document.addEventListener('click',async e=>{
     case 'ia-mode':{const f=state.iaf;f.mode=v;f.msg='';f.modeles=null;render();break}
     case 'ia-tester':envoyerIA({essai:true});break;
     case 'ocr-mode':{const f=state.ocrf;f.mode=v;f.msg='';render();break}
+    case 'ocr-tester':envoyerOCR({essai:true});break;
     case 'cle-tester':envoyerCle(v,{essai:true});break;
     case 'cle-oublier':envoyerCle(v,{oublier:true});break;
     case 'suggestions':SUGGESTIONS.forEach(([t,c])=>put('recompenses',uid(),{titre:t,cout:c}));break;

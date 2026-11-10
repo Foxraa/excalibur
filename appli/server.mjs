@@ -283,7 +283,10 @@ async function reglerOCR(req, res) {
     catch (e) { resultat = { ok: false, code: e.code || "ocr_error" }; }
     // Une clé refusée n'est pas gardée ; Mistral injoignable, si : la connexion est peut-être seulement coupée.
     if (essai || resultat.code === "ocr_bad_key") return json(res, 200, resultat);
-  } else if (essai) return json(res, 200, resultat);
+  } else if (essai) {
+    // L'IA du cartable lit les photos : on vérifie qu'elle répond, comme le « Tester » de l'IA.
+    return json(res, 200, await essaiIA({ ia: IA, url: OLLAMA_URL, modele: OLLAMA_MODEL }));
+  }
   OCR = ocr;
   const env = { OCR: ocr === "mistral" ? "mistral" : null };
   if (laCle) { CLE_MISTRAL = laCle; env.MISTRAL_API_KEY = laCle; }
