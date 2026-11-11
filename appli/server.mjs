@@ -63,6 +63,10 @@ const iaPrete = ia => ia === "ollama" || (ia === "mistral" ? !!CLE_MISTRAL : !!c
 // Lecture des photos : par l'IA du cartable (OCR=ia), ou d'abord par Mistral OCR (OCR=mistral, avec MISTRAL_API_KEY),
 // qui en recopie le texte ; l'IA reçoit alors ce texte au lieu des images.
 let OCR = (process.env.OCR || "").toLowerCase() === "mistral" ? "mistral" : "ia";
+// Un choix sans la clé qu'il lui faut (clé retirée de .env à la main, par exemple) repasse sur Ollama.
+if (!iaPrete(IA)) { console.log(`Pas de clé pour ${IA} : le cartable utilise Ollama.`); IA = "ollama"; }
+if (!iaPrete(IA_QUICK)) IA_QUICK = IA;
+if (OCR === "mistral" && !CLE_MISTRAL) OCR = "ia";
 const ollamaLocal = () => OLLAMA_URL.origin === lireUrlOllama(OLLAMA_LOCAL).origin || ["localhost", "127.0.0.1", "[::1]"].includes(OLLAMA_URL.hostname);
 
 // Change les lignes voulues de .env sans toucher au reste ; null retire la ligne.

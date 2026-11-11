@@ -15,6 +15,10 @@
   const IMAGES='paysage|photo|photographie|image|illustration|dessin|sch[ée]ma|carte|plan|document|graphique|frise|croquis|figure';
   const DET="(?:le|la|l['’]|ce|cet|cette|les|ces)\\s*";
   const IMAGE_ABSENTE=new RegExp(`(?<!\\p{L})(?:${DET}(?:${IMAGES})s?(?!\\p{L})[^.?!]{0,30}?(?<!\\p{L})(?:que tu (?:vois|observes|regardes|as sous les yeux)|ci-(?:dessous|dessus|contre)|suivante?s?)|(?:observe|regarde|examine)\\s+(?:bien\\s+|attentivement\\s+)?${DET}(?:${IMAGES})s?|(?:sur|dans)\\s+(?:la|cette|l['’])\\s*(?:photo|photographie|image|illustration))(?!\\p{L})`,'iu');
+  // « Dans la phrase suivante, quel verbe… ? » sans phrase écrite : les choix sont souvent des phrases, et la question ne veut plus rien dire.
+  const ANNONCE=/(?<!\p{L})(?:la|les|cette|ces|le|ce)\s+(?:phrases?|textes?|mots?|groupes? de mots|verbes?|nombres?|calculs?|liste)\s+(?:suivante?s?|ci-(?:dessous|dessus|contre))(?!\p{L})/iu;
+  // La chose annoncée est bien là : citée entre guillemets, ou écrite après deux-points.
+  const annonceSansContenu=t=>ANNONCE.test(t)&&!PHRASE.test(t)&&!/:\s*\S+(?:\s+\S+){2,}/.test(t);
   const PIEGE=/\s*\(?\b(?:attention|pense bien)\b[^.!?)]*\bpi[èe]ge\b[^.!?)]*[.!?]?\)?/gi;
   const JUSTIFIER=/\s*\(?\b(?:explique|justifie)\b[^.!?)]*\b(?:choix|réponse|pourquoi)\b[^.!?)]*[.!?]?\)?/gi;
   const OUVERTE=/^(quels?|quelles?|combien|comment|pourquoi|où|ou\b|qui\b|que\b|qu['’]|à quoi|de quoi|dans quel|avec quoi|lequel|laquelle|lesquels|lesquelles)/i;
@@ -193,6 +197,7 @@
     if(image&&!photos.includes(image))return {refus:photos.length?`la photo « ${image} » n'existe pas : choisir un id de la liste des photos`:"il n'y a pas de photo à montrer dans cette matière : décrire avec des mots"};
     if(!image&&IMAGE_ABSENTE.test(t))return {refus:photos.length?"aucune photo n'est choisie : mettre dans \"image\" l'id d'une photo de la liste, ou décrire avec des mots ce qu'on voit":"aucune image n'est affichée : décrire avec des mots ce qu'on voit (« Sur une photo de campagne, on voit… »)"};
     x={...x,image:image||undefined};
+    if(annonceSansContenu(t))return {refus:"la question parle de « la phrase suivante » sans l'écrire : citer la phrase entre « », ou, si les choix sont des phrases, demander « Dans quelle phrase… ? »"};
     if(/soulign/i.test(t)&&!/<u>/i.test(t))return {refus:'il est question d\'un mot souligné, mais rien n\'est souligné'};
     const cite=t.match(/phrase\s*:?\s*[«"“]([^»"”]+)[»"”][^«»"“”]{0,30}\bmot\s+[«"“'‘]\s*([^»"”'’]+?)\s*[»"”'’]/i);
     if(cite&&!contient(cite[1],cite[2]))return {refus:'le mot dont parle la question n\'est pas dans la phrase citée'};

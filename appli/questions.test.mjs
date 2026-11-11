@@ -389,3 +389,13 @@ test("en maths, une bonne réponse recopiée telle quelle depuis la question est
   assert.ok(c({ type: "qcm", question: "Qu'est-ce qui dure le plus longtemps : 1 h 10 min ou 75 min ?", choix: ["1 h 10 min", "75 min"], bonne: 1 }, { matiere: "maths" }).question);
   assert.ok(c({ type: "qcm", question: "Il est 3 h 25. Quelle heure sera-t-il dans 10 minutes ?", choix: ["3 h 35", "3 h 15"], bonne: 0 }, { matiere: "maths" }).question);
 });
+
+test("une question qui annonce « la phrase suivante » sans l'écrire est refusée", () => {
+  const qcm = (question, choix, bonne = 0) => c({ type: "qcm", question, choix, bonne });
+  assert.ok(qcm("Dans la phrase suivante, quel verbe est du 2e groupe ?", ["Nous partons en vacances.", "Ils dorment tôt.", "Elle vient demain.", "Tu choisis un dessert."], 3).refus);
+  assert.ok(courte("Recopie le verbe de la phrase ci-dessous.", "mange").refus);
+  // La phrase est bien écrite : la question passe.
+  assert.ok(qcm("Dans la phrase suivante, quel verbe est du 2e groupe : « Tu choisis un dessert » ?", ["choisis", "dessert"]).question);
+  assert.ok(courte("Trouve le verbe dans la phrase suivante : Le chat dort sur le canapé.", "dort").question);
+  assert.ok(qcm("Dans quelle phrase le verbe est-il du 2e groupe ?", ["Ils dorment tôt.", "Tu choisis un dessert."], 1).question);
+});

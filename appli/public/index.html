@@ -1411,7 +1411,7 @@ async function genererQuestions(q,diffs){
 ${prenom()} fait un questionnaire de ${q.n} questions sur ${plusieurs?'ces leçons (révision de la matière)':'cette leçon'}. Niveau : ${nv.label}. Les questions sont créées au fur et à mesure, d'après ses réponses.
 Règles :
 - Chaque question doit être parfaitement claire pour un enfant de 9 ans, sans rien à deviner : une seule chose demandée, tous les renseignements utiles donnés, et ce qu'il faut répondre (un nombre, une unité, un mot…). Précise tout ce qui pourrait se comprendre de deux façons. Par exemple, pour une horloge, dis toujours quelle aiguille montre quoi : « la petite aiguille (celle des heures) est sur le 3, la grande aiguille (celle des minutes) est sur le 6 », jamais seulement « l'aiguille est sur le 6 ».
-- Chaque question se suffit à elle-même : ${prenom()} ne voit ni la leçon ni les questions d'avant. Ne parle jamais de « la solution », « le problème », « l'exercice » ou « le texte » sans les écrire en entier dans la question : un problème de mathématiques donne tout son énoncé (la situation, les nombres, ce qu'on cherche) avant de poser la question. ${photos.length?`Seules les photos de la liste ci-dessous peuvent être affichées : jamais « la carte ci-dessous » ou « le schéma », et sans "image", jamais « la photo » ni « le paysage que tu observes ».`:`Aucune image n'est affichée : jamais « le paysage que tu observes », « observe la photo » ou « la carte ci-dessous » ; décris avec des mots ce qu'on y voit (« Sur une photo de campagne, on voit une forêt, un champ de blé et une route. »).`}
+- Chaque question se suffit à elle-même : ${prenom()} ne voit ni la leçon ni les questions d'avant. Ne parle jamais de « la solution », « le problème », « l'exercice » ou « le texte » sans les écrire en entier dans la question : un problème de mathématiques donne tout son énoncé (la situation, les nombres, ce qu'on cherche) avant de poser la question. Pas de « la phrase suivante » sans la phrase écrite dans la question : quand les choix sont eux-mêmes des phrases, demande « Dans quelle phrase le verbe est-il du 2e groupe ? », et non « Dans la phrase suivante, quel verbe est du 2e groupe ? ». ${photos.length?`Seules les photos de la liste ci-dessous peuvent être affichées : jamais « la carte ci-dessous » ou « le schéma », et sans "image", jamais « la photo » ni « le paysage que tu observes ».`:`Aucune image n'est affichée : jamais « le paysage que tu observes », « observe la photo » ou « la carte ci-dessous » ; décris avec des mots ce qu'on y voit (« Sur une photo de campagne, on voit une forêt, un champ de blé et une route. »).`}
 - La question ne doit jamais contenir ni laisser voir sa réponse. En français surtout : pour faire conjuguer, accorder ou transformer, donne la forme de départ et la consigne, mais pas le résultat attendu (par exemple « Conjugue le verbe chanter au futur avec nous », et non « Conjugue : nous chanterons »). La bonne réponse ne doit pas non plus se deviner en relisant la question, en répétant ses mots : interdit « Comment la légende t'aide-t-elle à lire une carte ? » avec la réponse « En consultant la légende » ; bien « Sur une carte, où trouves-tu ce que veut dire un trait bleu ? ».
 - Écris comme une fiche d'exercices : une consigne courte et directe, en 1 ou 2 phrases. Pas de « Imagine que », pas de bavardage, n'annonce jamais de piège et ne parle pas de ses réponses d'avant.
 - Mets-toi à la place d'un enfant de 9 ans qui découvre la question : il doit comprendre tout de suite quoi faire, la réponse ne doit pas être sous ses yeux, et la consigne doit correspondre exactement aux boutons ou à la case qu'il voit. Si ce n'est pas le cas, réécris la question.
@@ -2990,16 +2990,22 @@ const IA_MODES={
 // Les IA en ligne, avec la clé qu'il leur faut.
 const IA_CLE={claude:{p:'anthropic',nom:'Anthropic',a:()=>iaInfo.cle},mistral:{p:'mistral',nom:'Mistral',a:()=>iaInfo.cleMistral}};
 const modeIA=ia=>IA_MODES[ia]&&ia!=='ollama'?ia:'local';
-const ICI_CLES=()=>state.acc?'collez-la juste en dessous':'ajoutez-la dans « Clés API » plus bas';
+const ICI_CLES=()=>'collez-la dans « Clés API », plus haut';
+// Claude et Mistral ne se choisissent qu'une fois leur clé enregistrée.
+const iaDispo=id=>!IA_CLE[id]||!!IA_CLE[id].a();
 function vIA(){
   if(!iaInfo)return '';
-  const f=state.iaf||(state.iaf={mode:modeIA(iaInfo.ia)}),m=IA_MODES[f.mode],k=IA_CLE[f.mode];
+  const f=state.iaf||(state.iaf={mode:modeIA(iaInfo.ia)});
+  if(!iaDispo(f.mode))f.mode='local';
+  const m=IA_MODES[f.mode],k=IA_CLE[f.mode];
+  const bloquees=Object.keys(IA_CLE).filter(id=>!iaDispo(id)).map(id=>IA_MODES[id].nom);
   const liste=f.modeles||[],voulu=f.modele||iaInfo.ollamaModel,modele=liste.includes(voulu+':latest')?voulu+':latest':voulu;
   const boutons=`<button class="btn primary" ${f.busy?'disabled':''}>${f.busy?'Un instant…':state.acc?'Enregistrer et continuer':'Enregistrer'}</button><button type="button" class="btn" data-act="ia-tester" ${f.busy?'disabled':''}>Tester</button>${state.acc?`<button type="button" class="btn ghost" data-act="acc-ia-plus-tard">Régler plus tard</button>`:''}`;
-  const choix=Object.entries(IA_MODES).map(([id,x])=>`<button type="button" class="btn ${f.mode===id?'primary':''}" data-act="ia-mode" data-v="${id}" aria-pressed="${f.mode===id}">${x.ico} ${x.nom}</button>`).join('');
+  const choix=Object.entries(IA_MODES).map(([id,x])=>{const ok=iaDispo(id);return `<button type="button" class="btn ${f.mode===id?'primary':''}" data-act="ia-mode" data-v="${id}" aria-pressed="${f.mode===id}" ${ok?'':`disabled title="Il faut d'abord une clé ${IA_CLE[id].nom}"`}>${x.ico} ${x.nom}</button>`}).join('');
   return `<form class="stack" data-form="ia">
     <div class="row">${choix}${k?boutons:''}</div>
     <p class="small muted">${m.txt}${k&&!k.a()?` Il faut une clé ${k.nom} : ${ICI_CLES()}.`:''}</p>
+    ${bloquees.length?`<p class="small muted">${bloquees.join(' et ')} ${bloquees.length>1?'se débloquent':'se débloque'} quand ${bloquees.length>1?'leur clé est enregistrée':'sa clé est enregistrée'} dans « Clés API », plus haut.</p>`:''}
     ${f.mode==='local'?`<div class="row ligne"><label class="f">Modèle${liste.length?`<select name="ollamaModel">${(liste.includes(modele)?liste:[modele,...liste]).map(n=>`<option ${n===modele?'selected':''}>${esc(n)}</option>`).join('')}</select>`:`<input type="text" id="ia-modele" name="ollamaModel" value="${esc(modele)}" autocomplete="off" spellcheck="false" required>`}</label>${boutons}</div>`:''}
     ${f.msg?`<p class="small" role="status">${f.ok?'✅':'⚠️'} ${esc(f.msg)}</p>`:''}
   </form>`;
@@ -3045,9 +3051,10 @@ function ocrModes(){
 function vOCR(){
   if(!iaInfo)return '';
   const f=state.ocrf||(state.ocrf={mode:iaInfo.ocr==='mistral'?'mistral':'ia'}),modes=ocrModes();
+  if(f.mode==='mistral'&&!iaInfo.cleMistral)f.mode='ia';
   return `<form class="stack" data-form="ocr">
-    <div class="row">${Object.entries(modes).map(([id,x])=>`<button type="button" class="btn ${f.mode===id?'primary':''}" data-act="ocr-mode" data-v="${id}" aria-pressed="${f.mode===id}">${x.ico} ${x.nom}</button>`).join('')}<button class="btn primary" ${f.busy?'disabled':''}>${f.busy?'Un instant…':'Enregistrer'}</button><button type="button" class="btn" data-act="ocr-tester" ${f.busy?'disabled':''}>Tester</button></div>
-    <p class="small muted">${modes[f.mode].txt}${f.mode==='mistral'&&!iaInfo.cleMistral?' Il faut une clé Mistral : ajoutez-la dans « Clés API » plus bas.':''}</p>
+    <div class="row">${Object.entries(modes).map(([id,x])=>{const ok=id!=='mistral'||!!iaInfo.cleMistral;return `<button type="button" class="btn ${f.mode===id?'primary':''}" data-act="ocr-mode" data-v="${id}" aria-pressed="${f.mode===id}" ${ok?'':'disabled title="Il faut d\'abord une clé Mistral"'}>${x.ico} ${x.nom}</button>`}).join('')}<button class="btn primary" ${f.busy?'disabled':''}>${f.busy?'Un instant…':'Enregistrer'}</button><button type="button" class="btn" data-act="ocr-tester" ${f.busy?'disabled':''}>Tester</button></div>
+    <p class="small muted">${modes[f.mode].txt}${!iaInfo.cleMistral?' Mistral OCR se débloque quand une clé Mistral est enregistrée dans « Clés API », plus haut.':''}</p>
     ${f.msg?`<p class="small" role="status">${f.ok?'✅':'⚠️'} ${esc(f.msg)}</p>`:''}
   </form>`;
 }
@@ -3087,6 +3094,9 @@ function vCle(p){
     ${f.msg?`<p class="small" role="status">${f.ok?'✅':'⚠️'} ${esc(f.msg)}</p>`:''}
   </form>`;
 }
+// Les clés passent avant le choix de l'IA : sans clé, Claude et Mistral restent grisés et le cartable tourne avec Ollama.
+const vCles=()=>`${Object.keys(CLES).map(p=>`<div class="cle-bloc stack"><label class="rg-nom" for="cle-${p}">${CLES[p].nom}</label>${vCle(p)}</div>`).join('')}
+    <p class="small muted">Sans clé, le cartable utilise Ollama sur ce PC. Une clé n'est gardée que si elle marche. Elle reste sur ce PC (fichier <code>.env</code>), n'est jamais réaffichée et n'est pas copiée sur une clé USB.</p>`;
 async function envoyerCle(p,{essai=false,oublier=false}={}){
   const k=CLES[p],form=document.querySelector(`[data-form="cle"][data-f="${p}"]`);if(!k||!form)return;
   const cle=String(new FormData(form).get('cle')||'').trim();
@@ -3128,13 +3138,10 @@ function vParents(){
   ${page==='suivi'?`<section class="card stack"><h3>À valider</h3>${ach.length?ach.map(a=>`<div class="reward"><span>${esc(titreDemande(a))} <span class="cost">${a.palier?'offert':a.cout}</span></span><span class="row"><button class="btn primary" data-act="valider" data-id="${a.id}">Accorder</button><button class="btn" data-act="refuser" data-id="${a.id}">Refuser</button></span></div>`).join(''):'<p class="small muted">Aucune demande en attente.</p>'}
     ${etoilesDetail()}</section>
   ${vSemaine(`<div class="row"><button class="btn primary" data-act="tab" data-v="programme">🗺️ Programme CM1 : où en est ${esc(prenom())}</button></div>`)}
-  `:page==='reglages2'?`<section class="card stack"><h3>🤖 Intelligence artificielle</h3>
+  `:page==='reglages2'?`<section class="card stack"><h3>🔑 Clés API</h3>${vCles()}</section>
+  <section class="card stack"><h3>🤖 Intelligence artificielle</h3>
     ${reglage("IA du cartable",vIA())}
     ${reglage('Lecture des photos',vOCR())}
-  </section>
-  <section class="card stack"><h3>🔑 Clés API</h3>
-    ${Object.keys(CLES).map(p=>`<div class="cle-bloc stack"><label class="rg-nom" for="cle-${p}">${CLES[p].nom}</label>${vCle(p)}</div>`).join('')}
-    <p class="small muted">Une clé n'est gardée que si elle marche. Elle reste sur ce PC (fichier <code>.env</code>), n'est jamais réaffichée et n'est pas copiée sur une clé USB.</p>
   </section>`
   :`<section class="card stack"><h3>Récompenses</h3>${rec.map(r=>`<div class="reward"><span>${esc(r.titre)}</span><span class="row"><span class="cost">${r.cout}</span><button class="btn ghost danger" data-act="del-rec" data-id="${r.id}">Retirer</button></span></div>`).join('')}
     <form class="row rec-ajout" data-form="rec"><input type="text" id="rec-t" name="titre" placeholder="Nouvelle récompense" aria-label="Nouvelle récompense" required><input type="number" id="rec-c" name="cout" min="1" value="50" aria-label="Prix en étoiles" required><span aria-hidden="true">⭐</span><button class="btn">Ajouter</button></form>
@@ -3181,7 +3188,7 @@ function vAccueil(){
       <form class="form-grid" data-form="acc-pin"><label class="f">Code parent<input type="password" name="pin" inputmode="numeric" autocomplete="new-password" pattern="\\d{4,8}" required data-autofocus></label><label class="f">Le même code, encore une fois<input type="password" name="pin2" inputmode="numeric" autocomplete="new-password" required></label><div><button class="btn primary">Créer le code</button></div></form>`;
   else if(e===2){const z=cfg().zone||ZONE_DEFAUT;corps=`${tete(SK().heros,'Le prénom apparaît partout dans le cartable. La zone sert au calendrier des vacances scolaires.')}
       <form class="form-grid" data-form="acc-prenom"><label class="f">Prénom de l'enfant<input type="text" name="prenom" value="${esc(cfg().prenom||'')}" autocomplete="off" required data-autofocus></label><label class="f">Zone de vacances<select name="zone">${['A','B','C'].map(x=>`<option value="${x}" ${x===z?'selected':''}>Zone ${x}</option>`).join('')}</select></label><div><button class="btn primary">Continuer</button></div></form>`}
-  else if(e===3)corps=`${tete("L'IA du cartable",`Elle lit les photos, prépare les quiz et explique les erreurs. Choisissez où elle tourne. Vous pourrez changer plus tard dans l'espace parents.`)}${vIA()}${state.iaf&&IA_CLE[state.iaf.mode]?`<p class="eyebrow">Clé ${IA_CLE[state.iaf.mode].nom}</p>${vCle(IA_CLE[state.iaf.mode].p)}`:''}`;
+  else if(e===3)corps=`${tete("L'IA du cartable",`Elle lit les photos, prépare les quiz et explique les erreurs. Si vous avez une clé Claude ou Mistral, collez-la d'abord ; sinon, elle tourne avec Ollama sur ce PC. Vous pourrez changer plus tard dans l'espace parents.`)}<p class="eyebrow">Clés API (facultatif)</p>${vCles()}<p class="eyebrow">Choix de l'IA</p>${vIA()}`;
   else if(e===4){const deja=all('recompenses').sort((a,b)=>a.cout-b.cout),titres=new Set(deja.map(r=>r.titre));
     corps=`${tete('Les récompenses',`${esc(prenom())} gagne des étoiles en travaillant et les échange contre des récompenses, que vous validez. Cochez celles que vous proposez et ajustez leur prix. Vous pourrez tout changer plus tard dans l'espace parents.`)}
       <form class="stack" data-form="acc-rec">
