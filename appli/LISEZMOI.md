@@ -29,7 +29,7 @@ Les choix se font dans l'**espace parents**, page **Réglages IA**, carte « Int
 
 ### Clés API
 
-Les clés se règlent à part, dans la carte « Clés API » : **Anthropic** (pour Claude, créée sur [platform.claude.com](https://platform.claude.com)) et **Mistral** (pour l'IA Mistral et pour la lecture des photos, une seule clé pour les deux, créée sur [console.mistral.ai](https://console.mistral.ai)). Une clé n'est enregistrée que si elle marche. **Oublier la clé** la retire ; si elle servait, l'IA repasse sur Ollama, et la lecture des photos sur l'IA du cartable.
+Les clés se règlent à part, dans la carte « Clés API », en haut de la page Réglages IA. Claude, Mistral et Mistral OCR restent grisés tant que leur clé n'est pas enregistrée ; sans aucune clé, le cartable tourne avec Ollama (même si `.env` demande Claude ou Mistral). Les clés : **Anthropic** (pour Claude, créée sur [platform.claude.com](https://platform.claude.com)) et **Mistral** (pour l'IA Mistral et pour la lecture des photos, une seule clé pour les deux, créée sur [console.mistral.ai](https://console.mistral.ai)). Une clé n'est enregistrée que si elle marche. **Oublier la clé** la retire ; si elle servait, l'IA repasse sur Ollama, et la lecture des photos sur l'IA du cartable.
 
 Les choix (`IA`, `OCR=mistral`) et les clés (`ANTHROPIC_API_KEY`, `MISTRAL_API_KEY`) sont gardés dans `.env`. Les clés ne reviennent jamais au navigateur et ne sont pas copiées sur une clé USB.
 
