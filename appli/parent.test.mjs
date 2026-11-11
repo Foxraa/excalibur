@@ -156,3 +156,13 @@ test("delaiEchec : double à chaque échec, plafonné à une minute", () => {
   assert.equal(delaiEchec(7), 60000);
   assert.equal(delaiEchec(10), 60000);
 });
+
+test("l'enfant peut changer seulement son monde et le clair / sombre dans config/main", () => {
+  const existant = { id: "main", prenom: "Léo", skin: "manga", theme: "auto" };
+  assert.equal(a({ col: "config", id: "main", existant, data: { ...existant, skin: "galaxie" } }), null);
+  assert.equal(a({ col: "config", id: "main", existant, data: { ...existant, skin: "galaxie", prenom: "Zoé" } }), "parent");
+  assert.equal(a({ col: "config", id: "main", existant, data: { ...existant, skin: "<script>" } }), "parent");
+  assert.equal(a({ col: "config", id: "main", data: { skin: "galaxie" } }), "parent");
+  assert.equal(a({ col: "config", id: "main", existant, data: { ...existant, theme: "sombre" } }), null);
+  assert.equal(a({ col: "config", id: "main", existant, data: { ...existant, theme: 3 } }), "parent");
+});

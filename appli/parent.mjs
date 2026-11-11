@@ -52,6 +52,16 @@ function demandeLegitime({ data, existant, recompenses }) {
   return cout === 0 && Number(data.palier) > 0;
 }
 
+// L'enfant choisit seul son monde (skin) et le clair / sombre (theme) : permis si rien d'autre ne change dans config/main.
+const APPARENCE = ["skin", "theme"];
+function seulApparenceChange(data, existant) {
+  if (!data || typeof data !== "object" || !existant) return false;
+  if (APPARENCE.some(c => data[c] != null && (typeof data[c] !== "string" || !/^[a-z]{1,20}$/.test(data[c])))) return false;
+  const cles = new Set([...Object.keys(data), ...Object.keys(existant)]);
+  for (const c of [...APPARENCE, "id"]) cles.delete(c);
+  return [...cles].every(c => JSON.stringify(data[c]) === JSON.stringify(existant[c]));
+}
+
 // Attente (ms) après le n-ième échec de code consécutif : 1 s, 2 s, 4 s… plafonnée à une minute.
 export function delaiEchec(n) { return Math.min(2 ** (n - 1), 60) * 1000; }
 
@@ -62,7 +72,7 @@ export function autorise({ col, id, data, existant, parent, pinDefini, recompens
   if (col === "config" && id === "pin") return "parent";
   if (parent) return null;
   if (col === "recompenses" || col === "programme") return "parent";
-  if (col === "config" && id === "main") return "parent";
+  if (col === "config" && id === "main") return seulApparenceChange(data, existant) ? null : "parent";
   if (col === "achats") {
     if (suppression) return "parent";
     return demandeLegitime({ data, existant, recompenses }) ? null : "parent";
