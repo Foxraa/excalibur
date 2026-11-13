@@ -771,6 +771,7 @@ details.defis-jour>p{margin:0 0 8px}
 <script src="programme.js"></script>
 <script src="paysages.js"></script>
 <script src="questions.js"></script>
+<script src="doublons.js"></script>
 <script src="semaine.js"></script>
 <script src="tables.js"></script>
 <script src="accueil.js"></script>
@@ -2570,7 +2571,7 @@ function vAjouter(){
       <span class="small muted">Jusqu'à ${maxImages} photos : une leçon, des exercices, une évaluation, ton agenda, un mot de la maîtresse… Je trouve tout seul de quoi il s'agit.</span>
     </label>
     <input type="file" id="photo-in" accept="image/*" multiple hidden>
-    ${a.images.length?`<div class="thumbs">${a.images.map((im,i)=>`<div class="stack" style="gap:4px;align-items:center"><img src="${esc(im.thumb||'')}" alt="Photo ${i+1}"><button class="btn ghost small" data-act="rm-img" data-v="${i}">Retirer</button></div>`).join('')}</div>`:''}
+    ${a.images.length?`<div class="thumbs">${a.images.map((im,i)=>`<div class="stack" style="gap:4px;align-items:center"><img src="${esc(im.thumb||'')}" alt="Photo ${i+1}">${photoDejaRangee(im)}<button class="btn ghost small" data-act="rm-img" data-v="${i}">Retirer</button></div>`).join('')}</div>`:''}
     <h3>2. Dis-moi en quelques mots (facultatif)</h3>
     <div class="form-grid"><label class="f">Ce qu'on a fait<input type="text" id="add-indice" value="${esc(a.indice)}" placeholder="ex : les fractions, mon agenda, l'évaluation de dictée…"></label><label class="f">Date<input type="date" id="add-date" value="${esc(a.date)}"></label></div>
     ${a.charge?attente(`Je charge la photo ${a.charge.i} sur ${a.charge.n}…`,{charge:a.charge}):''}
@@ -2602,9 +2603,10 @@ function vApercu(){
   </section>
   ${rien?'':`<form class="stack" data-form="save-res">
     ${LL.map((l,j)=>{const ex=l.exercices,nJ=ex.filter(x=>x.juste===true).length;
-      return `<section class="card stack"><label class="row" style="font-weight:700"><input type="checkbox" class="chk" name="kl${j}" checked> ${plus?`Ranger la leçon ${j+1} sur ${LL.length}`:r.genre==='lecon'?'Ranger la leçon':'Ranger la leçon de cette notion'} (+5 étoiles)</label>
+      return `<section class="card stack">${l.deja?`<input type="hidden" name="kl${j}" value="on"><h3>${plus?`Leçon ${j+1} sur ${LL.length}`:'La fiche'}</h3>`:`<label class="row" style="font-weight:700"><input type="checkbox" class="chk" name="kl${j}" checked> ${plus?`Ranger la leçon ${j+1} sur ${LL.length}`:r.genre==='lecon'?'Ranger la leçon':'Ranger la leçon de cette notion'} (+5 étoiles)</label>`}
       <div class="form-grid"><label class="f">Titre<input type="text" name="lTitre${j}" value="${esc(l.titre||'')}" required></label><label class="f">Matière<select name="lMat${j}">${matOptions(l.matiere)}</select></label><label class="f">Date<input type="date" name="lDate${j}" value="${esc(a.date)}"></label></div>
       ${l.resume?`<p><strong>En bref :</strong> ${rich(l.resume)}</p>`:''}
+      ${vDejaRangee(l,j)}${vEtatFiche(l.fiche)}
       ${ex.length?`<div><h3>Tes exercices : ${nJ} juste${nJ>1?'s':''} sur ${ex.length}</h3>${lignesExercices(ex)}</div>`:''}
       ${l.pointsFaibles.length?`<div class="note-box"><strong>Ce qu'on va retravailler ensemble :</strong><ul>${l.pointsFaibles.map(x=>`<li>${rich(x)}</li>`).join('')}</ul><p class="small muted">Les quiz de cette leçon insisteront sur ces points.</p></div>`:''}
       ${(l.corrections||[]).filter(Boolean).length?`<div class="note-box"><strong>J'ai repéré quelque chose à corriger :</strong><ul>${l.corrections.filter(Boolean).map(x=>`<li>${rich(x)}</li>`).join('')}</ul></div>`:''}
@@ -2630,12 +2632,44 @@ function vApercu(){
     <div class="row"><button class="btn primary big">Ranger dans mon cartable</button><button type="button" class="btn" data-act="reset-add">Annuler</button></div>
   </form>`}`;
 }
+// Chaque leçon trouvée : sa fiche est-elle remplie, et est-elle déjà dans le cartable ?
+function comparerAuCartable(r,images){
+  r.lecons.forEach(l=>{
+    const im=r.lecons.length>1&&l.photos.length?l.photos.map(k=>images[k-1]).filter(Boolean):images;
+    l.empreintes=empreintesDe(im);l.fiche=etatFiche(l.exercices);
+    const d=dejaRangee(l,l.empreintes,all('lecons'));
+    if(d){const avant=etatFiche(d.lecon.exercices);
+      // Mettre à jour seulement si la nouvelle photo apporte des réponses en plus.
+      l.deja={id:d.lecon.id,titre:d.lecon.titre,date:d.lecon.date,par:d.par,avant,plus:!!l.fiche&&l.fiche.faites>(avant?avant.faites:0)}}
+  })}
+const ETAT_FICHE={vierge:['var(--warn)','Fiche pas encore faite'],partielle:['var(--warn)','Fiche commencée'],complete:['var(--ok)','Fiche complétée']};
+function vEtatFiche(f){if(!f)return '';const [c,t]=ETAT_FICHE[f.etat];
+  const d=f.etat==='vierge'?"Je ne vois aucune réponse écrite. Quand tu l'auras faite, reprends-la en photo : je la corrigerai.":f.etat==='partielle'?`Tu as répondu à ${f.faites} question${f.faites>1?'s':''} sur ${f.total} : il en reste ${f.total-f.faites}.`:`Tu as répondu aux ${f.total} question${f.total>1?'s':''}.`;
+  return `<p><strong style="color:${c}">${t}.</strong> ${d}</p>`}
+function vDejaRangee(l,j){const d=l.deja;if(!d)return '';
+  const ou=`« ${esc(d.titre)} », rangée le ${esc(longDate(d.date))}`;
+  const quoi=d.par==='photo'?`Tu as déjà rangé cette photo : ${ou}.`:`Cette fiche ressemble à ${ou}.`;
+  const av=d.avant?` À ce moment-là : ${d.avant.faites} réponse${d.avant.faites>1?'s':''} sur ${d.avant.total}.`:'';
+  const opt=(v,t,on)=>`<label class="row"><input type="radio" name="act${j}" value="${v}" ${on?'checked':''}> ${t}</label>`;
+  return `<div class="note-box stack" style="gap:6px"><strong>Déjà dans ton cartable</strong><p>${quoi}${av}${d.plus?' Maintenant tu en as écrit plus : je peux mettre la fiche à jour.':''}</p>
+    ${opt('maj','Mettre à jour la fiche déjà rangée',d.plus)}${opt('non','Ne pas la ranger une deuxième fois',!d.plus)}${opt('nouvelle','La ranger quand même comme une nouvelle leçon',false)}</div>`}
+// Les nouvelles réponses remplacent les anciennes ; le cours et les quiz déjà faits restent.
+function majLecon(id,l,thumbs){const v=S.lecons.get(id);if(!v)return null;
+  const uniq=a=>[...new Set(a.filter(Boolean))];
+  put('lecons',id,{...v,exercices:l.exercices.length?l.exercices:v.exercices||[],pointsFaibles:l.exercices.length?l.pointsFaibles:v.pointsFaibles||[],
+    corrections:uniq([...(v.corrections||[]),...(l.corrections||[])]),transcription:l.transcription||v.transcription||'',
+    thumbs:uniq([...(v.thumbs||[]),...thumbs]),empreintes:uniq([...(v.empreintes||[]),...(l.empreintes||[])]),majLe:Date.now()});
+  return id}
 function enregistrerRes(fd){
   const a=state.add,r=a.res;let nd=0,nc=0,note=false;
   // Avec plusieurs leçons, chacune ne garde que les miniatures de ses propres photos.
+  let nMaj=0;
   const ids=r.lecons.flatMap((l,j)=>{if(!fd['kl'+j])return [];
-    const im=r.lecons.length>1&&l.photos.length?l.photos.map(k=>a.images[k-1]).filter(Boolean):a.images;
-    return [nouvelleLecon(l,{titre:fd['lTitre'+j],matiere:fd['lMat'+j],date:fd['lDate'+j]||a.date,genre:r.genre,thumbs:im.map(i=>i.thumb).filter(Boolean)})]});
+    const im=r.lecons.length>1&&l.photos.length?l.photos.map(k=>a.images[k-1]).filter(Boolean):a.images,thumbs=im.map(i=>i.thumb).filter(Boolean);
+    const act=l.deja?fd['act'+j]||'non':'nouvelle';
+    if(act==='non')return [];
+    if(act==='maj'){const id=majLecon(l.deja.id,l,thumbs);if(id){nMaj++;return [id]}}
+    return [nouvelleLecon(l,{titre:fd['lTitre'+j],matiere:fd['lMat'+j],date:fd['lDate'+j]||a.date,genre:r.genre,thumbs,empreintes:l.empreintes})]});
   const lecs=ids.map(id=>S.lecons.get(id)).filter(Boolean);
   // Un devoir donné le jour d'une leçon porte en général sur elle : la leçon de même matière sert d'indice si l'IA n'a rien relié.
   r.devoirs.forEach((x,i)=>{if(!fd['k'+i])return;const m=fd['mat'+i]||x.matiere,lec=lecs.find(l=>l.matiere===m);
@@ -2649,17 +2683,26 @@ function enregistrerRes(fd){
     const p=val/sur;gagne(ptsNote({valeur:val,sur,createdAt:Date.now()}),p>=.8?'Superbe note, bravo !':p>=.6?'Belle note !':"Merci de l'avoir rentrée. On va travailler ça ensemble.")}
   state.add={images:[],indice:'',date:TODAY(),busy:false,res:null,err:'',sujet:''};
   const fait=[ids.length&&(ids.length>1?`${ids.length} leçons`:'la leçon'),nd&&`${nd} devoir${nd>1?'s':''}${nc?' (révisions planifiées)':''}`,note&&'la note'].filter(Boolean);
-  if(fait.length>1||ids.length>1||(!ids.length&&!note))toast(fait.length?`Rangé : ${fait.join(', ')}.`:'Rien de coché, rien de rangé.');
+  if(nMaj&&fait.length<=1&&ids.length<=1)toast('Fiche mise à jour dans ton cartable.');
+  else if(fait.length>1||ids.length>1||(!ids.length&&!note))toast(fait.length?`Rangé : ${fait.join(', ')}.`:'Rien de coché, rien de rangé.');
   if(ids.length)go('lecon',ids[0]);else if(nd)go('devoirs');else if(note)go('notes');else render();
   window.scrollTo({top:0});
 }
+// L'empreinte du fichier reconnaît une photo déjà rangée, même prise un autre jour sur un autre écran.
+async function empreinteFichier(file){
+  try{const h=await crypto.subtle.digest('SHA-256',await file.arrayBuffer());return 'sha256:'+[...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('')}catch(e){return null}
+}
+const empreintesDe=ims=>ims.flatMap(i=>[i.empreinte,i.thumb]).filter(Boolean);
+// « Tu as déjà rangé cette photo » : sous la miniature, avant même de la lire.
+function photoDejaRangee(im){const d=dejaRangee(null,empreintesDe([im]),all('lecons'));
+  return d?`<span class="small" style="color:var(--bad);max-width:130px;text-align:center">Déjà rangée : « ${esc(d.lecon.titre)} », ${esc(longDate(d.lecon.date))}</span>`:''}
 async function prepImage(file){
   try{
     const bmp=await createImageBitmap(file);
     const draw=(max,q)=>new Promise(res=>{const s=Math.min(1,max/Math.max(bmp.width,bmp.height));const cv=document.createElement('canvas');cv.width=Math.round(bmp.width*s);cv.height=Math.round(bmp.height*s);cv.getContext('2d').drawImage(bmp,0,0,cv.width,cv.height);cv.toBlob(b=>res({b,cv}),'image/jpeg',q)});
     const big=await draw(1800,.86);const small=await draw(320,.6);
-    return {blob:big.b||file,thumb:small.cv.toDataURL('image/jpeg',.6)};
-  }catch(e){return {blob:file,thumb:null}}
+    return {blob:big.b||file,thumb:small.cv.toDataURL('image/jpeg',.6),empreinte:await empreinteFichier(file)};
+  }catch(e){return {blob:file,thumb:null,empreinte:await empreinteFichier(file)}}
 }
 /* Les photos sont réduites l'une après l'autre : le bloc d'attente dit laquelle, sans tout redessiner entre deux. */
 function majCharge(a){const el=app.querySelector('[data-charge]');if(!el||!a.charge)return;
@@ -2679,7 +2722,7 @@ async function ajouterFichiers(files,a=state.add){if(a.charge)return;
 }
 function nouvelleLecon(r,base){
   const id=uid();
-  const l={matiere:base.matiere,titre:base.titre||r.titre||'Leçon',date:base.date||TODAY(),createdAt:Date.now(),notions:r.notions||[],resume:r.resume||'',transcription:r.transcription||'',cours:r.cours||{},corrections:r.corrections||[],lienProgramme:r.lienProgramme||'',competences:[],pourAllerPlusLoin:r.pourAllerPlusLoin||'',exercices:r.exercices||[],pointsFaibles:r.pointsFaibles||[],genre:base.genre||'lecon',thumbs:base.thumbs||[],questions:[]};
+  const l={matiere:base.matiere,titre:base.titre||r.titre||'Leçon',date:base.date||TODAY(),createdAt:Date.now(),notions:r.notions||[],resume:r.resume||'',transcription:r.transcription||'',cours:r.cours||{},corrections:r.corrections||[],lienProgramme:r.lienProgramme||'',competences:[],pourAllerPlusLoin:r.pourAllerPlusLoin||'',exercices:r.exercices||[],pointsFaibles:r.pointsFaibles||[],genre:base.genre||'lecon',thumbs:base.thumbs||[],empreintes:base.empreintes||[],questions:[]};
   const ll=avecLien(l,r.competences);put('lecons',id,ll);gagne(ptsLecon(ll),'Leçon rangée dans ton cartable.');return id;
 }
 
@@ -3271,7 +3314,7 @@ document.addEventListener('click',async e=>{
     case 'rm-img':state.add.images.splice(Number(v),1);render();break;
     case 'reset-add':state.add={images:[],indice:'',date:TODAY(),busy:false,res:null,err:'',sujet:''};render();break;
     case 'analyser':{const a=state.add;a.indice=(document.getElementById('add-indice')||{}).value||'';a.date=(document.getElementById('add-date')||{}).value||TODAY();a.busy=true;a.debut=Date.now();a.err='';render();
-      try{const r=await analyserPhotos(a.images.map(i=>i.blob),a.indice,a.date);r.devoirs.forEach(x=>{x.deja=dejaNote(x)});a.res=r}catch(err){console.warn('analyser',err);a.err=errMsg(err);a.errSrc='photo'}
+      try{const r=await analyserPhotos(a.images.map(i=>i.blob),a.indice,a.date);r.devoirs.forEach(x=>{x.deja=dejaNote(x)});comparerAuCartable(r,a.images);a.res=r}catch(err){console.warn('analyser',err);a.err=errMsg(err);a.errSrc='photo'}
       a.busy=false;render();break}
     case 'scan-rm':state.scan.images.splice(Number(v),1);render();break;
     case 'scan-reset':state.scan={images:[],indice:'',busy:false,res:null,err:''};render();break;
