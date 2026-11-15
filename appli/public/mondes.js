@@ -6,6 +6,7 @@
 (function(global){
   const SEUILS_MONDES={
     excalibur:0,
+    gotham:2000,
     dresseur:3000,
     fee:4500,
     dino:6000,

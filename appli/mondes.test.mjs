@@ -5,11 +5,11 @@ import "./public/mondes.js";
 
 const { SEUILS_MONDES, mondeOuvert, prochainMonde } = globalThis;
 
-test("huit mondes, Excalibur ouvert d'emblée, seuils tous différents", () => {
+test("neuf mondes, Excalibur ouvert d'emblée, seuils tous différents", () => {
   const seuils = Object.values(SEUILS_MONDES);
-  assert.equal(seuils.length, 8);
+  assert.equal(seuils.length, 9);
   assert.equal(SEUILS_MONDES.excalibur, 0);
-  assert.equal(new Set(seuils).size, 8);
+  assert.equal(new Set(seuils).size, 9);
 });
 
 test("un monde s'ouvre pile au seuil, pas une étoile avant", () => {
@@ -20,7 +20,7 @@ test("un monde s'ouvre pile au seuil, pas une étoile avant", () => {
 });
 
 test("prochainMonde donne le suivant, puis null quand tout est ouvert", () => {
-  assert.deepEqual(prochainMonde(1780), { id: "dresseur", seuil: 3000 });
+  assert.deepEqual(prochainMonde(1780), { id: "gotham", seuil: 2000 });
   assert.deepEqual(prochainMonde(3000), { id: "fee", seuil: 4500 });
   assert.equal(prochainMonde(12000), null);
 });
