@@ -64,6 +64,8 @@ Dans l'espace parents, « Habillage du cartable » propose quatre skins :
 
 Le skin change les couleurs et les formes, le logo et l'icône de l'onglet, les hiboux, le nom des niveaux et des badges, les encouragements et le ton de l'IA. Les étoiles, les niveaux atteints et les données restent les mêmes. Il y a 50 niveaux dans chaque skin : le premier coûte 150 étoiles, chaque suivant 40 de plus (54 390 étoiles au total pour le niveau 50). Atteindre le niveau N rapporte N étoiles, qui comptent pour les récompenses mais pas pour monter de niveau. Tous les 10 niveaux, l'enfant choisit une récompense offerte, que les parents valident comme les autres ; si elle est refusée, il peut en choisir une autre. Les couleurs des onglets ne changent pas, pour que l'enfant se repère toujours.
 
+Les mondes s'ouvrent un par un, sur six mois : Excalibur dès le départ, puis un nouveau toutes les 3 à 4 semaines jusqu'au 11 mai 2027. Le calendrier est en haut de `public/mondes.js` (objet `CALENDRIER_MONDES`). Un monde pas encore ouvert apparaît avec un cadenas ; le serveur refuse aussi de le choisir sans le code parent. Le monde déjà choisi reste utilisable, même s'il n'est pas encore ouvert.
+
 Chaque habillage existe en clair et en sombre. Dans les réglages, « Couleurs » propose *Comme l'ordinateur* (par défaut, suit le mode clair ou sombre de Windows), *Clair* ou *Sombre*. Le choix vaut pour tous les habillages.
 
 ## Les étoiles

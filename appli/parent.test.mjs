@@ -159,10 +159,19 @@ test("delaiEchec : double à chaque échec, plafonné à une minute", () => {
 
 test("l'enfant peut changer seulement son monde et le clair / sombre dans config/main", () => {
   const existant = { id: "main", prenom: "Léo", skin: "manga", theme: "auto" };
-  assert.equal(a({ col: "config", id: "main", existant, data: { ...existant, skin: "galaxie" } }), null);
+  assert.equal(a({ col: "config", id: "main", existant, data: { ...existant, skin: "galaxie" }, jour: "2027-06-01" }), null);
   assert.equal(a({ col: "config", id: "main", existant, data: { ...existant, skin: "galaxie", prenom: "Zoé" } }), "parent");
   assert.equal(a({ col: "config", id: "main", existant, data: { ...existant, skin: "<script>" } }), "parent");
   assert.equal(a({ col: "config", id: "main", data: { skin: "galaxie" } }), "parent");
   assert.equal(a({ col: "config", id: "main", existant, data: { ...existant, theme: "sombre" } }), null);
   assert.equal(a({ col: "config", id: "main", existant, data: { ...existant, theme: 3 } }), "parent");
+});
+
+test("l'enfant ne peut pas choisir un monde pas encore ouvert, mais garde le sien", () => {
+  const existant = { id: "main", skin: "sorcier", theme: "auto" };
+  const ex = { ...existant, skin: "excalibur" };
+  assert.equal(a({ col: "config", id: "main", existant: ex, data: { ...ex, skin: "galaxie" }, jour: "2026-11-20" }), "parent");
+  assert.equal(a({ col: "config", id: "main", existant: ex, data: { ...ex, skin: "galaxie" }, jour: "2027-02-22" }), null);
+  assert.equal(a({ col: "config", id: "main", existant, data: { ...existant, theme: "sombre" }, jour: "2026-11-20" }), null);
+  assert.equal(a({ col: "config", id: "main", existant: ex, data: { ...ex, skin: "galaxie" }, jour: "2026-11-20", parent: true }), null);
 });

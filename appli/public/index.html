@@ -784,6 +784,7 @@ details.defis-jour>p{margin:0 0 8px}
 <script src="tables.js"></script>
 <script src="accueil.js"></script>
 <script src="epee.js"></script>
+<script src="mondes.js"></script>
 <script src="ollama.js"></script>
 <script>
 /* ============ Données de référence ============ */
@@ -3009,7 +3010,10 @@ function vEpees(){
 function vMondes(){
   return `<h2>Mon monde</h2>
   <section class="card stack"><p>Choisis le monde dans lequel tu veux apprendre. Tes étoiles et tes progrès restent les mêmes.</p>
-  <div class="row">${Object.entries(SKINS).map(([id,k])=>`<button class="btn ${skinId()===id?'primary':''}" data-act="skin" data-v="${id}" aria-pressed="${skinId()===id}">${k.ico} ${esc(k.nom)}</button>`).join('')}</div></section>
+  <div class="row">${Object.entries(SKINS).map(([id,k])=>mondeOuvert(id,TODAY())||skinId()===id
+    ?`<button class="btn ${skinId()===id?'primary':''}" data-act="skin" data-v="${id}" aria-pressed="${skinId()===id}">${k.ico} ${esc(k.nom)}</button>`
+    :`<button class="btn" disabled title="S'ouvre le ${esc(longDate(CALENDRIER_MONDES[id]))}">🔒 ${esc(k.nom)}</button>`).join('')}</div>
+  ${(p=>p?`<p class="small muted">🎁 Prochain monde le ${esc(longDate(p.date))}. Lequel ? Surprise !</p>`:'')(prochainMonde(TODAY()))}</section>
   <section class="card stack"><h3>Clair ou sombre</h3>
   <div class="row">${Object.entries(THEMES).map(([id,l])=>`<button class="btn ${themeId()===id?'primary':''}" data-act="theme" data-v="${id}" aria-pressed="${themeId()===id}">${l}</button>`).join('')}</div></section>`;
 }
@@ -3527,7 +3531,7 @@ document.addEventListener('click',async e=>{
     case 'maj-lancer':lancerMaj();break;
     case 'cartable-redemarrer':arreterCartable(true);break;
     case 'cartable-arreter':arreterCartable(false);break;
-    case 'skin':put('config','main',{...cfg(),skin:el.dataset.v});toast(`Monde ${SKINS[el.dataset.v].nom.split(' ·')[0]} choisi.`);break;
+    case 'skin':if(!mondeOuvert(el.dataset.v,TODAY()))break;put('config','main',{...cfg(),skin:el.dataset.v});toast(`Monde ${SKINS[el.dataset.v].nom.split(' ·')[0]} choisi.`);break;
     case 'theme':put('config','main',{...cfg(),theme:v});toast({clair:'Couleurs claires choisies.',sombre:'Couleurs sombres choisies.',auto:"Les couleurs suivent l'ordinateur."}[v]);break;
     case 'prog-mat':go('programme',v);break;
     case 'comp-etat':{const c=COMP(id);if(!c)break;const cur=etatComp(c).etat;const next={avenir:'vu',vu:'fragile',fragile:'progres',progres:'acquis',acquis:'avenir'}[cur];put('programme',id,{etat:next,date:TODAY(),ts:Date.now()});break}
