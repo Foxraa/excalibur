@@ -4,7 +4,7 @@
    controlerQuestion(x,{matiere,voix}) renvoie {question} ou {refus:"la raison"}.
    Une question orale porte le texte à lire dans x.oral, jamais affiché : voix dit si le navigateur sait le lire. */
 (function(global){
-  const propre=s=>String(s??'').toLowerCase().replace(/[’]/g,"'").replace(/^[\s.,;:!?«»"“”]+|[\s.,;:!?«»"“”]+$/g,'').replace(/\s+/g,' ');
+  const propre=s=>String(s??'').normalize('NFC').toLowerCase().replace(/[’]/g,"'").replace(/^[\s.,;:!?«»"“”]+|[\s.,;:!?«»"“”]+$/g,'').replace(/\s+/g,' ');
   const sansDetail=s=>String(s??'').replace(/\s*\(.*$/,'');
 
   // Sans texte à lire dans x.oral, la question ne peut rien faire écouter.
@@ -15,6 +15,14 @@
   const IMAGES='paysage|photo|photographie|image|illustration|dessin|sch[ée]ma|carte|plan|document|graphique|frise|croquis|figure';
   const DET="(?:le|la|l['’]|ce|cet|cette|les|ces)\\s*";
   const IMAGE_ABSENTE=new RegExp(`(?<!\\p{L})(?:${DET}(?:${IMAGES})s?(?!\\p{L})[^.?!]{0,30}?(?<!\\p{L})(?:que tu (?:vois|observes|regardes|as sous les yeux)|ci-(?:dessous|dessus|contre)|suivante?s?)|(?:observe|regarde|examine)\\s+(?:bien\\s+|attentivement\\s+)?${DET}(?:${IMAGES})s?|(?:sur|dans)\\s+(?:la|cette|l['’])\\s*(?:photo|photographie|image|illustration))(?!\\p{L})`,'iu');
+  // « Dans la phrase suivante, quel verbe… ? » sans phrase écrite : les choix sont souvent des phrases, et la question ne veut plus rien dire.
+  const ANNONCE=/(?<!\p{L})(?:la|les|cette|ces|le|ce)\s+(?:phrases?|textes?|mots?|groupes? de mots|verbes?|nombres?|calculs?|liste)\s+(?:suivante?s?|ci-(?:dessous|dessus|contre))(?!\p{L})/iu;
+  // La chose annoncée est bien là : citée entre guillemets, ou écrite après deux-points ou après la question
+  // (« Quel mot est mal écrit dans cette phrase ? Le chien à faim… »).
+  // « Dans cette phrase, quel mot est un verbe ? » sans phrase : même défaut.
+  const CETTE_PHRASE=/(?<!\p{L})dans cette phrase(?!\p{L})/iu;
+  const annonceSansContenu=t=>(ANNONCE.test(t)||CETTE_PHRASE.test(t))&&!PHRASE.test(t)&&!/_{2,}/.test(t)&&!/[:?]\s*\S+(?:\s+\S+){2,}/.test(t)&&!/[«"“'‘*][^«»"“”'’*]+\s[^«»"“”'’*]+[»"”'’*]/.test(t);
+  const DOC_ABSENT=/(?<!\p{L})(?:dans|sur|d['’]apr[èe]s) (?:le|la|ce|cette|l['’])\s*(?:graphique|sch[ée]ma|carte|document|frise|diagramme|dessin|image|photo)(?!\p{L})/iu;
   const PIEGE=/\s*\(?\b(?:attention|pense bien)\b[^.!?)]*\bpi[èe]ge\b[^.!?)]*[.!?]?\)?/gi;
   const JUSTIFIER=/\s*\(?\b(?:explique|justifie)\b[^.!?)]*\b(?:choix|réponse|pourquoi)\b[^.!?)]*[.!?]?\)?/gi;
   const OUVERTE=/^(quels?|quelles?|combien|comment|pourquoi|où|ou\b|qui\b|que\b|qu['’]|à quoi|de quoi|dans quel|avec quoi|lequel|laquelle|lesquels|lesquelles)/i;
@@ -78,25 +86,71 @@
 
   // « Quel mot est mal écrit ? » : le modèle pose souvent la question sur une phrase sans faute.
   // Il doit donc nommer le mot fautif (x.faute) tel qu'il est dans la phrase, et sa correction dans x.reponses.
-  const CHERCHE_FAUTE=/(?<!\p{L})mots?(?!\p{L})[^.?!]*(?<!\p{L})(?:mal [ée]crits?|mal orthographi[ée]s?|fautes?|erreurs?)(?!\p{L})|(?<!\p{L})(?:fautes?|erreurs?) d['’]orthographe(?!\p{L})|(?<!\p{L})où est la faute(?!\p{L})/iu;
+  const CHERCHE_FAUTE=/(?<!\p{L})(?:mots?|verbes?)(?!\p{L})[^.?!]*(?<!\p{L})(?:mal [ée]crits?|mal orthographi[ée]s?|mal conjugu[ée]s?|mal accord[ée]s?|fautes?|erreurs?)(?!\p{L})|(?<!\p{L})(?:fautes?|erreurs?) d['’]orthographe(?!\p{L})|(?<!\p{L})où est la faute(?!\p{L})/iu;
+  const BIEN_ECRIT=/(?<!\p{L})(?:bien|correctement|mal) (?:[ée]crit|orthographi[ée])e?s?(?!\p{L})|(?<!\p{L})orthographe(?!\p{L})/iu;
+  const QUELLE_PHRASE=/(?<!\p{L})(?:dans |de )?(?:quelle|laquelle des) phrases?(?!\p{L})/iu;
   const A_RECOPIER=/^(?:recopie|corrige|réécris|reecris)(?!\p{L})/iu;
   const REFUS_FAUTE=`pour faire trouver une faute : type courte, le mot fautif tel qu'il est écrit dans la phrase dans "faute", sa correction dans "reponses"`;
   function controlerFaute(x,t,{matiere}={}){
     if(matiere&&matiere!=='francais')return {refus:"l'orthographe ne compte qu'en français : poser une question sur la leçon"};
     const reps=(Array.isArray(x.reponses)?x.reponses:[]).map(String).filter(Boolean);
     if(A_RECOPIER.test(t))return reps.some(r=>contient(t,sansDetail(r)))?{refus:"la phrase contient déjà la réponse : il n'y a aucune faute à corriger"}:null;
+    // QCM dont les choix sont des mots de la phrase : l'enfant clique sur le mot fautif, c'est aussi un bon exercice.
+    if(x.type==='qcm'&&Array.isArray(x.choix)){
+      const ch=x.choix.map(String),b=Number(x.bonne);
+      if(ch.length>=2&&ch[b]!==undefined&&ch.every(c=>contient(t,c)))return {question:{...x,question:t,faute:ch[b],reponses:undefined}};
+      return {refus:REFUS_FAUTE};
+    }
     const faute=String(x.faute??'').trim(),corrige=reps.filter(r=>propre(r)!==propre(faute));
     if(x.type!=='courte'||!corrige.length||!contient(t,faute))return {refus:REFUS_FAUTE};
     return {question:{...x,question:t,reponses:[...corrige,faute]}};
   }
 
+  // Les heures : « petite aiguille sur le 12, écris l'heure du soir » n'a pas de réponse (midi ou minuit, ni l'un ni l'autre le soir),
+  // et minuit s'écrit 0 h, jamais 12 h.
+  const MATIN=/(?<!\p{L})(?:du matin|le matin)(?!\p{L})/iu, SOIR=/(?<!\p{L})du soir(?!\p{L})/iu;
+  const MOMENT=/(?<!\p{L})(?:du matin|le matin|du soir|le soir|de la nuit|la nuit|de l['’]apr[èe]s-midi|l['’]apr[èe]s-midi)(?!\p{L})/iu;
+  const AIGUILLE_12=/(?<!\p{L})petite aiguille[^.?!]{0,40}?sur (?:le )?12(?!\d)/iu;
+  const heureDe=s=>{const m=String(s??'').match(/^\s*(\d{1,2})\s*(?:h|:)/i);return m?Number(m[1]):null};
+  function heureIncoherente(x,t){
+    const rep=String(x.type==='qcm'&&Array.isArray(x.choix)?x.choix[Number(x.bonne)]??'':x.type==='courte'&&Array.isArray(x.reponses)?x.reponses[0]??'':'');
+    const h=heureDe(rep),midiMinuit=/(?<!\p{L})(?:midi|minuit)(?!\p{L})/iu.test(t);
+    if(AIGUILLE_12.test(t)&&MOMENT.test(t)&&!midiMinuit)return "la petite aiguille sur le 12 montre midi ou minuit, ni le matin ni le soir : écrire « midi » ou « minuit » dans la question, ou choisir une autre heure";
+    if(h===null)return null;
+    if(SOIR.test(t)&&h>=12&&h<=16)return `la réponse ${rep} n'est pas une heure du soir : le soir va de 17 h à 23 h`;
+    if(MATIN.test(t)&&!SOIR.test(t)&&h>=12)return `la réponse ${rep} n'est pas une heure du matin`;
+    if(/(?<!\p{L})minuit(?!\p{L})/iu.test(t)&&!/(?<!\p{L})midi(?!\p{L})/iu.test(t)&&h===12&&/^\s*12\s*(?:h|:)\s*\d/i.test(rep))return "minuit s'écrit 0 h (minuit et demi : 0 h 30), jamais 12 h";
+    return null;
+  }
+
+  // Le jugement de l'IA sur une réponse courte : s'il dit que la réponse est juste, elle compte juste,
+  // même si « correct » est resté à false (« Ta réponse est juste sur le fond… » comptée fausse).
+  function jugementCoherent(r){
+    const com=r&&r.commentaire?String(r.commentaire):'';
+    const dit=/(?<!\p{L})(?:ta|sa) r[ée]ponse[^.!?]{0,40}?(?<!pas )(?<!\p{L}n['’])est (?:bien )?(?:juste|correcte?|exacte?|bonne)(?!\p{L})/iu.test(com)
+      ||/(?<!pas )juste sur le fond/iu.test(com);
+    return {ok:!!(r&&(r.correct===true||r.correct==='true'||dit)),commentaire:com};
+  }
+
   // « Comment la légende t'aide-t-elle ? » → « En consultant la légende » : relire la question suffit.
   // En français et en anglais, retrouver un mot dans une phrase est souvent l'exercice lui-même.
   const MATIERES_SAVOIR=new Set(['maths','sciences','histoire','geographie','emc']);
+  const MOTS_MAX_COURTE=5;
   const MOTS_VIDES=new Set("les une des aux dans sur sous avec par pour grâce ce cet cette ces son ses mon mes ton tes elle ils elles nous vous est sont qui que quoi faut regarder regarde regardant lire lit lisant consulter consulte consultant utiliser utilise utilisant observer observe observant chercher cherche cherchant oui non vrai faux".split(' '));
   const motsCles=s=>(propre(sansDetail(s)).replace(/(?<!\p{L})en \p{L}+ant(?!\p{L})/gu,' ').match(/[\p{L}\p{N}]+/gu)||[]).filter(m=>m.length>2&&!MOTS_VIDES.has(m)).map(m=>m.replace(/[sx]$/,''));
   function reponseRepetee(x,t,{matiere}={}){
     if(!MATIERES_SAVOIR.has(matiere))return false;
+    // « L'horloge indique 3 h 25 min 40 s. Comment l'écrire ? » → « 3 h 25 min 40 s » : la réponse est recopiée telle quelle.
+    // Les nombres comptent ici ; si un faux choix est lui aussi dans la question, il faut bien choisir entre eux.
+    const recopie=r=>{const s=sansDetail(r);return propre(s).split(' ').length>=2&&contient(t,s)};
+    if(x.type==='courte'){
+      const reps=(Array.isArray(x.reponses)?x.reponses:[]).map(String).filter(Boolean);
+      if(reps.length&&reps.every(recopie))return true;
+    }
+    if(x.type==='qcm'&&Array.isArray(x.choix)){
+      const bonne=Number(x.bonne);
+      if(recopie(String(x.choix[bonne]??''))&&!x.choix.some((c,i)=>i!==bonne&&contient(t,String(c))))return true;
+    }
     const lus=new Set(motsCles(t));
     const repete=r=>{const m=motsCles(r);return !/\d/.test(r)&&m.length>0&&m.every(w=>lus.has(w))};
     if(x.type==='courte'){
@@ -118,8 +172,27 @@
   }
   function controlerCourte(x,t,ctx){
     t=t.replace(PIEGE,'').replace(JUSTIFIER,'').replace(/\?\s*\.$/,'?').trim();
-    const reps=(Array.isArray(x.reponses)?x.reponses:[]).map(String).filter(Boolean);
-    if(!reps.length)return {refus:'aucune réponse attendue'};
+    const toutes=(Array.isArray(x.reponses)?x.reponses:[]).map(String).filter(Boolean);
+    if(!toutes.length)return {refus:'aucune réponse attendue'};
+    const reps=seulementUnChiffre(t,toutes);
+    if(!reps.length)return {refus:"la question demande le chiffre des… : la réponse est un seul chiffre (le nombre de centaines, c'est autre chose)"};
+    const trous=nbTrous(t);
+    // « Complète avec 'a' ou 'à' : … ___ … ___ » dans une seule case : l'enfant ne devine pas qu'il faut taper « a / à ».
+    // Les mots étant nommés, la question devient un QCM qui propose les combinaisons.
+    // Sans mots nommés, si la réponse n'est faite que d'homophones (« a / à »), ce sont eux qu'on propose.
+    const parts=propre(sansDetail(reps[0])).split(/\s*\/\s*/);
+    // Pour chaque trou : le mot attendu et l'homophone qui se confond avec lui (« a / et » → a ou à, puis et ou est).
+    const sons=()=>parts.length===trous&&parts.every(groupeSon)?parts.map(p=>[p,groupeSon(p).find(w=>w!==p)]):null;
+    const nommes=trous>=2?optionsDansTexte(t):null;
+    const parTrou=nommes?Array(trous).fill([...new Set(nommes)]):trous>=2?sons():null;
+    if(parTrou){
+      if(parts.length!==trous||!parts.every((p,i)=>parTrou[i].includes(p)))return {refus:REFUS_TROUS(trous)};
+      let combis=[[]];parTrou.forEach(mots=>{combis=combis.flatMap(c=>mots.map(m=>[...c,m]))});
+      const bonne=parts.join(' / '),autres=combis.map(c=>c.join(' / ')).filter(c=>c!==bonne).slice(0,3);
+      return controlerQcm({...x,type:'qcm',choix:[bonne,...autres],bonne:0,reponses:undefined,calcul:undefined},t);
+    }
+    // Plusieurs trous dans une seule case, sans rien pour dire comment écrire la réponse : il faut un QCM.
+    if(trous>=2)return {refus:`la phrase a ${trous} trous : en faire un qcm dont chaque choix donne un mot par trou, séparés par « / »`};
     if(reps.every(r=>/^(oui|non|vrai|faux)$/.test(propre(r)))){
       const oui=/^(oui|vrai)$/.test(propre(reps[0]));
       t=t.replace(/\s*\(?réponds? (?:par )?oui ou (?:par )?non\.?\)?/i,'').trim();
@@ -141,11 +214,55 @@
     if(PLUSIEURS.test(t))return {refus:'la question demande plusieurs réponses : une seule chose à la fois'};
     return {question:{...x,question:t,reponses:reps}};
   }
+  // « Deux garçons… ___ ballon » avec « son / sont » à départager : un choix qui glisse « leur »
+  // sort de la confusion travaillée, et peut être juste lui aussi. Pour chaque trou, un faux choix
+  // ne garde que des mots qui sonnent comme la bonne réponse.
+  function memesSons(ch,t){
+    const trous=(t.match(/_{2,}/g)||[]).length,bon=ch.find(c=>c.ok);
+    const parts=c=>propre(c.t).split(/\s*\/\s*/);
+    const groupes=parts(bon).map(groupeSon);
+    if(!trous||groupes.length!==trous||!groupes.every(Boolean))return ch;
+    return ch.filter(c=>{const p=parts(c);return c.ok||(p.length===trous&&p.every((m,i)=>groupes[i].includes(m)))});
+  }
+  // « Mon frère ___ un vélo rouge ___ bleu » avec « a » pour seul choix : un mot ne remplit pas deux trous.
+  // Chaque choix doit donner un mot par trou, séparés par « / ».
+  const nbTrous=t=>(t.match(/_{2,}/g)||[]).length;
+  const nbMots=r=>propre(sansDetail(r)).split(/\s*\/\s*/).length;
+  const REFUS_TROUS=n=>`la phrase a ${n} trous : chaque choix doit donner un mot par trou, séparés par « / » (par exemple « a / et »)`;
+  // « Dans quelle phrase le verbe est-il bien écrit ? » : « Les enfants jouent … dans les parc » a le verbe juste,
+  // et l'enfant serait compté faux. Chaque faux choix ne diffère de la bonne phrase que d'un mot, toujours le même ;
+  // les autres sont retirés (« jou à le foot » n'est pas du français).
+  const QUELLE_PHRASE_JUSTE=/(?<!\p{L})(?:dans )?quelle phrase(?!\p{L})[^?]*(?<!\p{L})(?:bien|correctement|sans faute|juste|correcte)(?!\p{L})/iu;
+  const motsDe=s=>propre(s).split(' ');
+  function unSeulMot(ch,t){
+    const bon=ch.find(c=>c.ok);
+    if(!QUELLE_PHRASE_JUSTE.test(t)||motsDe(bon.t).length<4)return ch;
+    const b=motsDe(bon.t);
+    const ecart=c=>{const m=motsDe(c.t);if(m.length!==b.length)return null;const d=b.flatMap((w,i)=>w===m[i]?[]:[i]);return d.length===1?d[0]:null};
+    const compte=new Map();
+    ch.forEach(c=>{if(!c.ok){const e=ecart(c);if(e!==null)compte.set(e,(compte.get(e)||0)+1)}});
+    if(!compte.size)return [bon];
+    const vise=[...compte].sort((a,z)=>z[1]-a[1])[0][0];
+    return ch.filter(c=>c.ok||ecart(c)===vise);
+  }
+  // « Complète avec le mot qui convient : … ___ … ___ » : avec plusieurs trous, la consigne passe au pluriel.
+  const consigneAuPluriel=t=>nbTrous(t)<2?t:t
+    .replace(/(?<!\p{L})le mot qui convient(?!\p{L})/giu,'les mots qui conviennent')
+    .replace(/(?<!\p{L})le bon mot(?!\p{L})/giu,'les bons mots')
+    .replace(/(?<!\p{L})quel mot complète(?!\p{L})/giu,'quels mots complètent')
+    .replace(/(?<!\p{L})le trou(?!\p{L})/giu,'les trous');
   function controlerQcm(x,t){
+    t=consigneAuPluriel(t);
     const bonne=Number(x.bonne),vus=new Map();
     (Array.isArray(x.choix)?x.choix:[]).forEach((c,i)=>{const k=propre(c);if(!vus.has(k)||i===bonne)vus.set(k,{t:String(c),ok:i===bonne||vus.get(k)?.ok})});
     let ch=[...vus.values()];
     if(ch.length<2||!ch.some(c=>c.ok))return {refus:'les choix du qcm sont incomplets'};
+    const trous=nbTrous(t);
+    if(trous>=2){
+      if(nbMots(ch.find(c=>c.ok).t)!==trous)return {refus:REFUS_TROUS(trous)};
+      ch=ch.filter(c=>c.ok||nbMots(c.t)===trous);
+      if(ch.length<2)return {refus:REFUS_TROUS(trous)};
+    }
     t=t.replace(JUSTIFIER,'').replace(/\?\s*\.$/,'?').trim();
     // Si la question nomme les mots à départager, les boutons sont ces mots-là, et rien d'autre.
     const nommes=CHOIX_MOT.test(t)?optionsDansTexte(t):null;
@@ -154,6 +271,10 @@
       if(!nommes.includes(propre(bon.t)))return {refus:'la bonne réponse ne fait pas partie des mots nommés dans la question'};
       ch=[...new Set(nommes)].map(n=>propre(bon.t)===n?bon:{t:n,ok:false});
     }
+    ch=memesSons(ch,t);
+    if(ch.length<2)return {refus:'les choix du qcm sont incomplets'};
+    ch=unSeulMot(ch,t);
+    if(ch.length<2)return {refus:"chaque mauvaise phrase doit être la bonne phrase avec une seule faute, toujours sur le mot dont parle la question"};
     const b=ch.findIndex(c=>c.ok);
     if(phraseInutile(t,ch[b].t))return {refus:REFUS_PHRASE};
     return {question:{...x,question:aTrou(t,ch[b].t)||t,choix:ch.map(c=>c.t),bonne:b}};
@@ -167,17 +288,44 @@
     if(BAVARDAGE.test(t))return {refus:'la question parle de ce qui a été fait avant'};
     // ctx.photos : les photos que cette matière peut montrer (paysages.js).
     const image=String(x.image??'').trim(),photos=ctx.photos||[];
+    // « Le paysage de la photo [littoral-calanque] » : l'enfant ne doit jamais voir le nom interne d'une photo.
+    if(photos.some(p=>t.includes(p))||/\[[a-z]+(?:-[a-z]+)+\]/.test(t))return {refus:"la question écrit le nom interne d'une photo : mettre son id seulement dans \"image\", et dire « Sur la photo, »"};
     if(image&&!photos.includes(image))return {refus:photos.length?`la photo « ${image} » n'existe pas : choisir un id de la liste des photos`:"il n'y a pas de photo à montrer dans cette matière : décrire avec des mots"};
     if(!image&&IMAGE_ABSENTE.test(t))return {refus:photos.length?"aucune photo n'est choisie : mettre dans \"image\" l'id d'une photo de la liste, ou décrire avec des mots ce qu'on voit":"aucune image n'est affichée : décrire avec des mots ce qu'on voit (« Sur une photo de campagne, on voit… »)"};
     x={...x,image:image||undefined};
+    // « Dans le graphique, la barre la plus haute… » : aucun graphique n'est affiché.
+    if(!image&&DOC_ABSENT.test(t))return {refus:"la question parle d'un graphique, d'une carte ou d'un document qui n'est pas affiché : tout écrire avec des mots dans la question"};
+    // Les photos sont des photos : « Sur cette carte, où est la légende ? » avec une photo de Marseille n'a pas de sens.
+    if(image&&/(?<!\p{L})(?:cette|la|sur la|une) (?:carte|plan|sch[ée]ma|graphique)(?!\p{L})/iu.test(t))return {refus:"l'image montrée est une photo, pas une carte ni un schéma : poser une question sur ce qu'on voit sur la photo"};
+    if(!image&&Array.isArray(x.choix)&&x.choix.some(c=>/(?<!\p{L})(?:photo|image)(?!\p{L})/iu.test(String(c))))return {refus:"les choix parlent de photos qui ne sont pas affichées : décrire avec des mots"};
+    if(annonceSansContenu(t))return {refus:"la question parle de « la phrase suivante » sans l'écrire : citer la phrase entre « », ou, si les choix sont des phrases, demander « Dans quelle phrase… ? »"};
+    {const h=heureIncoherente(x,t);if(h)return {refus:h}}
     if(/soulign/i.test(t)&&!/<u>/i.test(t))return {refus:'il est question d\'un mot souligné, mais rien n\'est souligné'};
+    // Seul le texte de la question sait afficher le gras (**mot**) : les choix sont écrits tels quels.
+    if(/(?<!\p{L})(?:en )?gras(?!\p{L})/iu.test(t)&&!/\*\*[^*]+\*\*/.test(t))return {refus:"il est question d'un mot en gras, mais rien n'est en gras : écrire le mot entre ** dans la question, ou le citer entre « »"};
     const cite=t.match(/phrase\s*:?\s*[«"“]([^»"”]+)[»"”][^«»"“”]{0,30}\bmot\s+[«"“'‘]\s*([^»"”'’]+?)\s*[»"”'’]/i);
     if(cite&&!contient(cite[1],cite[2]))return {refus:'le mot dont parle la question n\'est pas dans la phrase citée'};
     if(oral)return controlerOral(x,t,ctx);
     x={...x,oral:undefined};
+    // « Quel mot est mal écrit ? Ma cousine ___ appris… » : dans une phrase à trous, il n'y a aucune faute à trouver.
+    if(CHERCHE_FAUTE.test(t)&&/_{2,}/.test(t))return {refus:"une phrase à trous n'a pas de faute à trouver : demander de compléter la phrase, ou écrire la phrase entière avec une vraie faute"};
+    // « Dans quelle phrase le mot de sciences est-il bien écrit ? » : l'orthographe ne se travaille qu'en français et en anglais.
+    if(ctx.matiere&&!LANGUES[ctx.matiere]&&(CHERCHE_FAUTE.test(t)||BIEN_ECRIT.test(t)))return {refus:"l'orthographe ne compte qu'en français : poser une question sur la leçon"};
+    // « Dans quelle phrase… ? » sans choix : les phrases ne sont écrites nulle part.
+    if(x.type!=='qcm'&&QUELLE_PHRASE.test(t))return {refus:"la question demande « dans quelle phrase », mais aucune phrase n'est proposée : en faire un qcm dont les choix sont les phrases"};
     if(CHERCHE_FAUTE.test(t)){const f=controlerFaute(x,t,ctx);if(f)return f}
     // En français, passé le premier niveau, une phrase à trou de 4 mots ne fait pas réfléchir.
     if(ctx.matiere==='francais'&&Number(x.difficulte)>=2&&/_{2,}/.test(t)&&(t.match(PHRASE)?.[1]??t).trim().split(/\s+/).length<MOTS_MIN_TROU)return {refus:`phrase à trou trop simple : au moins ${MOTS_MIN_TROU} mots, avec un vrai contexte`};
+    // « Les enfants aiment ___ jouer » avec « jouer » pour réponse : le trou ne remplace rien, la réponse est sous les yeux.
+    if(nbTrous(t)===1){
+      const rep=sansDetail(x.type==='qcm'&&Array.isArray(x.choix)?x.choix[Number(x.bonne)]:x.type==='courte'&&Array.isArray(x.reponses)?x.reponses[0]:'');
+      if(/\p{L}/u.test(rep)&&propre(rep).length>1&&!groupeSon(rep)&&contient(t,rep))return {refus:"le trou ne remplace rien : la réponse est déjà écrite dans la phrase. Mettre ___ à la place du mot à trouver"};
+    }
+    // « Pourquoi les villes ont-elles des parcs ? » → « Pour que les habitants puissent se reposer… » : impossible à retrouver mot pour mot.
+    if(x.type==='courte'&&MATIERES_SAVOIR.has(ctx.matiere)){
+      const reps=(Array.isArray(x.reponses)?x.reponses:[]).map(r=>propre(sansDetail(r)));
+      if(reps.length&&reps.every(r=>r.split(' ').length>MOTS_MAX_COURTE))return {refus:`la réponse à taper est une phrase : une réponse courte tient en ${MOTS_MAX_COURTE} mots au plus, sinon faire un qcm`};
+    }
     if(reponseRepetee(x,t,ctx))return {refus:'la bonne réponse répète les mots de la question : demander quelque chose qui ne se devine pas en la relisant'};
     if(x.type==='vf')return controlerVf(x,t);
     if(x.type==='courte')return controlerCourte(x,t,ctx);
@@ -186,7 +334,12 @@
   }
   // Textes déjà passés par norm() : « tu as » et « as » valent la même réponse, pas « il as » et « tu as ».
   const sansPronom=s=>s.replace(/^(je|j|tu|il|elle|on|nous|vous|ils|elles) (?=\S)/,'');
-  const memeReponse=(rep,attendu)=>!!rep&&!!attendu&&(rep===attendu||rep===sansPronom(attendu)||sansPronom(rep)===attendu);
+  // « V », « Ve », « Vème siècle » : le e de l'ordinal ne change pas la réponse (de même « 5 » et « 5e »).
+  // Seuls I, V et X : les siècles s'arrêtent à XXI, et « île » ne doit pas valoir « il ».
+  const sansOrdinal=s=>s.replace(/^((?:[ivx]+|\d+)) ?(?:e|eme|ème|er|ere|ère|nd|nde)?(?: si[eè]cle)?$/,'$1');
+  // « Combien d'années séparent 800 et 1200 ? » → « 400 ans » attendu : « 400 » tout seul est juste, la question donne l'unité.
+  const sansUnite=s=>s.replace(/^(\d(?:[\d ]*\d)?(?:[.,]\d+)?) [a-z]+(?: [a-z]+)?$/,'$1');
+  const memeReponse=(rep,attendu)=>!!rep&&!!attendu&&(rep===attendu||rep===sansPronom(attendu)||sansPronom(rep)===attendu||sansOrdinal(rep)===sansOrdinal(attendu)||(/^\d/.test(rep)&&rep===sansUnite(attendu)));
   // À l'oreille, ces mots ne se distinguent pas : lire la phrase complète ne donne pas la réponse.
   const SONS=["a à as","et est es ai","ou où","son sont","on ont","ce se","ces ses c'est s'est sait sais","mes mais met mets","la là l'a","leur leurs","peu peut peux","sa ça","ma m'a","ta t'a","mon m'ont","ton t'ont","ni n'y","si s'y","dans d'en","quand quant qu'en"].map(g=>g.split(' '));
   const groupeSon=m=>SONS.find(g=>g.includes(propre(m)));
@@ -226,6 +379,139 @@ Réponds uniquement en JSON : {"raisonnement":"...","resultat":"le nombre trouv�
     const attendu=nombres(choix[bonne]);
     return vus.length&&attendu.length?memesNombres(attendu,vus):null;
   }
+  // « Quel mot est mal écrit ? » : la phrase est relue sans dire quel mot était visé.
+  function promptFaute(x){
+    return `Voici une question d'orthographe pour un élève de CM1.
+
+${x.question}
+
+Relis la phrase mot par mot, avec les règles de grammaire (a / à, et / est, son / sont, accords…). Il peut n'y avoir aucune faute : ne l'invente pas. Un mot déjà bien écrit n'est pas une faute : la correction doit être différente du mot fautif.
+
+Réponds uniquement en JSON : {"raisonnement":"...","fautes":["chaque mot mal écrit, tel qu'il est dans la phrase ; liste vide s'il n'y a aucune faute"],"faute":"le premier mot mal écrit, ou \\"\\"","correction":"ce premier mot bien écrit"}`;
+  }
+  // true : la même faute est trouvée ; false : aucune faute, ou une autre ; null : réponse illisible.
+  function accordFaute(x,r){
+    if(!r||typeof r!=='object'||!('faute' in r||Array.isArray(r.fautes)))return null;
+    // « Les enfants comencent à preparé… » : avec deux fautes, l'enfant peut corriger l'autre et être compté faux.
+    if(Array.isArray(r.fautes)){
+      const f=[...new Set(r.fautes.map(propre).filter(Boolean))];
+      if(f.length!==1)return false;
+      if(!('faute' in r))r={...r,faute:f[0]};
+    }
+    const vue=propre(r.faute);
+    // « baptême » → « baptême » : le mot est déjà bien écrit, la phrase n'a pas de faute.
+    if('correction' in r&&propre(r.correction)===vue)return false;
+    const justes=(Array.isArray(x.reponses)?x.reponses:[]).map(propre).filter(m=>m!==propre(x.faute));
+    if(justes.includes(vue))return false;
+    return !!vue&&vue===propre(x.faute);
+  }
+  // « Les élèves ___ leurs affaires » avec « ses / ces » : aucun choix ne va dans le trou.
+  // Les choix ne sont pas montrés : devant « a / à », le modèle en prend toujours un, même quand il faut « rangent ».
+  // Il trouve lui-même le mot qui manque ; s'il trouve un autre mot que la bonne réponse, la phrase ne va pas.
+  // En réponse courte aussi : « Le chien ___ sa balle » attend « cache », mais « pousse » irait aussi bien.
+  const aRelireTrou=x=>/_{2,}/.test(String(x.question??''))&&(x.type==='qcm'&&Array.isArray(x.choix)||x.type==='courte'&&Array.isArray(x.reponses)&&x.reponses.length>0);
+  function promptTrou(x){
+    const n=nbTrous(String(x.question));
+    return `Voici une phrase à trou pour un élève de CM1.
+
+${x.question}
+
+Quel mot manque à la place de ___ ? Relis la phrase entière : le sujet, le verbe, le sens.${n>1?` Il y a ${n} trous : donne un mot par trou, dans l'ordre, séparés par « / ».`:''}
+
+Réponds uniquement en JSON : {"raisonnement":"...","mot":"le mot qui manque"}`;
+  }
+  // true : le même mot ; false : un autre mot ; null : réponse illisible.
+  function accordTrou(x,r){
+    if(!r||typeof r!=='object'||!('mot' in r))return null;
+    const vu=propre(r.mot),bons=(x.type==='qcm'?[x.choix[Number(x.bonne)]]:x.reponses).map(b=>propre(sansDetail(b)));
+    if(!vu)return false;
+    if(bons.includes(vu))return true;
+    // Phrase à deux trous : le petit modèle répond souvent n'importe quoi (« a / le » pour « ___ nager »).
+    // Si sa réponse n'est aucun des choix, on ne sait pas : la relecture critique tranchera.
+    if(nbTrous(String(x.question??''))>1&&!(x.choix||x.reponses).some(c=>propre(sansDetail(c))===vu))return null;
+    return false;
+  }
+  // « Les enfants sont allé au parc », puis « Les enfants sont allé au cinéma » : la même question avec un autre décor.
+  // Refusée si le mot fautif a déjà servi, ou si la phrase reprend la plupart des mots d'une question déjà posée.
+  const OUTILS=new Set("les une des aux dans sur sous avec par pour que qui quoi est sont ont ses ces son sur leur leurs mon mes ton tes nous vous ils elle elles quel quelle quels quelles mot mots mal écrit écrits phrase cette complète complete bon bonne convient qui".split(' '));
+  const motsPleins=t=>new Set((propre(t).match(/\p{L}+/gu)||[]).filter(m=>m.length>2&&!OUTILS.has(m)).map(m=>m.normalize('NFD').replace(/\p{M}/gu,'').replace(/[sx]$/,'')));
+  function tropProche(x,precedentes){
+    const faute=propre(x.faute);
+    const meme=faute&&precedentes.find(p=>propre(p.faute)===faute);
+    if(meme)return `le mot fautif « ${x.faute} » a déjà servi : choisir une autre faute, sur une autre notion de la leçon`;
+    const a=motsPleins(x.question);
+    if(a.size<3)return null;
+    for(const p of precedentes){
+      const b=motsPleins(p.question);if(b.size<3)continue;
+      const communs=[...a].filter(m=>b.has(m)).length;
+      if(communs/Math.min(a.size,b.size)>=0.6)return `trop proche de la question « ${p.question} » : changer de phrase et de notion`;
+    }
+    return null;
+  }
+  // « Trouve la faute » trois fois de suite : l'exercice tourne en rond.
+  const serieFautes=qs=>{let n=0;for(let i=qs.length-1;i>=0&&qs[i].faute;i--)n++;return n};
+  global.tropProche=tropProche;
+  global.serieFautes=serieFautes;
+  global.aRelireTrou=aRelireTrou;
+  global.promptTrou=promptTrou;
+  global.accordTrou=accordTrou;
+  global.promptFaute=promptFaute;
+  global.accordFaute=accordFaute;
+  // « Quel est le chiffre des centaines de 3 457 ? » avec ["4","40","345"] : seul « 4 » est un chiffre.
+  const CHIFFRE_DES=/(?<!\p{L})chiffre des (?:unit[ée]s|dizaines|centaines|milliers)(?!\p{L})/iu;
+  const UN_CHIFFRE=/^(?:\d|z[ée]ro|un|deux|trois|quatre|cinq|six|sept|huit|neuf)$/;
+  function seulementUnChiffre(t,reps){
+    if(!CHIFFRE_DES.test(t))return reps;
+    return reps.filter(r=>UN_CHIFFRE.test(propre(sansDetail(r))));
+  }
+  // Après la résolution à l'aveugle : les réponses acceptées qui donnent un autre nombre sont retirées.
+  // Une réponse écrite en lettres (« vingt-trois ») est gardée : elle ne se compare pas.
+  function reponsesConfirmees(x,r){
+    const vus=nombres(r?.resultat);
+    if(x.type!=='courte'||!vus.length)return x.reponses;
+    return x.reponses.filter(a=>{const n=nombres(a);return !n.length||memesNombres(n,vus)});
+  }
+  global.reponsesConfirmees=reponsesConfirmees;
+
+  /* Relecture critique, avant que l'enfant voie la question : sur 150 questions générées, on trouvait
+     des faits faux (le biface « taillé sur une seule face »), deux choix justes (9 × 5 + 9 et 6 × 9),
+     ou des variantes fausses acceptées (« cook » pour « my mother ___ »). */
+  function promptJuge(x,matiere){
+    const ch=x.type==='qcm'?x.choix.map((c,i)=>`  ${i+1}. ${c}${i===Number(x.bonne)?'   ← prévu comme juste':''}`).join('\n'):'';
+    const prevu=x.type==='vf'?`Réponse prévue : ${x.bonne?'VRAI':'FAUX'}`:x.type==='courte'?`Réponses acceptées : ${x.reponses.map(r=>`« ${r} »`).join(' ; ')}`:`Choix :\n${ch}`;
+    return `Tu relis une question de quiz pour un élève de CM1, avant qu'il la voie. Sois exigeant : une erreur ici apprend une chose fausse à l'enfant, ou lui compte faux une bonne réponse.
+
+Matière : ${matiere}
+Question : ${x.question}
+${prevu}
+
+Vérifie :
+1. La réponse prévue est-elle exacte (faits, dates, règles, calculs) ?
+${x.type==='qcm'?"2. Un autre choix est-il juste lui aussi, ou défendable par un enfant qui connaît sa leçon ?":x.type==='courte'?"2. Parmi les réponses acceptées, lesquelles sont fausses ou ne répondent pas à la question ?":"2. L'affirmation est-elle vraie ou fausse sans ambiguïté ?"}
+3. La question se comprend-elle seule, sans image, texte, tableau ou carte qui ne serait pas écrit dedans ?
+
+Réponds uniquement en JSON, sans rien avant ni après : {"raisonnement":"3 phrases au plus","exacte":true,${x.type==='qcm'?'"autreJuste":"le texte exact d\'un autre choix juste, ou \\"\\"",':''}${x.type==='courte'?'"reponsesFausses":["réponses acceptées qui sont fausses"],':''}"comprehensible":true}`;
+  }
+  // {ok:true, reponses?} : gardée (les variantes fausses retirées) ; {ok:false, refus} : écartée ; null : pas de réponse lisible.
+  function accordJuge(x,r){
+    if(!r||typeof r!=='object'||!('exacte' in r))return null;
+    if(r.exacte===false||r.exacte==='false')return {ok:false,refus:'la réponse prévue est fausse'+(r.raisonnement?` : ${String(r.raisonnement).slice(0,160)}`:'')};
+    if(r.comprehensible===false||r.comprehensible==='false')return {ok:false,refus:"la question ne se comprend pas seule : il manque quelque chose (image, texte, tableau) ou elle est ambiguë"};
+    if(x.type==='qcm'){
+      const autre=propre(r.autreJuste);
+      const j=autre?x.choix.findIndex(c=>propre(c)===autre):-1;
+      if(j>=0&&j!==Number(x.bonne))return {ok:false,refus:`deux choix sont justes : « ${x.choix[Number(x.bonne)]} » et « ${x.choix[j]} »`};
+    }
+    if(x.type==='courte'&&Array.isArray(r.reponsesFausses)){
+      const fausses=new Set(r.reponsesFausses.map(propre));
+      const reponses=x.reponses.filter(a=>!fausses.has(propre(a)));
+      if(!reponses.length)return {ok:false,refus:'aucune des réponses acceptées n\'est juste'};
+      return {ok:true,reponses};
+    }
+    return {ok:true};
+  }
+  global.promptJuge=promptJuge;
+  global.accordJuge=accordJuge;
   // Ce que dit le badge du coin sur le quiz en cours : null s'il n'y a rien à montrer.
   function etatBadgeQuiz(q){
     if(!q||q.fini)return null;
@@ -241,6 +527,7 @@ Réponds uniquement en JSON : {"raisonnement":"...","resultat":"le nombre trouv�
   global.accordResolution=accordResolution;
   global.controlerQuestion=controlerQuestion;
   global.memeReponse=memeReponse;
+  global.jugementCoherent=jugementCoherent;
   global.texteAEcouter=texteAEcouter;
   // Pour une dictée, l'orthographe est ce qu'on vérifie : les accents comptent, pas la majuscule ni le point.
   global.memeEcriture=(rep,attendu)=>memeReponse(propre(rep),propre(sansDetail(attendu)));

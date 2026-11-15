@@ -155,7 +155,7 @@ main{padding-block:24px 110px}
 .sous{margin-bottom:-6px}
 /* Accueil : une seule mission, en grand */
 .mission-jour{text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;padding:28px 20px;border-color:color-mix(in srgb,var(--accent) 45%,var(--line));background:linear-gradient(180deg,var(--tint),var(--surface) 70%)}
-.mission-jour h2{font-size:1.7rem;max-width:30ch}
+.mission-jour h2{font-size:1.7rem;max-width:30ch;text-wrap:balance}
 .mission-jour .mj-ico{font-size:3rem;line-height:1}
 .mission-jour .mj-btns{justify-content:center}
 /* Bouton flottant : ajouter une photo du cahier depuis n'importe quel écran */
@@ -186,6 +186,15 @@ main .wrap > h2,main .wrap > .sec-title h2{font-size:1.9rem}
 .card h3{color:var(--ink)}
 .card > h3::before,.card .sec-title > h3::before{content:"";display:inline-block;width:10px;height:22px;border-radius:6px;background:var(--accent);margin-right:10px;vertical-align:-3px}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+/* Un champ suivi de ses boutons sur une même ligne ; les boutons passent dessous si la place manque. */
+.ligne{align-items:flex-end}.ligne>label.f,.ligne>input{flex:1 1 220px}
+.reglage{display:grid;grid-template-columns:170px minmax(0,1fr);gap:8px 18px;align-items:start;padding-top:12px;border-top:1px solid var(--line)}
+.card>h3+.reglage{border-top:0;padding-top:0}
+.rg-nom{font-weight:700;padding-top:12px}
+/* Clés API : le nom, puis le champ seul sur sa ligne, puis les boutons. */
+.cle-bloc .rg-nom{padding-top:0}.cle-bloc+.cle-bloc{border-top:1px solid var(--line);padding-top:12px}
+@media (max-width:640px){.reglage{grid-template-columns:1fr}.rg-nom{padding-top:0}}
+.rec-ajout>input[type=text]{flex:1 1 200px}.rec-ajout>input[type=number]{width:90px;flex:none}
 .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
 .cols{display:grid;gap:22px;grid-template-columns:1fr 1fr}
 @media (max-width:760px){.cols{grid-template-columns:1fr}}
@@ -368,6 +377,9 @@ details summary{cursor:pointer;font-weight:700;color:var(--accent);min-height:40
 .dots i{width:18px;height:18px;border-radius:50%;background:var(--line);transition:background .2s,transform .2s}
 .dots i.ok{background:var(--ok)} .dots i.ko{background:var(--bad)} .dots i.cur{outline:4px solid var(--accent);outline-offset:2px;transform:scale(1.15)}
 .qtext{font-size:1.45rem;font-weight:700;line-height:1.4;font-family:var(--f-display)}
+.tableau-md{border-collapse:collapse;margin:10px 0;font-family:var(--f-body,inherit);font-size:1.1rem;font-weight:600}
+.tableau-md th,.tableau-md td{border:2px solid currentColor;padding:6px 14px;text-align:center}
+.tableau-md th{opacity:.85}
 .qphoto{margin:0}.qphoto img{display:block;max-width:100%;max-height:320px;margin:0 auto;border-radius:12px}
 .qphoto figcaption{font-size:.75rem;margin-top:4px;opacity:.7;text-align:center}.qphoto figcaption a{color:inherit}
 .qphoto.petite img{max-height:180px;width:auto;max-width:100%}
@@ -572,7 +584,7 @@ table.t tr:last-child td{border-bottom:0}
 .semaine .sec-title{margin-bottom:8px}
 .tag{font-size:.78rem;font-weight:700;padding:2px 9px;border-radius:999px;border:2px solid var(--line);color:var(--ink-soft);white-space:nowrap}
 
-/* Skin manga (choisi dans l'espace parents) : une planche de BD. Trame de points, cases au trait noir épais,
+/* Skin manga (choisi par l'enfant dans « Mon monde ») : une planche de BD. Trame de points, cases au trait noir épais,
    ombres pleines décalées, lignes de vitesse, bulles pour les réponses. Les couleurs des onglets ne bougent pas :
    elles restent le repère pour se retrouver. */
 html[data-skin="manga"]{--bg:#fbfaf6;--bg-dot:#dedad0;--surface:#fff;--surface-2:#f4f3ef;--ink:#151417;--ink-soft:#4f4c58;--line:#15141733;
@@ -631,8 +643,117 @@ html[data-skin="dino"] .tab{border-radius:22px 12px 24px 10px/12px 22px 10px 20p
 html[data-skin="dino"] .badge{border-radius:28px 14px 30px 12px/16px 28px 12px 26px;border-color:color-mix(in srgb,var(--roche) 45%,var(--line))}
 html[data-skin="dino"] .hello::after{width:200px;height:200px;right:-40px;top:-60px;background:radial-gradient(circle,color-mix(in srgb,#ff922b 45%,transparent),transparent 65%)}
 html[data-skin="dino"] .fb{border-radius:26px 14px 28px 12px/14px 26px 12px 24px}
+/* Skin galaxie : l'espace. Fond semé d'étoiles, un rayon laser sous l'en-tête, une lame lumineuse devant les titres,
+   des cartes au bord éclairé comme un hublot. */
+html[data-skin="galaxie"]{--bg:#eef3fb;--bg-dot:#b9c7e3;--bg-dot-2:#f2c94c;--surface:#fff;--surface-2:#f1f5fc;--ink:#17213a;--ink-soft:#56607a;--line:#d5deee;
+  --laser:#228be6;--laser-2:#e03131;--shadow:0 2px 0 rgba(30,60,140,.07),0 12px 28px -12px rgba(30,60,140,.4);--lift:0 4px 0 rgba(30,60,140,.09),0 20px 34px -12px rgba(30,60,140,.48)}
+@media (prefers-color-scheme: dark){html[data-skin="galaxie"]:not([data-theme="light"]){--bg:#070b1a;--bg-dot:#3a4a7a;--bg-dot-2:#c9d6ff;--surface:#111933;--surface-2:#18223f;--ink:#e8eeff;--ink-soft:#a3b0d6;--line:#26335a;--laser:#4dabf7;--laser-2:#ff6b6b;
+  --shadow:0 2px 0 rgba(0,0,0,.3),0 12px 28px -10px rgba(77,171,247,.22);--lift:0 4px 0 rgba(0,0,0,.35),0 20px 34px -12px rgba(77,171,247,.3)}}
+html[data-skin="galaxie"][data-theme="dark"]{--bg:#070b1a;--bg-dot:#3a4a7a;--bg-dot-2:#c9d6ff;--surface:#111933;--surface-2:#18223f;--ink:#e8eeff;--ink-soft:#a3b0d6;--line:#26335a;--laser:#4dabf7;--laser-2:#ff6b6b;
+  --shadow:0 2px 0 rgba(0,0,0,.3),0 12px 28px -10px rgba(77,171,247,.22);--lift:0 4px 0 rgba(0,0,0,.35),0 20px 34px -12px rgba(77,171,247,.3)}
+html[data-skin="galaxie"] body{background-image:radial-gradient(var(--bg-dot-2) 1px,transparent 1.4px),radial-gradient(var(--bg-dot) 1.3px,transparent 1.7px),radial-gradient(var(--bg-dot) .9px,transparent 1.2px);background-size:97px 89px,31px 37px,19px 23px;background-position:13px 29px,0 0,7px 11px}
+html[data-skin="galaxie"] .top::after{height:5px;background:linear-gradient(90deg,transparent,var(--laser) 12%,#fff 50%,var(--laser) 88%,transparent);box-shadow:0 0 12px var(--laser)}
+html[data-skin="galaxie"] h2{text-shadow:0 0 16px color-mix(in srgb,var(--laser) 35%,transparent)}
+html[data-skin="galaxie"] .card{border-color:color-mix(in srgb,var(--laser) 26%,var(--line))}
+html[data-skin="galaxie"] .card > h3::before,html[data-skin="galaxie"] .card .sec-title > h3::before{width:20px;height:5px;border-radius:3px;background:linear-gradient(90deg,#868e96 0 30%,var(--laser) 30%);box-shadow:0 0 6px var(--laser);vertical-align:.2em;margin-right:9px}
+html[data-skin="galaxie"] .btn:not(.ghost){border-radius:12px}
+html[data-skin="galaxie"] .tab{border-radius:14px}
+html[data-skin="galaxie"] .badge{border-color:color-mix(in srgb,var(--laser) 32%,var(--line))}
+html[data-skin="galaxie"] .hello::after{width:240px;height:240px;right:-60px;top:-80px;background:radial-gradient(circle,color-mix(in srgb,var(--laser) 40%,transparent),transparent 62%)}
+
+/* Skin dresseur : créatures à attraper. Fond d'herbe tachetée, bande rouge et blanche sous l'en-tête,
+   une petite capsule devant les titres. */
+html[data-skin="dresseur"]{--bg:#fff8d6;--bg-dot:#ffe27a;--bg-dot-2:#9ec1ee;--surface:#fff;--surface-2:#fffbe8;--ink:#1d2a4a;--ink-soft:#4f5d80;--line:#f1dd96;--rouge:#ee1515;--bleu:#3d7dca;--jaune:#ffcb05;
+  --shadow:0 2px 0 rgba(40,90,30,.07),0 12px 28px -12px rgba(40,90,30,.38);--lift:0 4px 0 rgba(40,90,30,.09),0 20px 34px -12px rgba(40,90,30,.45)}
+@media (prefers-color-scheme: dark){html[data-skin="dresseur"]:not([data-theme="light"]){--bg:#0d1630;--bg-dot:#24376a;--bg-dot-2:#6b5a10;--surface:#15204a;--surface-2:#1b2856;--ink:#fff6cc;--ink-soft:#c3c9e0;--line:#2b3d75;--rouge:#ff4b4b;--bleu:#6aa2ee;--jaune:#ffcb05;
+  --shadow:0 2px 0 rgba(0,0,0,.3),0 12px 28px -10px rgba(0,0,0,.5);--lift:0 4px 0 rgba(0,0,0,.35),0 20px 34px -12px rgba(0,0,0,.55)}}
+html[data-skin="dresseur"][data-theme="dark"]{--bg:#0d1630;--bg-dot:#24376a;--bg-dot-2:#6b5a10;--surface:#15204a;--surface-2:#1b2856;--ink:#fff6cc;--ink-soft:#c3c9e0;--line:#2b3d75;--rouge:#ff4b4b;--bleu:#6aa2ee;--jaune:#ffcb05;
+  --shadow:0 2px 0 rgba(0,0,0,.3),0 12px 28px -10px rgba(0,0,0,.5);--lift:0 4px 0 rgba(0,0,0,.35),0 20px 34px -12px rgba(0,0,0,.55)}
+html[data-skin="dresseur"] body{background-image:radial-gradient(var(--bg-dot-2) 1.6px,transparent 2px),radial-gradient(ellipse 2px 4px,var(--bg-dot) 90%,transparent);background-size:83px 71px,19px 17px;background-position:11px 23px,0 0}
+html[data-skin="dresseur"] .top::after{height:9px;background:linear-gradient(var(--rouge) 0 40%,#212529 40% 62%,#fff 62%)}
+html[data-skin="dresseur"] h2{color:var(--jaune);-webkit-text-stroke:1.5px var(--bleu);paint-order:stroke fill;text-shadow:2px 3px 0 var(--bleu)}
+html[data-skin="dresseur"] .card{border:2.5px solid color-mix(in srgb,var(--bleu) 35%,var(--line))}
+html[data-skin="dresseur"] .card > h3::before,html[data-skin="dresseur"] .card .sec-title > h3::before{width:14px;height:14px;border-radius:50%;background:linear-gradient(var(--rouge) 0 43%,#212529 43% 57%,#fff 57%);box-shadow:0 0 0 1.8px #212529;vertical-align:-.05em;margin-right:9px}
+html[data-skin="dresseur"] .btn:not(.ghost),html[data-skin="dresseur"] .tab{border-radius:16px}
+html[data-skin="dresseur"] .badge{border-radius:50% 50% 22px 22px/40% 40% 22px 22px;border-color:color-mix(in srgb,var(--jaune) 70%,var(--line))}
+html[data-skin="dresseur"] .hello::after{width:240px;height:240px;right:-60px;top:-80px;background:radial-gradient(circle,color-mix(in srgb,var(--jaune) 55%,transparent),transparent 62%)}
+/* Skin champignon : le royaume des plombiers. Ciel bleu semé de pièces, rangée de briques sous l'en-tête,
+   un bloc « ? » devant les titres, des boutons qui ont l'air de blocs à frapper. */
+html[data-skin="champignon"]{--bg:#8fb6fd;--bg-dot:#c4d8ff;--bg-dot-2:#fbd000;--surface:#fff;--surface-2:#eef4ff;--ink:#14213d;--ink-soft:#4a5775;--line:#c3d4f2;--brique:#c84c0c;--joint:#3a1a06;--rouge:#e52521;--vert:#43b047;
+  --shadow:0 2px 0 rgba(20,70,140,.07),0 12px 28px -12px rgba(20,70,140,.38);--lift:0 4px 0 rgba(20,70,140,.09),0 20px 34px -12px rgba(20,70,140,.45)}
+@media (prefers-color-scheme: dark){html[data-skin="champignon"]:not([data-theme="light"]){--bg:#000;--bg-dot:#1a1a2e;--bg-dot-2:#b89a00;--surface:#141a2e;--surface-2:#1b2340;--ink:#f2f5ff;--ink-soft:#aeb8d4;--line:#2a3456;--brique:#c84c0c;--joint:#3a1a06;--rouge:#ff4a45;--vert:#5cd65f;
+  --shadow:0 2px 0 rgba(0,0,0,.3),0 12px 28px -10px rgba(0,0,0,.5);--lift:0 4px 0 rgba(0,0,0,.35),0 20px 34px -12px rgba(0,0,0,.55)}}
+html[data-skin="champignon"][data-theme="dark"]{--bg:#000;--bg-dot:#1a1a2e;--bg-dot-2:#b89a00;--surface:#141a2e;--surface-2:#1b2340;--ink:#f2f5ff;--ink-soft:#aeb8d4;--line:#2a3456;--brique:#c84c0c;--joint:#3a1a06;--rouge:#ff4a45;--vert:#5cd65f;
+  --shadow:0 2px 0 rgba(0,0,0,.3),0 12px 28px -10px rgba(0,0,0,.5);--lift:0 4px 0 rgba(0,0,0,.35),0 20px 34px -12px rgba(0,0,0,.55)}
+html[data-skin="champignon"] body{background-image:radial-gradient(ellipse 3px 4px,var(--bg-dot-2) 90%,transparent),radial-gradient(var(--bg-dot) 1.5px,transparent 1.9px);background-size:91px 79px,23px 23px;background-position:17px 31px,0 0}
+html[data-skin="champignon"] .top::after{height:14px;background:linear-gradient(transparent 6px,var(--joint) 6px 8px,transparent 8px),repeating-linear-gradient(90deg,var(--brique) 0 26px,var(--joint) 26px 28px)}
+html[data-skin="champignon"] h2{color:var(--rouge);text-shadow:2px 2px 0 #000}
+html[data-skin="champignon"] .card{border-radius:14px;border:2.5px solid #000}
+html[data-skin="champignon"] .card > h3::before,html[data-skin="champignon"] .card .sec-title > h3::before{content:"?";width:18px;height:18px;line-height:18px;text-align:center;border-radius:3px;background:#fbd000;color:#c84c0c;font-weight:900;font-size:.78rem;box-shadow:inset 0 0 0 2px #000;vertical-align:.12em;margin-right:9px}
+html[data-skin="champignon"] .btn:not(.ghost){border-radius:8px;border:2px solid #000}
+html[data-skin="champignon"] .tab{border-radius:10px}
+html[data-skin="champignon"] .badge{border-radius:12px;border:2.5px solid #000}
+html[data-skin="champignon"] .hello::after{width:240px;height:240px;right:-60px;top:-80px;background:radial-gradient(circle,color-mix(in srgb,#fbd000 50%,transparent),transparent 62%)}
+/* Skin sorcier : l'école de magie. Parchemin le jour, nuit du château le soir, rayures d'écharpe sous l'en-tête,
+   une étincelle dorée devant les titres. */
+html[data-skin="sorcier"]{--bg:#f3e9cf;--bg-dot:#e2cf9c;--bg-dot-2:#d3a625;--surface:#fffaec;--surface-2:#f6ecd2;--ink:#2a1a12;--ink-soft:#6a543f;--line:#e0cc9a;--or:#ae8a1e;--pourpre:#740001;
+  --shadow:0 2px 0 rgba(90,60,20,.07),0 12px 28px -12px rgba(90,60,20,.38);--lift:0 4px 0 rgba(90,60,20,.09),0 20px 34px -12px rgba(90,60,20,.45)}
+@media (prefers-color-scheme: dark){html[data-skin="sorcier"]:not([data-theme="light"]){--bg:#0b1230;--bg-dot:#1f2a52;--bg-dot-2:#d3a625;--surface:#141c3d;--surface-2:#1b2449;--ink:#f6eed8;--ink-soft:#c2b896;--line:#2b3663;--or:#d3a625;--pourpre:#ae0001;
+  --shadow:0 2px 0 rgba(0,0,0,.3),0 12px 28px -10px rgba(224,184,79,.15);--lift:0 4px 0 rgba(0,0,0,.35),0 20px 34px -12px rgba(224,184,79,.22)}}
+html[data-skin="sorcier"][data-theme="dark"]{--bg:#0b1230;--bg-dot:#1f2a52;--bg-dot-2:#d3a625;--surface:#141c3d;--surface-2:#1b2449;--ink:#f6eed8;--ink-soft:#c2b896;--line:#2b3663;--or:#d3a625;--pourpre:#ae0001;
+  --shadow:0 2px 0 rgba(0,0,0,.3),0 12px 28px -10px rgba(224,184,79,.15);--lift:0 4px 0 rgba(0,0,0,.35),0 20px 34px -12px rgba(224,184,79,.22)}
+html[data-skin="sorcier"] body{background-image:radial-gradient(var(--bg-dot-2) 1px,transparent 1.4px),radial-gradient(var(--bg-dot) 1.4px,transparent 1.8px);background-size:73px 67px,21px 21px;background-position:9px 17px,0 0}
+html[data-skin="sorcier"] .top::after{height:7px;background:repeating-linear-gradient(90deg,var(--pourpre) 0 20px,var(--or) 20px 28px)}
+html[data-skin="sorcier"] h2{font-family:Georgia,"Times New Roman",serif;text-shadow:0 0 14px color-mix(in srgb,var(--or) 30%,transparent)}
+html[data-skin="sorcier"] h2{color:var(--pourpre)}
+html[data-skin="sorcier"][data-theme="dark"] h2{color:var(--or)}
+@media (prefers-color-scheme: dark){html[data-skin="sorcier"]:not([data-theme="light"]) h2{color:var(--or)}}
+html[data-skin="sorcier"] .card{border:2px solid color-mix(in srgb,var(--or) 50%,var(--line))}
+html[data-skin="sorcier"] .card > h3::before,html[data-skin="sorcier"] .card .sec-title > h3::before{content:"✦";width:auto;height:auto;background:none;color:var(--or);font-size:1.1em;vertical-align:0;margin-right:8px}
+html[data-skin="sorcier"] .btn:not(.ghost){border-radius:10px}
+html[data-skin="sorcier"] .tab{border-radius:12px}
+html[data-skin="sorcier"] .badge{border-color:color-mix(in srgb,var(--or) 40%,var(--line))}
+html[data-skin="sorcier"] .hello::after{width:240px;height:240px;right:-60px;top:-80px;background:radial-gradient(circle,color-mix(in srgb,var(--or) 35%,transparent),transparent 62%)}
+
+/* Accueil allégé : bonjour en une bande, mission seule, code du héros en pastilles, astuce et défis repliables. */
+/* flex : la colonne de la série n'est pas réservée quand elle est absente */
+.hello.mince{display:flex;align-items:center;gap:14px;padding:10px 18px}
+.hello.mince > div:not(.mascotte){flex:1 1 auto;min-width:0}
+.hello.mince .mascotte{width:56px;height:56px}
+.hello.mince h2{font-size:1.5rem;margin:0}
+.hello.mince .eyebrow{font-size:.7rem}
+.hello.mince .serie{margin:0;white-space:nowrap}
+.hello.mince .epee-carte svg{width:26px;height:42px}
+.hello.mince .epee-carte{max-width:230px;gap:8px}
+.hello.mince .epee-carte small{display:none}
+html .hello.mince::after,html[data-skin] .hello.mince::after{width:120px;height:120px;right:-40px;top:-50px}
+@media (max-width:760px){.hello.mince,.hello.mince:not(:has(.mascotte)){display:grid;grid-template-columns:1fr auto;gap:8px 12px;padding:10px 14px}.hello.mince .mascotte{display:none}.hello.mince h2{font-size:1.3rem}}
+.mission-large{width:100%}
+.code-bande{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:10px 16px}
+.code-bande h3{margin:0;font-size:1rem}
+.code-bande .pastilles{display:flex;flex-wrap:wrap;gap:8px;flex:1 1 auto}
+.pastille{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;min-height:40px;border:2px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);font-weight:700;cursor:pointer;user-select:none}
+.pastille:hover{border-color:var(--accent)}
+.pastille{position:relative}
+.pastille input.chk{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}
+.pastille:has(input:focus-visible){outline:3px solid var(--accent);outline-offset:2px}
+.pastille.done{background:var(--ok-bg);border-color:var(--ok)}
+.pastille.done span::after{content:" ✓";color:var(--ok)}
+.code-bande .compteur{margin-left:auto;white-space:nowrap}
+details.tip-jour{padding:10px 18px 10px 18px;border-width:2px}
+details.tip-jour::before,details.tip-jour.pause::before{content:none}
+details.tip-jour summary{color:inherit;cursor:pointer;font-weight:700;font-size:1.05rem;list-style:none}
+details.tip-jour summary::-webkit-details-marker{display:none}
+details.tip-jour summary::before{content:"💡 "}
+details.tip-jour.pause summary::before{content:"🌙 "}
+details.tip-jour p{margin:8px 0 2px;font-size:1.05rem;line-height:1.5}
+details.defis-jour>summary{cursor:pointer;font-weight:800;font-size:1.1rem;color:var(--ink)}
+details.defis-jour[open]>summary{margin-bottom:8px}
+details.defis-jour>p{margin:0 0 8px}
+@media (max-width:560px){.code-bande .compteur{margin-left:0}}
 </style>
 
+<script>try{const t=localStorage.getItem('excalibur-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <div class="strip" id="strip" aria-label="Mon année et mon travail"></div>
 <header class="top">
   <div class="wrap">
@@ -653,8 +774,10 @@ html[data-skin="dino"] .fb{border-radius:26px 14px 28px 12px/14px 26px 12px 24px
 <script src="programme.js"></script>
 <script src="paysages.js"></script>
 <script src="questions.js"></script>
+<script src="doublons.js"></script>
 <script src="semaine.js"></script>
 <script src="tables.js"></script>
+<script src="accueil.js"></script>
 <script src="epee.js"></script>
 <script>
 /* ============ Données de référence ============ */
@@ -677,7 +800,7 @@ const ROUTINE=[
   {id:'relire',t:"J'ai relu la leçon du jour"},
   {id:'cartable',t:"J'ai préparé mon cartable pour demain"},
 ];
-/* Les skins, choisis dans l'espace parents : le vocabulaire, le logo et la mascotte d'attente changent avec l'habillage.
+/* Les skins, choisis par l'enfant dans « Mon monde » : le vocabulaire, le logo et la mascotte d'attente changent avec l'habillage.
    Excalibur (chevaliers) est celui par défaut ; les autres ajoutent leur style dans la feuille de style (html[data-skin="…"]). */
 const SKINS={
   excalibur:{nom:'Excalibur · chevaliers',ico:'⚔️',arme:{nom:'Épée',pluriel:'épées',ton:'ton épée',feminin:true},
@@ -736,8 +859,72 @@ const SKINS={
     code:'code de la tribu',tresor:'Le trésor de la caverne',accueil:'Bienvenue dans la caverne !',heros:'Le petit sapiens',
     role:'comme un petit explorateur de la préhistoire (tribu, caverne, feu à allumer, dinosaures), en rappelant si besoin que les humains et les dinosaures n\'ont jamais vécu à la même époque',
     badges:{b1:'Première peinture',b2:'Première chasse',b3:'Silex parfait',b4:'Lance précise',b5:'Trois jours de chasse',b6:'Semaine du mammouth',b7:'Cueilleur fidèle',b8:'Grand nomade',b9:'Grotte aux peintures',b10:'Code de la tribu',b11:'Le retour du T. rex',b12:'Pépite d\'ambre'}},
+  galaxie:{nom:'Galaxie · sabres laser',ico:'🚀',arme:{nom:'Sabre laser',pluriel:'sabres laser',ton:'ton sabre laser',feminin:false},theme:'dans une galaxie lointaine, avec des chevaliers aux sabres laser',
+    devise:()=>`La lumière du savoir ${deP()}, chevalier des étoiles de CM1`,
+    niveaux:`Poussière d'étoile|Petit astéroïde|Mousse de la navette|Apprenti pilote|Cadet de l'espace|Cadet appliqué|Mécanicien de bord|Copilote|Pilote de navette|Pilote de chasseur|Navigateur des étoiles|Éclaireur de la galaxie|Gardien du hangar|Sentinelle de la station|Apprenti chevalier|Porteur de sabre bleu|Porteur de sabre vert|Chevalier de bronze|Chevalier d'argent|Chevalier d'or|Chevalier des étoiles|Chevalier de la nébuleuse|Explorateur de planètes|Ami des robots|Ami des extraterrestres|Protecteur des lunes|Capitaine de vaisseau|Capitaine d'escadrille|Commandant de croiseur|Amiral de la flotte|Défenseur des planètes|Gardien de la station|Pilote d'élite|As de l'hyperespace|Maître du sabre|Maître de l'hyperespace|Sage des étoiles|Gardien des comètes|Membre du grand conseil|Grand maître|Héros de la nébuleuse|Héros des étoiles|Gardien des planètes|Protecteur de la galaxie|Seigneur des comètes|Maître de la lumière|Gardien de la lumière|Légende de l'hyperespace|Héros de la galaxie|Légende de la galaxie`.split('|'),
+    bravo:{
+      top:["Sans faute ! Tu as tout compris.","Mission accomplie, chevalier ! Rien ne t'a résisté.","Incroyable ! Tout le grand conseil est impressionné."],
+      bien:["Très bien ! Encore un petit effort et c'est parfait.","Beau duel ! Tu maîtrises presque tout.","Beau travail ! Revois juste tes erreurs pour faire briller ton sabre."],
+      moyen:["C'est un bon début. Relis les explications et refais le quiz demain.","Tu progresses. Même les grands maîtres ont été apprentis.","Pas mal ! Revois la fiche, la prochaine mission sera la bonne."],
+      bas:["Ce n'est pas grave, cette leçon est un vrai champ d'astéroïdes. On la revoit ensemble ?","Courage, jeune apprenti ! Relis la fiche tranquillement, puis réessaie en mode facile.","Chaque essai te rend plus fort. Recommence demain, tu verras la différence."]},
+    touche:['Touché, chevalier !','Coup de sabre parfait !'],
+    matin:"Une nouvelle journée se lève sur la galaxie. Quelle mission aujourd'hui ?",aprem:"Pas encore d'étoile aujourd'hui. Un quiz de 5 minutes pour allumer ton sabre ?",
+    serie:n=>`${n} jours de suite, bravo ! Le savoir est puissant en toi.`,fier:'Bravo, toute la galaxie est fière de toi !',
+    code:'code du chevalier des étoiles',tresor:'Le trésor de la station',accueil:'Bienvenue à bord !',heros:'Le chevalier des étoiles',
+    role:'comme un jeune apprenti chevalier des étoiles (mission dans l\'espace, sabre laser, vaisseau, planètes à explorer), sans reprendre les personnages ni les noms d\'un film',
+    badges:{b1:'Premier décollage',b2:'Premier duel',b3:'Tir parfait',b4:'Visée précise',b5:'Trois jours en orbite',b6:'Semaine dans les étoiles',b7:'Cadet fidèle',b8:'Voyage interstellaire',b9:'Archives de la station',b10:'Code du chevalier des étoiles',b11:'Le retour du chevalier',b12:'Étoile d\'or'}},
+  dresseur:{nom:'Pokémon · dresseur',ico:'🔴',arme:{nom:'Capsule',pluriel:'capsules',ton:'ta capsule',feminin:true},theme:'dans un monde de créatures imaginaires à attraper et à faire évoluer',
+    devise:()=>`La capsule du savoir ${deP()}, dresseur de CM1`,
+    niveaux:`Œuf mystère|Œuf qui bouge|Petite créature|Apprenti dresseur|Dresseur débutant|Ramasseur de baies|Lanceur de capsules|Lanceur précis|Ami des créatures|Explorateur des hautes herbes|Explorateur de la forêt|Explorateur des grottes|Pêcheur de la rivière|Dresseur de bronze|Dresseur d'argent|Dresseur d'or|Collectionneur de badges|Premier badge gagné|Trois badges gagnés|Cinq badges gagnés|Gardien du sentier|Éleveur de créatures|Soigneur de créatures|Chercheur de créatures rares|Ami des créatures de feu|Ami des créatures d'eau|Ami des créatures des plantes|Ami des créatures de l'éclair|Voyageur des régions|Champion d'arène|Champion de la ville|Rival redoutable|Dresseur expert|Dresseur d'élite|Capitaine de l'équipe|Assistant du professeur|Professeur des créatures|Maître des capsules|Maître des évolutions|Maître des hautes herbes|Gardien des légendes|Ami des créatures légendaires|Finaliste du grand tournoi|Champion du grand tournoi|Champion de la région|Maître des créatures|Grand maître dresseur|Héros des régions|Légende des dresseurs|Légende des créatures`.split('|'),
+    bravo:{
+      top:["Sans faute ! Tu as tout compris.","Capture parfaite ! Rien ne t'a résisté.","Incroyable ! Même le professeur est impressionné."],
+      bien:["Très bien ! Encore un petit effort et c'est parfait.","Beau combat ! Tu maîtrises presque tout.","Beau travail ! Revois juste tes erreurs pour faire évoluer ton équipe."],
+      moyen:["C'est un bon début. Relis les explications et refais le quiz demain.","Tu progresses. Chaque créature s'entraîne avant d'évoluer.","Pas mal ! Revois la fiche, la prochaine capture sera la bonne."],
+      bas:["Ce n'est pas grave, cette leçon est une créature coriace. On la revoit ensemble ?","Courage, dresseur ! Relis la fiche tranquillement, puis réessaie en mode facile.","Chaque essai rend ton équipe plus forte. Recommence demain, tu verras la différence."]},
+    touche:['Attrapé !','Lancer parfait !'],
+    matin:"Une nouvelle aventure commence, dresseur. Quelle créature aujourd'hui ?",aprem:"Pas encore d'étoile aujourd'hui. Un quiz de 5 minutes pour lancer ta capsule ?",
+    serie:n=>`${n} jours de suite, bravo ! Ton équipe devient plus forte.`,fier:'Bravo, toutes tes créatures sont fières de toi !',
+    code:'code du dresseur',tresor:'Le trésor du centre des créatures',accueil:'Bienvenue, jeune dresseur !',heros:'Le dresseur',
+    role:'comme un jeune dresseur de créatures imaginaires (capsule à lancer, créature à attraper, évolution, badge d\'arène), sans reprendre les noms ni les créatures d\'un jeu vidéo',
+    badges:{b1:'Premier œuf',b2:'Première capture',b3:'Lancer parfait',b4:'Lancer précis',b5:'Trois jours d\'aventure',b6:'Semaine de dresseur',b7:'Dresseur fidèle',b8:'Grand voyage',b9:'Bibliothèque du professeur',b10:'Code du dresseur',b11:'Le retour du dresseur',b12:'Badge d\'or'}},
+  champignon:{nom:'Mario & Luigi · royaume champignon',ico:'🍄',arme:{nom:'Champignon',pluriel:'champignons',ton:'ton champignon',feminin:false},theme:'dans un royaume de champignons, avec deux frères plombiers qui sautent de tuyau en tuyau',
+    devise:()=>`Le super pouvoir du savoir ${deP()}, plombier de CM1`,
+    niveaux:`Petite pièce|Pièce d'or|Bloc de brique|Bloc mystère|Petit champignon|Apprenti plombier|Plombier débutant|Sauteur de tuyaux|Sauteur de blocs|Ramasseur de pièces|Collectionneur de pièces|Explorateur des tuyaux|Nageur sous-marin|Grimpeur de lianes|Coureur des plaines|Coureur du désert|Glisseur des neiges|Explorateur des grottes|Sauteur de nuages|Plombier de bronze|Plombier d'argent|Plombier d'or|Ami des champignons|Ami des tortues|Gardien des fleurs de feu|Lanceur de boules de feu|Porteur de cape|Planeur des nuages|Saut parfait|Triple saut|Vainqueur du premier château|Vainqueur de trois châteaux|Vainqueur de cinq châteaux|Héros du monde 1|Héros du monde 4|Héros du monde 8|Gardien de l'étoile|Ami des étoiles|Super plombier|Super frère|Capitaine du royaume|Chevalier champignon|Protecteur du royaume|Sauveur du château|Maître des tuyaux|Maître des blocs mystère|Champion de la course|Héros du royaume|Légende des plombiers|Légende du royaume champignon`.split('|'),
+    bravo:{
+      top:["Sans faute ! Tu as tout compris.","Niveau terminé ! Rien ne t'a résisté.","Incroyable ! Tout le royaume applaudit."],
+      bien:["Très bien ! Encore un petit effort et c'est parfait.","Beau saut ! Tu maîtrises presque tout.","Beau travail ! Revois juste tes erreurs pour attraper toutes les pièces."],
+      moyen:["C'est un bon début. Relis les explications et refais le quiz demain.","Tu progresses. Chaque niveau se gagne en réessayant.","Pas mal ! Revois la fiche, le prochain niveau sera le bon."],
+      bas:["Ce n'est pas grave, cette leçon est un vrai château du boss. On la revoit ensemble ?","Courage, plombier ! Relis la fiche tranquillement, puis réessaie en mode facile.","Chaque essai te donne une vie de plus. Recommence demain, tu verras la différence."]},
+    touche:['Wahou, bien sauté !','Pièce gagnée !'],
+    matin:"Une nouvelle journée se lève sur le royaume. Quel niveau aujourd'hui ?",aprem:"Pas encore d'étoile aujourd'hui. Un quiz de 5 minutes pour attraper un champignon ?",
+    serie:n=>`${n} jours de suite, bravo ! Tu sautes de victoire en victoire.`,fier:'Bravo, tout le royaume champignon est fier de toi !',
+    code:'code du plombier',tresor:'Le trésor du château',accueil:'Bienvenue au royaume champignon !',heros:'Le plombier',
+    role:'comme un petit plombier courageux dans un royaume de champignons (tuyaux, blocs mystère, pièces à ramasser, château à atteindre), sans reprendre les personnages ni les noms d\'un jeu vidéo',
+    badges:{b1:'Premier niveau',b2:'Premier saut',b3:'Saut parfait',b4:'Atterrissage précis',b5:'Trois jours de course',b6:'Semaine au royaume',b7:'Frère fidèle',b8:'Tour des mondes',b9:'Bibliothèque du château',b10:'Code du plombier',b11:'Vie en plus',b12:'Pièce d\'or géante'}},
+  sorcier:{nom:'Harry Potter · sorciers',ico:'🪄',arme:{nom:'Écharpe',pluriel:'écharpes',ton:'ton écharpe',feminin:true},theme:'dans une école de magie installée dans un vieux château',
+    devise:()=>`Le sortilège du savoir ${deP()}, apprenti sorcier de CM1`,
+    niveaux:`Petit curieux|Lecteur de grimoires|Élève de première année|Élève appliqué|Porteur de baguette|Apprenti sorcier|Apprenti des potions|Faiseur d'étincelles|Ami des chouettes|Ami des chats noirs|Lanceur de sorts|Sort de lumière|Sort de lévitation|Élève de deuxième année|Élève de troisième année|Pilote de balai|Joueur de l'équipe de balai|Capitaine de l'équipe de balai|Préparateur de potions|Maître des potions|Botaniste des plantes magiques|Gardien de la bibliothèque|Lecteur des vieux grimoires|Astronome de la tour|Ami des hippogriffes|Ami des dragons|Ami des centaures|Élève de cinquième année|Délégué de classe|Délégué en chef|Champion du tournoi de magie|Explorateur de la forêt sombre|Duelliste|Duelliste redoutable|Sorcier diplômé|Enchanteur|Grand enchanteur|Professeur de sortilèges|Professeur de potions|Directeur adjoint|Gardien des clés du château|Membre du conseil des sages|Mage|Grand mage|Archimage|Gardien du château|Directeur de l'école|Héros du monde magique|Légende des sorciers|Légende de l'école de magie`.split('|'),
+    bravo:{
+      top:["Sans faute ! Tu as tout compris.","Sortilège parfait ! Rien ne t'a résisté.","Incroyable ! Même le directeur de l'école est impressionné."],
+      bien:["Très bien ! Encore un petit effort et c'est parfait.","Joli sort ! Tu maîtrises presque tout.","Beau travail ! Revois juste tes erreurs pour perfectionner ta formule."],
+      moyen:["C'est un bon début. Relis les explications et refais le quiz demain.","Tu progresses. Chaque sorcier a raté ses premières potions.","Pas mal ! Revois la fiche, ta prochaine formule sera la bonne."],
+      bas:["Ce n'est pas grave, cette leçon est une potion compliquée. On la revoit ensemble ?","Courage, apprenti sorcier ! Relis la fiche tranquillement, puis réessaie en mode facile.","Chaque essai rend ta magie plus forte. Recommence demain, tu verras la différence."]},
+    touche:['Sort réussi !','Coup de baguette parfait !'],
+    matin:"Une nouvelle journée commence à l'école de magie. Quel cours aujourd'hui ?",aprem:"Pas encore d'étoile aujourd'hui. Un quiz de 5 minutes pour lancer un sort ?",
+    serie:n=>`${n} jours de suite, bravo ! Ta magie grandit chaque jour.`,fier:'Bravo, toute l\'école de magie est fière de toi !',
+    code:'code du sorcier',tresor:'Le trésor du château',accueil:'Bienvenue à l\'école de magie !',heros:'L\'apprenti sorcier',
+    role:'comme un apprenti sorcier dans une école de magie (baguette, potion, grimoire, sortilège à réussir), sans reprendre les personnages, les lieux ni les noms d\'un livre ou d\'un film',
+    badges:{b1:'Premier grimoire',b2:'Premier sortilège',b3:'Formule parfaite',b4:'Baguette précise',b5:'Trois jours de magie',b6:'Semaine au château',b7:'Élève fidèle',b8:'Grand voyage en balai',b9:'Bibliothèque du château',b10:'Code du sorcier',b11:'Le retour de l\'apprenti',b12:'Coupe d\'or'}},
 };
 const skinId=()=>SKINS[cfg().skin]?cfg().skin:'excalibur';
+/* Clair ou sombre, pour tous les habillages : « auto » suit le réglage de l'ordinateur. */
+const THEMES={auto:"🌗 Comme l'ordinateur",clair:'☀️ Clair',sombre:'🌙 Sombre'};
+const themeId=()=>THEMES[cfg().theme]?cfg().theme:'auto';
+function appliquerTheme(){
+  const t={clair:'light',sombre:'dark'}[themeId()],r=document.documentElement;
+  if(t){if(r.dataset.theme!==t)r.dataset.theme=t}else delete r.dataset.theme;
+  try{localStorage.setItem('excalibur-theme',t||'')}catch(e){}
+}
 const SK=()=>SKINS[skinId()];
 const nomBadge=x=>SK().badges[x.id]||x.nom;
 const TIPS=[
@@ -755,7 +942,20 @@ const pick=a=>a[Math.floor(Math.random()*a.length)];
 /* ============ Outils ============ */
 const app=document.getElementById('app');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const rich=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/&lt;u&gt;(.+?)&lt;\/u&gt;/g,'<u>$1</u>').replace(/\n/g,'<br>');
+/* « | | Garçons | Filles | » : les tableaux que l'IA écrit en maths deviennent de vrais tableaux. */
+function tableauxMd(h){
+  const lignes=h.split('\n'),out=[];let bloc=[];
+  const cellules=l=>l.trim().replace(/^\||\|$/g,'').split('|').map(c=>c.trim());
+  const vider=()=>{
+    if(bloc.length<2){out.push(...bloc);bloc=[];return}
+    const rangs=bloc.filter(l=>!/^\s*\|?[\s:|-]+\|?\s*$/.test(l)).map(cellules);
+    out.push(`<table class="tableau-md">${rangs.map((r,i)=>`<tr>${r.map(c=>i===0?`<th>${c}</th>`:`<td>${c}</td>`).join('')}</tr>`).join('')}</table>`);bloc=[];
+  };
+  for(const l of lignes){if(/^\s*\|.*\|\s*$/.test(l))bloc.push(l);else{vider();out.push(l)}}
+  vider();
+  return out.join('\n').replace(/\n?(<table[\s\S]*?<\/table>)\n?/g,'$1');
+}
+const rich=s=>tableauxMd(esc(s)).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/&lt;u&gt;(.+?)&lt;\/u&gt;/g,'<u>$1</u>').replace(/\n/g,'<br>');
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const isoDay=(d=new Date())=>{const z=new Date(d.getTime()-d.getTimezoneOffset()*60000);return z.toISOString().slice(0,10)};
 const TODAY=()=>isoDay();
@@ -797,11 +997,40 @@ async function initStore(){
 }
 async function put(col,id,data){
   const clean={...data};delete clean.id;
+  const avant=S[col].get(id);
   S[col].set(id,{...clean,id});requestRender(true);
-  if(db){try{await db.collection(col).doc(id).set(JSON.parse(JSON.stringify(clean)))}catch(e){toast(e.code==='quota_exceeded'?"Le cartable est plein : supprime d'anciennes leçons.":"Je n'ai pas pu enregistrer. Vérifie ta connexion.");console.warn(e)}}
+  if(db){try{await db.collection(col).doc(id).set(JSON.parse(JSON.stringify(clean)))}catch(e){refusEcriture(col,id,avant,e)}}
   else saveLocal();
 }
-async function del(col,id){S[col].delete(id);requestRender(true);if(db){try{await db.collection(col).doc(id).delete()}catch(e){console.warn(e)}}else saveLocal()}
+async function del(col,id){
+  const avant=S[col].get(id);
+  S[col].delete(id);requestRender(true);
+  if(db){try{await db.collection(col).doc(id).delete()}catch(e){refusEcriture(col,id,avant,e)}}else saveLocal()
+}
+// Écriture refusée : on remet l'ancienne valeur (sinon la synchro ne la corrigerait jamais), puis on prévient.
+// Jeton parent refusé (expiré ou serveur redémarré) : l'espace parents se ferme, une seule fois même si plusieurs écritures échouent.
+function refusEcriture(col,id,avant,e){
+  console.warn(e);
+  if(avant===undefined)S[col].delete(id);else S[col].set(id,avant);
+  if(e&&e.code==='parent'){if(state.parent||state.jeton)finParent('Code parent demandé à nouveau.');else if(Date.now()-(refusEcriture.t||0)>3000){refusEcriture.t=Date.now();toast('Demande à un parent : il faut le code parent.')}}
+  else toast(e&&e.code==='invalide'?"Ce document n'est pas valide, je ne l'ai pas enregistré.":e&&e.code==='quota_exceeded'?"Le cartable est plein : supprime d'anciennes leçons.":"Je n'ai pas pu enregistrer. Vérifie ta connexion.");
+  requestRender(true);
+}
+// Ferme la session parent : le serveur oublie le jeton, la page aussi. À n'appeler qu'une fois les écritures parents terminées.
+// Titre d'une demande d'achat d'après le catalogue (le titre écrit par l'enfant n'est pas fiable).
+function titreDemande(a){
+  const r=S.recompenses.get(a.recompenseId);
+  if(!r)return `${a.titre||''} (récompense inconnue)`;
+  return a.palier?`Cadeau du niveau ${a.palier} : ${r.titre}`:r.titre;
+}
+function finParent(message){
+  const j=state.jeton;state.jeton='';if(window.claude)window.claude.parent=null;
+  state.parent=false;state.iaf=null;state.ocrf=null;state.clef=null;
+  if(state.acc)state.acc={etape:1}; // en plein accueil : on redemande le code à l'étape 1
+  if(j)fetch('/api/pin',{method:'DELETE',headers:{'x-parent':j}}).catch(()=>{});
+  if(message)toast(message);
+}
+
 const all=c=>[...S[c].values()];
 const cfg=()=>S.config.get('main')||{};
 /* Prénom de l'enfant, réglé dans l'espace parents. deP()/queP() font l'élision : « d'Emma », « de Léa ». */
@@ -828,13 +1057,19 @@ function lireJSON(t){
   if(i>=0&&j>i){try{return JSON.parse(t.slice(i,j+1))}catch(e){}}
   throw {code:'invalid_json',text:t};
 }
+/* Mistral répond « trop de demandes » quand les relectures partent ensemble : on attend un peu et on recommence. */
 async function askJSON(prompt,opts={},onProgress){
-  const {text,truncated}=await sample(prompt,{...opts,onText:onProgress?({text})=>onProgress(text.length):undefined});
+  let res;
+  for(let essai=0;;essai++){
+    try{res=await sample(prompt,{...opts,onText:onProgress?({text})=>onProgress(text.length):undefined});break}
+    catch(e){if(e?.code!=='rate_limited'||essai>=4)throw e;await new Promise(r=>setTimeout(r,1500*2**essai+Math.random()*500))}
+  }
+  const {text,truncated}=res;
   if(truncated)throw {code:'invalid_json',text};
   return lireJSON(text);
 }
 function progressAdd(n){const el=app.querySelector('[data-progress]');if(el)el.textContent=`J'écris ta fiche… (${n} caractères)`}
-function errMsg(e){return({no_ollama:"Ollama ne répond pas. Vérifie qu'il est lancé, ou demande à un parent de regarder le réglage de l'IA.",no_model:"Le modèle d'Ollama n'est pas installé (voir la fenêtre du cartable).",no_key:"Il manque la clé API de Claude : elle se règle dans l'espace parents.",bad_key:"La clé API est refusée. Vérifiez-la dans l'espace parents.",network:"Je n'arrive pas à joindre l'IA. Vérifie la connexion et que le cartable est bien lancé.",bad_request:"L'IA n'a pas compris la demande. Réessaie.",api_error:"L'IA a eu un petit souci. Réessaie dans un instant.",save_failed:"Je n'ai pas pu enregistrer.",rate_limited:"L'IA est très occupée. Réessaie dans quelques minutes.",image_rejected:"Cette photo n'a pas pu être lue. Prends-en une autre, bien éclairée et nette.",images_unavailable:"L'envoi de photos n'est pas possible ici. Ouvre la page dans l'application Claude.",invalid_json:"La réponse est arrivée en désordre. Appuie sur Réessayer.",refused:"L'IA n'a pas pu traiter cette demande. Essaie avec une autre photo ou une autre question.",session_expired:"Reconnecte-toi à Claude puis réessaie.",prompt_too_large:"C'est trop long d'un coup. Envoie moins de photos.",empty_completion:"L'IA n'a rien répondu. Réessaie."}[e&&e.code])||`Petit souci de connexion. Réessaie dans un instant. (code : ${(e&&(e.code||e.message))||'inconnu'})`}
+function errMsg(e){return({no_ollama:"Ollama ne répond pas. Vérifie qu'il est lancé, ou demande à un parent de regarder le réglage de l'IA.",no_model:"Le modèle d'Ollama n'est pas installé (voir la fenêtre du cartable).",no_key:"Il manque la clé API de l'IA : elle se règle dans l'espace parents.",bad_key:"La clé API est refusée. Vérifiez-la dans l'espace parents.",ocr_bad_key:"Mistral refuse la clé qui sert à lire les photos. Demande à un parent de la vérifier dans l'espace parents.",ocr_network:"Je n'arrive pas à joindre Mistral pour lire les photos. Vérifie la connexion internet.",ocr_error:"Mistral n'a pas réussi à lire les photos. Réessaie dans un instant.",network:"Je n'arrive pas à joindre l'IA. Vérifie la connexion et que le cartable est bien lancé.",bad_request:"L'IA n'a pas compris la demande. Réessaie.",api_error:"L'IA a eu un petit souci. Réessaie dans un instant.",save_failed:"Je n'ai pas pu enregistrer.",rate_limited:"L'IA est très occupée. Réessaie dans quelques minutes.",image_rejected:"Cette photo n'a pas pu être lue. Prends-en une autre, bien éclairée et nette.",images_unavailable:"L'envoi de photos n'est pas possible ici. Ouvre la page dans l'application Claude.",invalid_json:"La réponse est arrivée en désordre. Appuie sur Réessayer.",refused:"L'IA n'a pas pu traiter cette demande. Essaie avec une autre photo ou une autre question.",session_expired:"Reconnecte-toi à Claude puis réessaie.",prompt_too_large:"C'est trop long d'un coup. Envoie moins de photos.",empty_completion:"L'IA n'a rien répondu. Réessaie."}[e&&e.code])||`Petit souci de connexion. Réessaie dans un instant. (code : ${(e&&(e.code||e.message))||'inconnu'})`}
 const MAT_LIST=MATIERES.map(m=>`"${m.id}" (${m.nom})`).join(', ');
 const ROLE=()=>`Tu es un professeur des écoles expérimenté, spécialiste du programme officiel de CM1 (cycle 3, Éducation nationale, France), et le compagnon de travail bienveillant ${deP()}, 9 ans, élève de CM1. L'appli s'appelle Excalibur${SK().theme?', habillée '+SK().theme:''} : de temps en temps, tu peux encourager ${prenom()} ${SK().role}, sans que cela gêne l'explication. Tu écris en français, avec des phrases courtes, un vocabulaire simple mais exact, et des exemples tirés de la vie d'un enfant.
 
@@ -958,7 +1193,7 @@ Voici ${images.length>1?images.length+' photos envoyées':'une photo envoyée'} 
 - une évaluation ou un contrôle, corrigé ou non par la maîtresse ;
 - une page d'agenda, de cahier de textes ou une fiche de devoirs ;
 - autre chose : mot aux parents, circulaire, emploi du temps…
-Plusieurs photos peuvent montrer des choses différentes : traite-les toutes.${indice?`\n${prenom()} précise : « ${indice} »`:''}
+Plusieurs photos peuvent montrer des choses différentes : traite-les toutes.${indice?`\n${prenom()} précise : « ${indice} »`:''}
 ${prenom()} dit que c'est du ${longDate(dateSeance||t)}.
 
 Étape 1. Dans "genre", indique le genre principal : "lecon", "exercice", "evaluation", "agenda" ou "autre".
@@ -1026,7 +1261,7 @@ async function lireAgenda(images,indice){
   const cal=[...Array(50)].map((_,i)=>addDays(t,i-14)).map(d=>`${d} : ${longDate(d)}${d===t?" (aujourd'hui)":''}`).join('\n');
   const prompt=`${ROLE()}
 
-Voici ${images.length>1?images.length+' photos':'une photo'} de l'agenda (ou du cahier de textes) ${deP()}, ou d'une fiche de devoirs donnée par la maîtresse.${indice?`\n${prenom()} précise : « ${indice} »`:''}
+Voici ${images.length>1?images.length+' photos':'une photo'} de l'agenda (ou du cahier de textes) ${deP()}, ou d'une fiche de devoirs donnée par la maîtresse.${indice?`\n${prenom()} précise : « ${indice} »`:''}
 
 Ta mission : relever tous les devoirs écrits, même à la main ou abrégés (« apprendre », « réviser », « ex 3 p 42 », « éval », « poésie », « signer », « apporter »…).
 - Dans un agenda, un devoir est en général écrit sur la page du jour où il faut le faire pour (le jour où on le rend). Une mention « pour le… » est prioritaire.
@@ -1052,7 +1287,7 @@ const dejaNote=x=>all('devoirs').some(d=>d.pour===x.pour&&norm(d.titre)===norm(x
 async function coursDepuisSujet(sujet){
   const prompt=`${ROLE()}
 
-${prenom()} a travaillé en classe sur ce sujet : « ${sujet} ». Rédige-lui une leçon complète, détaillée et progressive (3 à 5 sections bien développées), conforme au programme de CM1. Laisse "transcription" vide et "corrections" vide.
+${prenom()} a travaillé en classe sur ce sujet : « ${sujet} ». Rédige-lui une leçon complète, détaillée et progressive (3 à 5 sections bien développées), conforme au programme de CM1. Laisse "transcription" vide et "corrections" vide.
 
 ${SCHEMAS_AIDE}
 
@@ -1186,7 +1421,9 @@ function oralApresRendu(){
   if(!b){if(parleOK&&!memeConsigne)speechSynthesis.cancel();return}
   if(b.hasAttribute('data-oral-auto')){q.lus={...q.lus,[q.i]:true};lireOral(q.questions[q.i])}
 }
-async function genererQuestions(q,diffs){
+/* Les phrases données en exemple dans la consigne : Mistral les recopie telles quelles si on le laisse faire. */
+const EXEMPLES_CONSIGNE=["Le chien à faim et il cherche sa gamelle dans le jardin.","Pendant les vacances, ma cousine ___ appris ___ nager dans le lac.","Le chien ___ (cacher) sa balle sous le canapé.","Nous allons à la plage.","Mon papa a un chien.","Une araignée a huit pattes."].map(question=>({question}));
+async function genererQuestions(q,diffs,souple=false){
   const oralOK=voixQuiz(q.matiere),photos=photosPour(q.matiere);
   const nv=NIVEAU_QUIZ[q.niveau],{erreurs,contenu,faibles,comps,plusieurs}=q.ctx;
   const faites=q.questions.map((x,i)=>({x,r:q.rep[i]}));
@@ -1199,17 +1436,17 @@ async function genererQuestions(q,diffs){
 ${prenom()} fait un questionnaire de ${q.n} questions sur ${plusieurs?'ces leçons (révision de la matière)':'cette leçon'}. Niveau : ${nv.label}. Les questions sont créées au fur et à mesure, d'après ses réponses.
 Règles :
 - Chaque question doit être parfaitement claire pour un enfant de 9 ans, sans rien à deviner : une seule chose demandée, tous les renseignements utiles donnés, et ce qu'il faut répondre (un nombre, une unité, un mot…). Précise tout ce qui pourrait se comprendre de deux façons. Par exemple, pour une horloge, dis toujours quelle aiguille montre quoi : « la petite aiguille (celle des heures) est sur le 3, la grande aiguille (celle des minutes) est sur le 6 », jamais seulement « l'aiguille est sur le 6 ».
-- Chaque question se suffit à elle-même : ${prenom()} ne voit ni la leçon ni les questions d'avant. Ne parle jamais de « la solution », « le problème », « l'exercice » ou « le texte » sans les écrire en entier dans la question : un problème de mathématiques donne tout son énoncé (la situation, les nombres, ce qu'on cherche) avant de poser la question. ${photos.length?`Seules les photos de la liste ci-dessous peuvent être affichées : jamais « la carte ci-dessous » ou « le schéma », et sans "image", jamais « la photo » ni « le paysage que tu observes ».`:`Aucune image n'est affichée : jamais « le paysage que tu observes », « observe la photo » ou « la carte ci-dessous » ; décris avec des mots ce qu'on y voit (« Sur une photo de campagne, on voit une forêt, un champ de blé et une route. »).`}
+- Chaque question se suffit à elle-même : ${prenom()} ne voit ni la leçon ni les questions d'avant. Ne parle jamais de « la solution », « le problème », « l'exercice » ou « le texte » sans les écrire en entier dans la question : un problème de mathématiques donne tout son énoncé (la situation, les nombres, ce qu'on cherche) avant de poser la question. Pas de « la phrase suivante » sans la phrase écrite dans la question : quand les choix sont eux-mêmes des phrases, demande « Dans quelle phrase le verbe est-il du 2e groupe ? », et non « Dans la phrase suivante, quel verbe est du 2e groupe ? ». ${photos.length?`Seules les photos de la liste ci-dessous peuvent être affichées : jamais « la carte ci-dessous » ou « le schéma », et sans "image", jamais « la photo » ni « le paysage que tu observes ».`:`Aucune image n'est affichée : jamais « le paysage que tu observes », « observe la photo » ou « la carte ci-dessous » ; décris avec des mots ce qu'on y voit (« Sur une photo de campagne, on voit une forêt, un champ de blé et une route. »).`}
 - La question ne doit jamais contenir ni laisser voir sa réponse. En français surtout : pour faire conjuguer, accorder ou transformer, donne la forme de départ et la consigne, mais pas le résultat attendu (par exemple « Conjugue le verbe chanter au futur avec nous », et non « Conjugue : nous chanterons »). La bonne réponse ne doit pas non plus se deviner en relisant la question, en répétant ses mots : interdit « Comment la légende t'aide-t-elle à lire une carte ? » avec la réponse « En consultant la légende » ; bien « Sur une carte, où trouves-tu ce que veut dire un trait bleu ? ».
 - Écris comme une fiche d'exercices : une consigne courte et directe, en 1 ou 2 phrases. Pas de « Imagine que », pas de bavardage, n'annonce jamais de piège et ne parle pas de ses réponses d'avant.
 - Mets-toi à la place d'un enfant de 9 ans qui découvre la question : il doit comprendre tout de suite quoi faire, la réponse ne doit pas être sous ses yeux, et la consigne doit correspondre exactement aux boutons ou à la case qu'il voit. Si ce n'est pas le cas, réécris la question.
 ${oralOK?`- Presque tout se lit à l'écran. Une question est lue à voix haute seulement quand c'est vraiment utile : ${q.matiere==='anglais'?"pour faire reconnaître un mot ou une petite phrase en anglais":"pour faire écrire un mot, un verbe conjugué ou une petite phrase sans les montrer"}. Pour cela : type "courte", le texte à lire dans "oral" (15 mots au plus), une consigne dans "question" (${q.matiere==='anglais'?"« Écoute et écris le mot en français. »":"« Écoute et écris le verbe. »"}) qui ne montre jamais ce texte, et ce qu'il faut écrire dans "reponses". ${q.matiere==='anglais'?'':"À l'oreille, « ils mangent » et « il mange » se confondent : fais lire une phrase où l'on entend le nombre (« Les enfants mangent une pomme. ») ou précise-le dans la consigne. "}Sans champ "oral", jamais de dictée ni « écoute ». Pour le reste, propose une phrase à trou ou un mot mal écrit à corriger ; ne demande jamais comment s'écrit un mot qui est déjà affiché dans la question.`:`- Tout est écrit à l'écran : ${prenom()} lit et n'entend rien. Pas de dictée, jamais « écoute », « tu entends » ou « je vais te lire ». Pour l'orthographe, propose une phrase à trou ou un mot mal écrit à corriger ; ne demande jamais comment s'écrit un mot qui est déjà affiché dans la question.`}
 - Le type dépend de ce qu'on demande, et les boutons affichés en dépendent. Varie les types d'une question à l'autre :
-  * "vf" (boutons Vrai et Faux) : une phrase affirmative à juger, sans « Vrai ou faux : », sans point d'interrogation, sans choix entre deux mots. Bien : « Dans "Nous allons à la plage", le mot "à" est une préposition. » Interdit : « Le mot "à" est-il un verbe ou une préposition ? »
-  * "qcm" (boutons à choisir) : dès qu'il faut choisir entre des mots ou des nombres, même deux seulement. Les choix vont seulement dans "choix", 4 si possible, tous différents : ne les recopie pas dans le texte de la question. Bien : question « Le chat ___ faim. », choix ["a","à","as","ont"]. Dans une phrase à trou, le mot à trouver est remplacé par ___ et n'est écrit nulle part dans la question. Interdit : « Dans "Mon papa a un chien", quel mot est le bon ? », car le mot est déjà là. Les mauvais choix sont de vraies confusions sur la même notion : pour a ou à, jamais « mes » ni « et ».
+  * "vf" (boutons Vrai et Faux) : une phrase affirmative à juger, sans « Vrai ou faux : », sans point d'interrogation, sans choix entre deux mots. ${q.matiere==='francais'?`Bien : « Dans "Nous allons à la plage", le mot "à" est une préposition. » Interdit : « Le mot "à" est-il un verbe ou une préposition ? »`:`Bien : « Une araignée a huit pattes. » Interdit : « Une araignée a-t-elle six ou huit pattes ? »`}
+  * "qcm" (boutons à choisir) : dès qu'il faut choisir entre des mots ou des nombres, même deux seulement. Les choix vont seulement dans "choix", 4 si possible, tous différents : ne les recopie pas dans le texte de la question. ${q.matiere==='francais'?`Bien : question « Le chat ___ faim. », choix ["a","à","as","ont"]. Dans une phrase à trou, le mot à trouver est remplacé par ___ et n'est écrit nulle part dans la question. Interdit : « Dans "Mon papa a un chien", quel mot est le bon ? », car le mot est déjà là. Les mauvais choix sont de vraies confusions sur la même notion : pour a ou à, jamais « mes » ni « et ».`:`Les mauvais choix sont de vraies confusions sur la même notion.`} Un seul choix est juste : relis chaque mauvais choix pour vérifier qu'il est vraiment faux.
   * "courte" (case à remplir) : une seule réponse à taper, un mot, un nombre ou une petite phrase. Jamais de liste de mots à choisir dans la question, jamais « donne deux mots » ou « trois exemples », jamais « explique ton choix ».
 - difficulte 1 = application directe de la règle, 2 = un peu de réflexion, 3 = question « pointue » qui vérifie la vraie compréhension : piège classique, application à un cas nouveau, raisonnement ou justification.
-- En mathématiques, mets des calculs et de petits problèmes. En français, fais manipuler la langue (transformer, classer, accorder), avec des phrases de CM1 de 8 à 15 mots, jamais de petite phrase évidente. Pour un homophone : difficulte 1, une phrase à un trou ; difficulte 2, une phrase à deux trous, par exemple « Pendant les vacances, ma cousine ___ appris ___ nager dans le lac. », avec des choix comme « a / à » et « à / a » ; difficulte 3, une phrase avec une faute à trouver, en type "courte", par exemple « Quel mot est mal écrit dans : Le chien à faim et il cherche sa gamelle dans le jardin ? », avec "faute":"à" (le mot fautif tel qu'il est écrit dans la phrase) et "reponses":["a"] (sa correction). La faute doit vraiment être dans la phrase. Dans les autres matières, ne pose jamais de question sur l'orthographe. Ne donne jamais la nature du mot en aide, comme « (verbe être) ».
+- ${q.matiere==='maths'?'Mets des calculs et de petits problèmes. Pour les heures : minuit s’écrit 0 h et midi 12 h ; ne parle du matin ou du soir que si l’heure le permet (jamais quand la petite aiguille est sur le 12).':q.matiere==='anglais'?"Fais reconnaître, traduire et utiliser l'anglais de la leçon ; les consignes sont en français.":q.matiere!=='francais'?`Pose des questions sur les connaissances de la leçon : faits, mots de la matière, raisonnements. Jamais de question de grammaire, de conjugaison ou d'orthographe, ni de phrase à trou sur un homophone.${q.matiere==='emc'?" Face à une moquerie, une violence ou un danger, prévenir un adulte est toujours une bonne réponse : ne le mets jamais parmi les mauvais choix.":''}`:`Fais manipuler la langue (transformer, classer, accorder), avec des phrases de CM1 de 8 à 15 mots, jamais de petite phrase évidente. Pour un homophone : difficulte 1, une phrase à un trou ; difficulte 2, une phrase à deux trous, par exemple « Pendant les vacances, ma cousine ___ appris ___ nager dans le lac. », avec des choix comme « a / à » et « à / a » (les choix ne mélangent que les mots qui se confondent, jamais un autre mot comme « leur », et un seul choix est juste ; relis la phrase avec la bonne réponse dans le trou : ce doit être une phrase française correcte, et le trou remplace l'homophone, jamais un verbe comme « rangent ») ; difficulte 3, une phrase avec une faute à trouver, en type "courte", par exemple « Quel mot est mal écrit dans : Le chien à faim et il cherche sa gamelle dans le jardin ? », avec "faute":"à" (le mot fautif tel qu'il est écrit dans la phrase) et "reponses":["a"] (sa correction). Pour un verbe à écrire dans un trou, donne toujours son infinitif entre parenthèses après le trou (« Le chien ___ (cacher) sa balle sous le canapé. ») : sans lui, plusieurs verbes iraient. La faute doit vraiment être dans la phrase, et il n'y en a qu'une : tous les autres mots sont bien écrits. Ces exemples montrent la forme : invente toujours tes propres phrases. Ne donne jamais la nature du mot en aide, comme « (verbe être) ».`}
 - Reste dans le programme de CM1 et dans le contenu de la leçon.${photos.length?`
 - Tu peux montrer une photo de paysage, pour une question sur trois environ, quand la leçon parle de paysages, de lieux ou de transports : mets son id dans "image" et commence la question par « Sur la photo, ». ${prenom()} voit la photo, mais toi tu n'as que sa description : pose seulement une question dont la réponse est écrite dans cette description (un plan, un élément naturel ou humain, le type de paysage), et n'invente aucun détail. Ne recopie pas la description dans la question. Photos disponibles :
 ${photos.map(p=>`  * ${p.id} : ${p.description}`).join('\n')}`:''}
@@ -1235,11 +1472,17 @@ ${historique}
 `:''}${ratees.length?`${prenom()} vient de se tromper sur : ${ratees.map(t=>'« '+t+' »').join(' et ')}. Reviens sur la même notion autrement, avec un exemple nouveau et plus simple, pour qu'il la comprenne vraiment.
 `:''}${(q.refus||[]).length?`Ces questions ont été refusées, ne refais pas la même erreur :
 ${q.refus.map(e=>'  * « '+e.question+' » : '+e.refus).join('\n')}
+`:''}${serieFautes(q.questions)>=2?`Les ${serieFautes(q.questions)} dernières questions demandaient de trouver un mot mal écrit : cette fois, propose un autre exercice de la leçon (transformer, accorder, conjuguer, classer, phrase à trou), même pour une question pointue.
 `:''}Crée maintenant ${diffs.length===1?'la question suivante':`les ${diffs.length} questions suivantes`} (n° ${q.questions.length+1}${diffs.length>1?' à '+(q.questions.length+diffs.length):''}), de difficulte : ${diffs.join(', ')}.
 Réponds uniquement avec un objet JSON {"questions":[...]} contenant exactement ${diffs.length} question(s).`;
   const r=await askJSON(prompt,{modelTier:'default',cache:false});
   const deja=new Set(q.questions.map(x=>norm(x.oral||x.question)));
   const controles=(r&&Array.isArray(r.questions)?r.questions:[]).filter(q=>q&&q.question&&['qcm','vf','courte'].includes(q.type)&&!deja.has(norm(q.oral||q.question))).map(x=>({x,...controlerQuestion(x,{matiere:q.matiere,voix:oralOK,photos:photos.map(p=>p.id)})}));
+  // Une question qui en répète une autre, ou un 4e « trouve la faute » d'affilée, est refusée.
+  // Aux derniers essais (souple), on l'accepte : mieux vaut une question semblable que pas de question.
+  if(!souple){const vues=[...q.questions,...EXEMPLES_CONSIGNE];controles.forEach(c=>{if(!c.question)return;
+    const r=tropProche(c.question,vues)||(c.question.faute&&serieFautes(q.questions)>=2?"déjà deux questions « trouve le mot mal écrit » de suite : proposer un autre exercice de la leçon":null);
+    if(r){c.refus=r;c.question=null}else vues.push(c.question)})}
   controles.filter(c=>c.refus).forEach(c=>{console.warn('Question refusée',c.x.question,'→',c.refus);q.refus=[...(q.refus||[]),{question:String(c.x.question),refus:c.refus}].slice(-3)});
   const qs=controles.filter(c=>c.question&&!(c.question.oral&&deja.has(norm(c.question.oral)))).map(c=>c.question);
   qs.forEach(q=>{
@@ -1254,21 +1497,58 @@ Réponds uniquement avec un objet JSON {"questions":[...]} contenant exactement 
     q.competence=comps.length===1?comps[0]:comps.includes(q.competence)?q.competence:undefined;
   });
   const verifiees=qs.filter(q=>q.type!=='qcm'||(q.choix.length>=2&&q.bonne>=0)).map(verifierCalcul).filter(Boolean).slice(0,diffs.length);
-  if(q.matiere!=='maths')return verifiees;
-  const justes=[];
-  for(const x of verifiees)if(await reponseConfirmee(q,x))justes.push(x);
-  return justes;
+  // Les relectures d'une question se suivent ; les questions, elles, sont relues en même temps.
+  const gardees=await Promise.all(verifiees.map(async x=>{
+    const ok=q.matiere==='maths'?await reponseConfirmee(q,x):x.faute?await fauteConfirmee(q,x):q.matiere==='francais'&&aRelireTrou(x)?await trouConfirme(q,x):true;
+    return ok&&(x.oral||x.faute||await jugeeJuste(q,x))?x:null;
+  }));
+  return gardees.filter(Boolean);
+}
+/* Relecture critique : réponse exacte, un seul choix juste, variantes acceptées toutes justes, question compréhensible seule.
+   Si l'IA ne répond pas, la question est gardée. */
+async function jugeeJuste(q,x){
+  let r;try{r=await askJSON(promptJuge(x,M(q.matiere).nom),{modelTier:'juge',cache:false})}catch(e){return true}
+  const a=accordJuge(x,r);
+  if(!a)return true;
+  if(a.ok){if(a.reponses)x.reponses=a.reponses;return true}
+  console.warn('Question écartée à la relecture',x.question,'→',a.refus);
+  q.refus=[...(q.refus||[]),{question:String(x.question),refus:a.refus}].slice(-3);
+  return false;
+}
+/* Phrase à trou en français : le modèle complète la phrase sans savoir quel choix était prévu.
+   S'il en choisit un autre, ou aucun, la question est écartée. S'il ne répond pas, elle est gardée. */
+async function trouConfirme(q,x){
+  let r;try{r=await askJSON(promptTrou(x),{modelTier:'quick',cache:false})}catch(e){return true}
+  if(accordTrou(x,r)!==false)return true;
+  console.warn('Trou non confirmé',x.question,'→',r);
+  q.refus=[...(q.refus||[]),{question:String(x.question),refus:`en complétant la phrase, on trouve « ${String(r?.mot??'').trim()||'?'} », pas la bonne réponse indiquée : le trou doit être à la place du mot qui se confond avec les autres choix`}].slice(-3);
+  return false;
+}
+/* « Quel mot est mal écrit ? » : le modèle écrit souvent une phrase sans faute, ou avec deux fautes. Mistral Large
+   relit la phrase sans savoir quel mot était visé (le petit modèle laissait passer « nous somme allé ») ;
+   s'il ne trouve pas exactement la même faute, la question est écartée. S'il ne répond pas, elle est gardée. */
+async function fauteConfirmee(q,x){
+  let r;try{r=await askJSON(promptFaute(x),{modelTier:'juge',cache:false})}catch(e){return true}
+  if(accordFaute(x,r)!==false)return true;
+  console.warn('Faute non confirmée',x.question,'→',r);
+  q.refus=[...(q.refus||[]),{question:String(x.question),refus:r&&Array.isArray(r.fautes)&&r.fautes.filter(Boolean).length>1?`la phrase a plusieurs fautes (${r.fautes.filter(Boolean).map(f=>'« '+f+' »').join(', ')}) : une seule faute, tous les autres mots bien écrits`:r&&String(r.faute??'').trim()?`la faute indiquée n'est pas la bonne : en relisant, on trouve « ${r.faute} »`:"la phrase ne contient aucune faute : écrire la phrase avec la faute dedans"}].slice(-3);
+  return false;
 }
 /* L'IA résout l'exercice sans voir la réponse proposée. En cas de désaccord, on ne sait pas qui a raison :
    la question est écartée, plutôt que de compter faux une bonne réponse. Si l'IA ne répond pas, elle est gardée. */
 async function reponseConfirmee(q,x){
   let r;try{r=await askJSON(promptResolution(x),{modelTier:'quick',cache:false})}catch(e){return true}
-  if(accordResolution(x,r)!==false)return true;
+  if(accordResolution(x,r)!==false){
+    // Une autre réponse acceptée peut être fausse (« 345 » pour le chiffre des centaines) : elle est retirée.
+    if(accordResolution(x,r)===true&&x.type==='courte')x.reponses=reponsesConfirmees(x,r);
+    return true;
+  }
   console.warn('Réponse non confirmée',x.question,'→',r);
   q.refus=[...(q.refus||[]),{question:String(x.question),refus:`la réponse indiquée comme bonne est fausse : en résolvant l'exercice, on trouve ${r.choix||r.resultat}`}].slice(-3);
   return false;
 }
-/* Complète le quiz jusqu'à avoir `jusqua` questions (une seule génération à la fois, 3 essais : une question peut être refusée). */
+/* Complète le quiz jusqu'à avoir `jusqua` questions (une seule génération à la fois, plusieurs essais : une question peut être refusée). */
+const ESSAIS_QUESTION=8;
 async function prepareQuestions(q,jusqua){
   if(q.gen||q.questions.length>=Math.min(jusqua,q.n))return;
   const nb=Math.min(jusqua,q.n)-q.questions.length;
@@ -1276,7 +1556,8 @@ async function prepareQuestions(q,jusqua){
   q.gen=true;q.genErr=null;
   try{
     let qs=[];
-    for(let essai=0;essai<3&&!qs.length;essai++){try{qs=await genererQuestions(q,diffs)}catch(e){if(essai===2)throw e}}
+    // Après 3 refus, une question un cran plus facile vaut mieux que pas de question du tout.
+    for(let essai=0;essai<ESSAIS_QUESTION&&!qs.length;essai++){try{qs=await genererQuestions(q,essai<3?diffs:diffs.map(d=>Math.max(1,d-1)),essai>=3)}catch(e){if(essai===ESSAIS_QUESTION-1)throw e}}
     if(!qs.length)throw {code:'invalid_json'};
     q.questions.push(...qs.slice(0,q.n-q.questions.length));
   }catch(e){q.genErr=errMsg(e)}
@@ -1312,13 +1593,13 @@ function procheOrtho(v,a){
 async function verifierCourte(q,rep,francais){
   const r=await askJSON(`${ROLE()}
 
-Question posée à ${prenom()} : « ${texteQuestion(q)} »
+Question posée à ${prenom()} : « ${texteQuestion(q)} »
 Réponses attendues : ${q.reponses.join(' / ')}
-Réponse ${deP()} : « ${rep} »
+Réponse ${deP()} : « ${rep} »
 La réponse ${deP()} est-elle juste sur le fond ? Compte-la juste si elle contient ce qui est attendu : avec ou sans le pronom ou le déterminant (« as » ou « tu as », « chat » ou « le chat »), en un mot ou en phrase. ${francais?"Sois bienveillant sur l'orthographe si le sens est bon, mais exigeant sur la notion.":"Ce n'est pas une question de français : ne tiens AUCUN compte de l'orthographe, de la grammaire, de la conjugaison, des accents ni de la ponctuation. Un mot mal écrit mais reconnaissable compte comme juste ; seul le sens compte, et ne parle pas de l'orthographe dans le commentaire."}
-Si c'est faux, le commentaire dit ce qui est juste dans sa réponse, puis où est l'erreur et pourquoi.
+Si sa réponse est juste sur le fond, "correct" vaut true. Si elle est fausse, le commentaire dit d'abord ce qui est bien vu, sans dire que la réponse est juste, puis où est l'erreur et pourquoi. Pour les heures : minuit s'écrit 0 h (minuit et demi : 0 h 30) et midi 12 h ; une réponse qui donne la bonne heure sous une autre écriture est juste.
 Réponds uniquement en JSON : {"correct":true,"commentaire":"1 ou 2 phrases pour ${prenom()}"}`,{modelTier:'quick'});
-  return {ok:!!(r&&(r.correct===true||r.correct==='true')),commentaire:r&&r.commentaire?String(r.commentaire):''};
+  return jugementCoherent(r);
 }
 
 /* ============ Calculs : étoiles, séries, badges, révisions ============ */
@@ -1554,7 +1835,11 @@ function dessinEpee(couleur){
     excalibur:`<path d="M33 39h14v66H33z" fill="${c}" ${ln}/><path d="M40 41v62" stroke="#fff" stroke-width="2" opacity=".6"/><circle cx="40" cy="9" r="7" ${or}/><rect x="36" y="15" width="8" height="17" rx="2" fill="#8d5524"/><rect x="20" y="31" width="40" height="8" rx="4" ${or}/>`,
     manga:`<path d="M34 39h12q1 36-1 66l-5 5-5-5q-2-30-1-66z" fill="${c}" ${ln}/><path d="M40 41v62" stroke="#fff" stroke-width="2" opacity=".6"/><rect x="36" y="8" width="8" height="25" rx="2" fill="#343a40"/><path d="M36 14l8 4M36 21l8 4M36 28l8 4" stroke="#adb5bd" stroke-width="1.6"/><ellipse cx="40" cy="35" rx="14" ry="4.5" ${or}/>`,
     fee:`<rect x="37" y="30" width="6" height="76" rx="3" fill="${c}" ${ln}/><path d="M40 8l4.5 9.5 10.5 1.4-7.6 7.3 1.9 10.4-9.3-5-9.3 5 1.9-10.4-7.6-7.3 10.5-1.4z" ${or} stroke-linejoin="round"/>`,
-    dino:`<path d="M40 108V58" stroke="${c}" stroke-width="8" stroke-linecap="round"/><path d="M40 64q-17-6-14-28 3-20 14-23 11 3 14 23 3 22-14 28z" fill="${c}" ${ln} stroke-linejoin="round"/><path d="M34 32l4 3M45 42l-4 3M35 50l4 2" stroke="#000" stroke-opacity=".3" stroke-width="2" stroke-linecap="round"/>`
+    dino:`<path d="M40 108V58" stroke="${c}" stroke-width="8" stroke-linecap="round"/><path d="M40 64q-17-6-14-28 3-20 14-23 11 3 14 23 3 22-14 28z" fill="${c}" ${ln} stroke-linejoin="round"/><path d="M34 32l4 3M45 42l-4 3M35 50l4 2" stroke="#000" stroke-opacity=".3" stroke-width="2" stroke-linecap="round"/>`,
+    galaxie:`<path d="M40 40v66" stroke="${c}" stroke-width="12" stroke-linecap="round" opacity="${couleur?'.45':'0'}"/><path d="M40 40v66" stroke="${c}" stroke-width="8" stroke-linecap="round"/><path d="M40 42v62" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity="${couleur?'.9':'.5'}"/><rect x="34" y="8" width="12" height="30" rx="3" fill="#ced4da" stroke="#495057" stroke-width="2"/><path d="M34 16h12M34 21h12M34 26h12" stroke="#495057" stroke-width="1.6"/><rect x="31" y="34" width="18" height="6" rx="2" fill="#495057"/><circle cx="40" cy="30" r="2" fill="#e03131"/>`,
+    dresseur:`<path d="M14 70a26 26 0 0 1 52 0z" fill="${c}"/><path d="M14 70a26 26 0 0 0 52 0z" fill="#fff"/><circle cx="40" cy="70" r="26" fill="none" stroke="#212529" stroke-width="2.2"/><path d="M14 70h52" stroke="#212529" stroke-width="2.6"/><circle cx="40" cy="70" r="8.3" fill="#fff" stroke="#212529" stroke-width="2.2"/><path d="M22 58q6-12 18-14" stroke="#fff" stroke-width="3" fill="none" opacity=".55" stroke-linecap="round"/>`,
+    champignon:`<path d="M10 76q0-44 30-44t30 44z" fill="${c}" ${ln}/><circle cx="40" cy="46" r="8" fill="#fff"/><circle cx="21" cy="62" r="6" fill="#fff"/><circle cx="59" cy="62" r="6" fill="#fff"/><path d="M26 76h28v22q-14 7-28 0z" fill="#fff3e0" stroke="#b08968" stroke-width="2"/><ellipse cx="35" cy="85" rx="2.4" ry="4.4" fill="#212529"/><ellipse cx="45" cy="85" rx="2.4" ry="4.4" fill="#212529"/>`,
+    sorcier:`<path d="M12 34q28 12 56 0v13q-28 12-56 0z" fill="${c}" ${ln}/><path d="M42 44h14v54H42z" fill="${c}" ${ln}/><path d="M42 56h14M42 68h14M42 80h14M42 92h14" stroke="#ffd43b" stroke-width="4"/><path d="M22 38v12M34 41v12M50 42v12M62 38v12" stroke="#ffd43b" stroke-width="4"/><path d="M44 98v6M49 98v6M54 98v6" stroke="${c}" stroke-width="2.4" stroke-linecap="round"/>`
   }[skinId()];
   return `<svg viewBox="0 0 80 130" aria-hidden="true">${halo}${objet}${rocher}</svg>`;
 }
@@ -1720,7 +2005,6 @@ function renderStrip(){
   const el=document.getElementById('strip');if(!el)return;
   // Seulement dans « Mon année » et chez les parents (choix de la zone) : l'accueil reste dégagé.
   el.hidden=!['annee','parents','programme'].includes(state.view);if(el.hidden)return;
-  if(document.activeElement&&document.activeElement.id==='zone-sel')return;
   const t=TODAY(),vac=vacancesAnnee(),zone=cfg().zone||ZONE_DEFAUT;
   const len=daysBetween(ANNEE.debut,ANNEE.fin);
   const P=d=>Math.max(0,Math.min(100,100*daysBetween(ANNEE.debut,d)/len));
@@ -1729,7 +2013,8 @@ function renderStrip(){
   if(t<ANNEE.debut){titre='Bientôt la rentrée';detail=`Rentrée ${dansJours(daysBetween(t,ANNEE.debut))}`}
   else if(enCours){titre=`<span class="vacn">${esc(enCours[0])} !</span>`;detail=enCours[2]>ANNEE.fin?'Bonnes vacances !':`Reprise ${esc(longDate(enCours[2]))} (${dansJours(daysBetween(t,enCours[2]))})`}
   else{const s=semainesClasse(vac);titre=`Semaine ${s.n} sur ${s.total}`;detail=proch?`${esc(proch[0])} ${dansJours(daysBetween(t,proch[1]))}`:''}
-  const zoneSel=`<select id="zone-sel" aria-label="Zone de vacances" title="Zone de vacances scolaires"><option value="">Zone ?</option>${['A','B','C'].map(z=>`<option value="${z}" ${z===zone?'selected':''}>Zone ${z}</option>`).join('')}</select>`;
+  // La zone se règle dans l'espace parents (réglages) : ici, on l'affiche seulement.
+  const zoneSel=`<span class="muted" title="Zone de vacances scolaires, réglée dans l'espace parents">Zone ${esc(zone)}</span>`;
   const seg=vac.filter(([,a])=>a<ANNEE.fin).map(([n,a,b])=>`<i class="vac" style="left:${P(a)}%;width:${P(b)-P(a)}%" title="${esc(n)} : du ${esc(shortDate(a))} au ${esc(shortDate(addDays(b,-1)))}"></i>`).join('');
   const fer=ANNEE.feries.map(([n,a,b])=>daysBetween(a,b)>1?`<i class="vac" style="left:${P(a)}%;width:${P(b)-P(a)}%" title="${esc(n)}"></i>`:`<i class="fer" style="left:${P(a)}%" title="${esc(n)}"></i>`).join('');
   const mois=MOIS.map((m,i)=>{const d=isoDay(new Date(2026,8+i,1,12));return `<span style="left:${P(d)}%">${m}</span>`}).join('');
@@ -1749,8 +2034,8 @@ function renderStrip(){
 /* ============ État de l'interface ============ */
 /* Quatre onglets. Les autres écrans vivent dans un onglet (GROUPE), avec des sous-onglets (SOUS). */
 const TABS=[['jour',"Aujourd'hui"],['matieres','Apprendre'],['devoirs','Devoirs'],['recompenses','Mon trésor']];
-const GROUPE={matiere:'matieres',lecon:'matieres',annee:'matieres',cours:'matieres',ajouter:'matieres',notes:'recompenses',epees:'recompenses',parents:'recompenses',programme:'recompenses',defi:'jour',quiz:''};
-const SOUS={matieres:[['matieres','📚 Mes leçons'],['annee','📅 Mon année']],recompenses:[['recompenses','👑 Mes étoiles'],['epees',()=>`${skinId()==='excalibur'?'⚔️':'✨'} Mes ${SK().arme.pluriel.toLowerCase()}`],['notes','📊 Mes notes'],['parents','🔒 Espace parents']]};
+const GROUPE={matiere:'matieres',lecon:'matieres',annee:'matieres',cours:'matieres',ajouter:'matieres',notes:'recompenses',epees:'recompenses',mondes:'recompenses',parents:'recompenses',programme:'recompenses',defi:'jour',quiz:''};
+const SOUS={matieres:[['matieres','📚 Mes leçons'],['annee','📅 Mon année']],recompenses:[['recompenses','👑 Mes étoiles'],['epees',()=>`${skinId()==='excalibur'?'⚔️':'✨'} Mes ${SK().arme.pluriel.toLowerCase()}`],['notes','📊 Mes notes'],['mondes','🌍 Mon monde'],['parents','🔒 Espace parents']]};
 function sousOnglets(){
   const v=state.view==='programme'?'parents':state.view,g=Object.keys(SOUS).find(k=>SOUS[k].some(([x])=>x===v));if(!g)return '';
   return `<nav class="matpick sous" aria-label="Dans cet onglet">${SOUS[g].map(([x,l])=>`<button class="btn" style="--m:var(--accent)" data-act="tab" data-v="${x}" aria-pressed="${x===v}">${typeof l==='function'?l():l}</button>`).join('')}</nav>`;
@@ -1759,8 +2044,8 @@ function sousOnglets(){
 const TAB_ICO={jour:'☀️',matieres:'📚',ajouter:'📷',programme:'🗺️',annee:'📅',devoirs:'✏️',notes:'📊',recompenses:'👑'};
 const MAT_ICO={francais:'📖',maths:'🔢',sciences:'🔬',histoire:'🏰',geographie:'🌍',anglais:'💬',emc:'🤝',arts:'🎨',musique:'🎵',eps:'⚽'};
 const MASCOTTE=`<svg class="mascotte" viewBox="0 0 120 120" aria-hidden="true"><ellipse cx="60" cy="112" rx="30" ry="5" fill="#000" opacity=".08"/><path d="M28 30l8 14M92 30l-8 14" stroke="#7048e8" stroke-width="8" stroke-linecap="round"/><ellipse cx="60" cy="68" rx="38" ry="42" fill="#845ef7"/><ellipse cx="60" cy="80" rx="24" ry="26" fill="#e5dbff"/><path d="M44 78q4 3 8 0M56 86q4 3 8 0M68 78q4 3 8 0M50 94q4 3 8 0M62 94q4 3 8 0" stroke="#b197fc" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="44" cy="52" r="15" fill="#fff"/><circle cx="76" cy="52" r="15" fill="#fff"/><g class="oeil"><circle cx="46" cy="53" r="7" fill="#22184a"/><circle cx="48" cy="50" r="2.5" fill="#fff"/></g><g class="oeil"><circle cx="74" cy="53" r="7" fill="#22184a"/><circle cx="76" cy="50" r="2.5" fill="#fff"/></g><path d="M55 64l5 7 5-7z" fill="#ffa94d"/><path d="M22 70q-6 18 10 26M98 70q6 18-10 26" stroke="#7048e8" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M38 31l-2-19 12 10 12-16 12 16 12-10-2 19z" fill="#ffd43b" stroke="#f08c00" stroke-width="2" stroke-linejoin="round"/><circle cx="60" cy="24" r="3" fill="#e03131"/><circle cx="47" cy="27" r="2" fill="#4dabf7"/><circle cx="73" cy="27" r="2" fill="#4dabf7"/><path d="M88 74h20v11q0 12-10 17-10-5-10-17z" fill="#2f6fd8" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/><path d="M98 77v21M91 85h14" stroke="#fff" stroke-width="3"/></svg>`;
-/* Le même hibou, habillé selon le skin choisi par les parents. */
-const MASCOTTE_SKIN={excalibur:MASCOTTE,manga:`<svg class="mascotte" viewBox="0 0 120 120" aria-hidden="true"><ellipse cx="60" cy="112" rx="30" ry="5" fill="#000" opacity=".08"/><path d="M28 30l8 14M92 30l-8 14" stroke="#7048e8" stroke-width="8" stroke-linecap="round"/><ellipse cx="60" cy="68" rx="38" ry="42" fill="#845ef7"/><ellipse cx="60" cy="80" rx="24" ry="26" fill="#e5dbff"/><path d="M44 78q4 3 8 0M56 86q4 3 8 0M68 78q4 3 8 0M50 94q4 3 8 0M62 94q4 3 8 0" stroke="#b197fc" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="44" cy="52" r="15" fill="#fff"/><circle cx="76" cy="52" r="15" fill="#fff"/><g class="oeil"><circle cx="46" cy="53" r="7" fill="#22184a"/><circle cx="48" cy="50" r="2.5" fill="#fff"/></g><g class="oeil"><circle cx="74" cy="53" r="7" fill="#22184a"/><circle cx="76" cy="50" r="2.5" fill="#fff"/></g><path d="M55 64l5 7 5-7z" fill="#ffa94d"/><path d="M22 70q-6 18 10 26M98 70q6 18-10 26" stroke="#7048e8" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M24 36q36-12 72 0v9q-36-12-72 0z" fill="#e03131" stroke="#151417" stroke-width="2.5" stroke-linejoin="round"/><circle cx="60" cy="34" r="5" fill="#fff" stroke="#151417" stroke-width="2"/><path d="M24 38q-10-2-18-10M24 42q-12 2-20-4" stroke="#e03131" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M97 88Q102 62 113 42" stroke="#151417" stroke-width="6" stroke-linecap="round" fill="none"/><path d="M97 88Q102 62 113 42" stroke="#e9ecef" stroke-width="3" stroke-linecap="round" fill="none"/><ellipse cx="96.5" cy="90" rx="7" ry="2.6" transform="rotate(-15 96.5 90)" fill="#151417"/><path d="M95.5 92l-3 12" stroke="#151417" stroke-width="6.5" stroke-linecap="round"/><path d="M95.5 92l-3 12" stroke="#e03131" stroke-width="4" stroke-linecap="round"/></svg>`,fee:`<svg class="mascotte" viewBox="0 0 120 120" aria-hidden="true"><ellipse cx="60" cy="112" rx="30" ry="5" fill="#000" opacity=".08"/><path d="M28 30l8 14M92 30l-8 14" stroke="#7048e8" stroke-width="8" stroke-linecap="round"/><path d="M30 62C4 34-6 70 22 80M90 62c26-28 36 8 8 18" fill="#d0ebff" fill-opacity=".85" stroke="#a5d8ff" stroke-width="2.5"/><ellipse cx="60" cy="68" rx="38" ry="42" fill="#845ef7"/><ellipse cx="60" cy="80" rx="24" ry="26" fill="#e5dbff"/><path d="M44 78q4 3 8 0M56 86q4 3 8 0M68 78q4 3 8 0M50 94q4 3 8 0M62 94q4 3 8 0" stroke="#b197fc" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="44" cy="52" r="15" fill="#fff"/><circle cx="76" cy="52" r="15" fill="#fff"/><g class="oeil"><circle cx="46" cy="53" r="7" fill="#22184a"/><circle cx="48" cy="50" r="2.5" fill="#fff"/></g><g class="oeil"><circle cx="74" cy="53" r="7" fill="#22184a"/><circle cx="76" cy="50" r="2.5" fill="#fff"/></g><path d="M55 64l5 7 5-7z" fill="#ffa94d"/><path d="M22 70q-6 18 10 26M98 70q6 18-10 26" stroke="#7048e8" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M30 34q30-14 60 0" stroke="#69db7c" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="36" cy="31" r="6" fill="#ff8fc7" stroke="#fff" stroke-width="2"/><circle cx="36" cy="31" r="2" fill="#ffd43b"/><circle cx="48" cy="25" r="6" fill="#ffa8a8" stroke="#fff" stroke-width="2"/><circle cx="48" cy="25" r="2" fill="#ffd43b"/><circle cx="60" cy="23" r="6" fill="#ff8fc7" stroke="#fff" stroke-width="2"/><circle cx="60" cy="23" r="2" fill="#ffd43b"/><circle cx="72" cy="25" r="6" fill="#ffa8a8" stroke="#fff" stroke-width="2"/><circle cx="72" cy="25" r="2" fill="#ffd43b"/><circle cx="84" cy="31" r="6" fill="#ff8fc7" stroke="#fff" stroke-width="2"/><circle cx="84" cy="31" r="2" fill="#ffd43b"/><ellipse cx="36" cy="66" rx="5" ry="3" fill="#ff8fc7" opacity=".7"/><ellipse cx="84" cy="66" rx="5" ry="3" fill="#ff8fc7" opacity=".7"/><path d="M100 104V62" stroke="#ae3ec9" stroke-width="5" stroke-linecap="round"/><path d="M100 100V64" stroke="#e599f7" stroke-width="1.6"/><path d="M100 45l3.5 7.3 8 1.1-5.8 5.6 1.4 8-7.1-3.8-7.1 3.8 1.4-8-5.8-5.6 8-1.1z" fill="#ffd43b" stroke="#f08c00" stroke-width="1.8" stroke-linejoin="round"/><path d="M114 44l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1zM86 48l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" fill="#ffd43b"/></svg>`,dino:`<svg class="mascotte" viewBox="0 0 120 120" aria-hidden="true"><ellipse cx="60" cy="112" rx="30" ry="5" fill="#000" opacity=".08"/><path d="M28 30l8 14M92 30l-8 14" stroke="#7048e8" stroke-width="8" stroke-linecap="round"/><ellipse cx="60" cy="68" rx="38" ry="42" fill="#845ef7"/><path d="M24 74q36 14 72 0l-4 34q-32 10-64 0z" fill="#f08c00" stroke="#a35a00" stroke-width="2" stroke-linejoin="round"/><path d="M24 74l8 6 8-6 8 6 8-6 8 6 8-6 8 6 8-6 8 6 8-6" stroke="#a35a00" stroke-width="2" fill="none"/><g fill="#7a4a1f"><ellipse cx="40" cy="90" rx="4" ry="3"/><ellipse cx="58" cy="98" rx="4.5" ry="3"/><ellipse cx="76" cy="90" rx="4" ry="3"/><ellipse cx="66" cy="84" rx="3" ry="2"/><ellipse cx="48" cy="102" rx="3" ry="2"/></g><circle cx="44" cy="52" r="15" fill="#fff"/><circle cx="76" cy="52" r="15" fill="#fff"/><g class="oeil"><circle cx="46" cy="53" r="7" fill="#22184a"/><circle cx="48" cy="50" r="2.5" fill="#fff"/></g><g class="oeil"><circle cx="74" cy="53" r="7" fill="#22184a"/><circle cx="76" cy="50" r="2.5" fill="#fff"/></g><path d="M55 64l5 7 5-7z" fill="#ffa94d"/><path d="M22 70q-6 18 10 26M98 70q6 18-10 26" stroke="#7048e8" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M40 32q4-14 10-6 4-14 10-4 6-12 10 4 8-8 10 6" fill="#5f3dc4"/><g transform="rotate(-14 60 22)"><rect x="44" y="19" width="32" height="6" rx="3" fill="#fff9ec" stroke="#8a6d4b" stroke-width="1.8"/><circle cx="44" cy="18.5" r="4" fill="#fff9ec" stroke="#8a6d4b" stroke-width="1.8"/><circle cx="44" cy="25.5" r="4" fill="#fff9ec" stroke="#8a6d4b" stroke-width="1.8"/><circle cx="76" cy="18.5" r="4" fill="#fff9ec" stroke="#8a6d4b" stroke-width="1.8"/><circle cx="76" cy="25.5" r="4" fill="#fff9ec" stroke="#8a6d4b" stroke-width="1.8"/><rect x="45" y="20" width="30" height="4" fill="#fff9ec"/></g><path d="M100 106V80" stroke="#8d5524" stroke-width="6" stroke-linecap="round"/><path d="M100 84q-11-4-9-18 2-12 9-14 7 2 9 14 2 14-9 18z" fill="#a0652d" stroke="#6b3d16" stroke-width="2" stroke-linejoin="round"/><path d="M95 62l3 2M104 68l-3 2M96 74l3 1" stroke="#6b3d16" stroke-width="1.6" stroke-linecap="round"/><ellipse cx="13" cy="102" rx="9" ry="11" fill="#e9fac8" stroke="#74b816" stroke-width="2.5"/><circle cx="10" cy="98" r="2" fill="#74b816"/><circle cx="16" cy="105" r="2.4" fill="#74b816"/></svg>`};
+/* Le même hibou, habillé selon le monde choisi. */
+const MASCOTTE_SKIN={excalibur:MASCOTTE,manga:`<svg class="mascotte" viewBox="0 0 120 120" aria-hidden="true"><ellipse cx="60" cy="112" rx="30" ry="5" fill="#000" opacity=".08"/><path d="M28 30l8 14M92 30l-8 14" stroke="#7048e8" stroke-width="8" stroke-linecap="round"/><ellipse cx="60" cy="68" rx="38" ry="42" fill="#845ef7"/><ellipse cx="60" cy="80" rx="24" ry="26" fill="#e5dbff"/><path d="M44 78q4 3 8 0M56 86q4 3 8 0M68 78q4 3 8 0M50 94q4 3 8 0M62 94q4 3 8 0" stroke="#b197fc" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="44" cy="52" r="15" fill="#fff"/><circle cx="76" cy="52" r="15" fill="#fff"/><g class="oeil"><circle cx="46" cy="53" r="7" fill="#22184a"/><circle cx="48" cy="50" r="2.5" fill="#fff"/></g><g class="oeil"><circle cx="74" cy="53" r="7" fill="#22184a"/><circle cx="76" cy="50" r="2.5" fill="#fff"/></g><path d="M55 64l5 7 5-7z" fill="#ffa94d"/><path d="M22 70q-6 18 10 26M98 70q6 18-10 26" stroke="#7048e8" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M24 36q36-12 72 0v9q-36-12-72 0z" fill="#e03131" stroke="#151417" stroke-width="2.5" stroke-linejoin="round"/><circle cx="60" cy="34" r="5" fill="#fff" stroke="#151417" stroke-width="2"/><path d="M24 38q-10-2-18-10M24 42q-12 2-20-4" stroke="#e03131" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M97 88Q102 62 113 42" stroke="#151417" stroke-width="6" stroke-linecap="round" fill="none"/><path d="M97 88Q102 62 113 42" stroke="#e9ecef" stroke-width="3" stroke-linecap="round" fill="none"/><ellipse cx="96.5" cy="90" rx="7" ry="2.6" transform="rotate(-15 96.5 90)" fill="#151417"/><path d="M95.5 92l-3 12" stroke="#151417" stroke-width="6.5" stroke-linecap="round"/><path d="M95.5 92l-3 12" stroke="#e03131" stroke-width="4" stroke-linecap="round"/></svg>`,fee:`<svg class="mascotte" viewBox="0 0 120 120" aria-hidden="true"><ellipse cx="60" cy="112" rx="30" ry="5" fill="#000" opacity=".08"/><path d="M28 30l8 14M92 30l-8 14" stroke="#7048e8" stroke-width="8" stroke-linecap="round"/><path d="M30 62C4 34-6 70 22 80M90 62c26-28 36 8 8 18" fill="#d0ebff" fill-opacity=".85" stroke="#a5d8ff" stroke-width="2.5"/><ellipse cx="60" cy="68" rx="38" ry="42" fill="#845ef7"/><ellipse cx="60" cy="80" rx="24" ry="26" fill="#e5dbff"/><path d="M44 78q4 3 8 0M56 86q4 3 8 0M68 78q4 3 8 0M50 94q4 3 8 0M62 94q4 3 8 0" stroke="#b197fc" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="44" cy="52" r="15" fill="#fff"/><circle cx="76" cy="52" r="15" fill="#fff"/><g class="oeil"><circle cx="46" cy="53" r="7" fill="#22184a"/><circle cx="48" cy="50" r="2.5" fill="#fff"/></g><g class="oeil"><circle cx="74" cy="53" r="7" fill="#22184a"/><circle cx="76" cy="50" r="2.5" fill="#fff"/></g><path d="M55 64l5 7 5-7z" fill="#ffa94d"/><path d="M22 70q-6 18 10 26M98 70q6 18-10 26" stroke="#7048e8" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M30 34q30-14 60 0" stroke="#69db7c" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="36" cy="31" r="6" fill="#ff8fc7" stroke="#fff" stroke-width="2"/><circle cx="36" cy="31" r="2" fill="#ffd43b"/><circle cx="48" cy="25" r="6" fill="#ffa8a8" stroke="#fff" stroke-width="2"/><circle cx="48" cy="25" r="2" fill="#ffd43b"/><circle cx="60" cy="23" r="6" fill="#ff8fc7" stroke="#fff" stroke-width="2"/><circle cx="60" cy="23" r="2" fill="#ffd43b"/><circle cx="72" cy="25" r="6" fill="#ffa8a8" stroke="#fff" stroke-width="2"/><circle cx="72" cy="25" r="2" fill="#ffd43b"/><circle cx="84" cy="31" r="6" fill="#ff8fc7" stroke="#fff" stroke-width="2"/><circle cx="84" cy="31" r="2" fill="#ffd43b"/><ellipse cx="36" cy="66" rx="5" ry="3" fill="#ff8fc7" opacity=".7"/><ellipse cx="84" cy="66" rx="5" ry="3" fill="#ff8fc7" opacity=".7"/><path d="M100 104V62" stroke="#ae3ec9" stroke-width="5" stroke-linecap="round"/><path d="M100 100V64" stroke="#e599f7" stroke-width="1.6"/><path d="M100 45l3.5 7.3 8 1.1-5.8 5.6 1.4 8-7.1-3.8-7.1 3.8 1.4-8-5.8-5.6 8-1.1z" fill="#ffd43b" stroke="#f08c00" stroke-width="1.8" stroke-linejoin="round"/><path d="M114 44l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1zM86 48l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" fill="#ffd43b"/></svg>`,dino:`<svg class="mascotte" viewBox="0 0 120 120" aria-hidden="true"><ellipse cx="60" cy="112" rx="30" ry="5" fill="#000" opacity=".08"/><path d="M28 30l8 14M92 30l-8 14" stroke="#7048e8" stroke-width="8" stroke-linecap="round"/><ellipse cx="60" cy="68" rx="38" ry="42" fill="#845ef7"/><path d="M24 74q36 14 72 0l-4 34q-32 10-64 0z" fill="#f08c00" stroke="#a35a00" stroke-width="2" stroke-linejoin="round"/><path d="M24 74l8 6 8-6 8 6 8-6 8 6 8-6 8 6 8-6 8 6 8-6" stroke="#a35a00" stroke-width="2" fill="none"/><g fill="#7a4a1f"><ellipse cx="40" cy="90" rx="4" ry="3"/><ellipse cx="58" cy="98" rx="4.5" ry="3"/><ellipse cx="76" cy="90" rx="4" ry="3"/><ellipse cx="66" cy="84" rx="3" ry="2"/><ellipse cx="48" cy="102" rx="3" ry="2"/></g><circle cx="44" cy="52" r="15" fill="#fff"/><circle cx="76" cy="52" r="15" fill="#fff"/><g class="oeil"><circle cx="46" cy="53" r="7" fill="#22184a"/><circle cx="48" cy="50" r="2.5" fill="#fff"/></g><g class="oeil"><circle cx="74" cy="53" r="7" fill="#22184a"/><circle cx="76" cy="50" r="2.5" fill="#fff"/></g><path d="M55 64l5 7 5-7z" fill="#ffa94d"/><path d="M22 70q-6 18 10 26M98 70q6 18-10 26" stroke="#7048e8" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M40 32q4-14 10-6 4-14 10-4 6-12 10 4 8-8 10 6" fill="#5f3dc4"/><g transform="rotate(-14 60 22)"><rect x="44" y="19" width="32" height="6" rx="3" fill="#fff9ec" stroke="#8a6d4b" stroke-width="1.8"/><circle cx="44" cy="18.5" r="4" fill="#fff9ec" stroke="#8a6d4b" stroke-width="1.8"/><circle cx="44" cy="25.5" r="4" fill="#fff9ec" stroke="#8a6d4b" stroke-width="1.8"/><circle cx="76" cy="18.5" r="4" fill="#fff9ec" stroke="#8a6d4b" stroke-width="1.8"/><circle cx="76" cy="25.5" r="4" fill="#fff9ec" stroke="#8a6d4b" stroke-width="1.8"/><rect x="45" y="20" width="30" height="4" fill="#fff9ec"/></g><path d="M100 106V80" stroke="#8d5524" stroke-width="6" stroke-linecap="round"/><path d="M100 84q-11-4-9-18 2-12 9-14 7 2 9 14 2 14-9 18z" fill="#a0652d" stroke="#6b3d16" stroke-width="2" stroke-linejoin="round"/><path d="M95 62l3 2M104 68l-3 2M96 74l3 1" stroke="#6b3d16" stroke-width="1.6" stroke-linecap="round"/><ellipse cx="13" cy="102" rx="9" ry="11" fill="#e9fac8" stroke="#74b816" stroke-width="2.5"/><circle cx="10" cy="98" r="2" fill="#74b816"/><circle cx="16" cy="105" r="2.4" fill="#74b816"/></svg>`,galaxie:`<svg class="mascotte" viewBox="0 0 120 120" aria-hidden="true"><ellipse cx="60" cy="112" rx="30" ry="5" fill="#000" opacity=".08"/><path d="M28 30l8 14M92 30l-8 14" stroke="#7048e8" stroke-width="8" stroke-linecap="round"/><ellipse cx="60" cy="68" rx="38" ry="42" fill="#845ef7"/><ellipse cx="60" cy="80" rx="24" ry="26" fill="#e5dbff"/><path d="M44 78q4 3 8 0M56 86q4 3 8 0M68 78q4 3 8 0M50 94q4 3 8 0M62 94q4 3 8 0" stroke="#b197fc" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="44" cy="52" r="15" fill="#fff"/><circle cx="76" cy="52" r="15" fill="#fff"/><g class="oeil"><circle cx="46" cy="53" r="7" fill="#22184a"/><circle cx="48" cy="50" r="2.5" fill="#fff"/></g><g class="oeil"><circle cx="74" cy="53" r="7" fill="#22184a"/><circle cx="76" cy="50" r="2.5" fill="#fff"/></g><path d="M55 64l5 7 5-7z" fill="#ffa94d"/><path d="M22 70q-6 18 10 26M98 70q6 18-10 26" stroke="#7048e8" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M25 44q35-30 70 0" stroke="#495057" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="24" cy="50" r="7" fill="#ced4da" stroke="#495057" stroke-width="2.5"/><circle cx="96" cy="50" r="7" fill="#ced4da" stroke="#495057" stroke-width="2.5"/><path d="M24 57q2 12 16 14" stroke="#495057" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="41" cy="71" r="3" fill="#e03131"/><path d="M104 84V28" stroke="#4dabf7" stroke-width="11" stroke-linecap="round" opacity=".35"/><path d="M104 84V28" stroke="#4dabf7" stroke-width="7" stroke-linecap="round"/><path d="M104 82V30" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><rect x="99" y="82" width="10" height="24" rx="2.5" fill="#ced4da" stroke="#495057" stroke-width="2"/><path d="M99 89h10M99 94h10" stroke="#495057" stroke-width="1.5"/><path d="M12 22l1.4 3.6 3.6 1.4-3.6 1.4-1.4 3.6-1.4-3.6-3.6-1.4 3.6-1.4zM10 70l1 2.4 2.4 1-2.4 1-1 2.4-1-2.4-2.4-1 2.4-1z" fill="#ffd43b"/><circle cx="18" cy="96" r="1.6" fill="#ffd43b"/></svg>`,dresseur:`<svg class="mascotte" viewBox="0 0 120 120" aria-hidden="true"><ellipse cx="60" cy="112" rx="30" ry="5" fill="#000" opacity=".08"/><path d="M28 30l8 14M92 30l-8 14" stroke="#7048e8" stroke-width="8" stroke-linecap="round"/><ellipse cx="60" cy="68" rx="38" ry="42" fill="#845ef7"/><ellipse cx="60" cy="80" rx="24" ry="26" fill="#e5dbff"/><path d="M44 78q4 3 8 0M56 86q4 3 8 0M68 78q4 3 8 0M50 94q4 3 8 0M62 94q4 3 8 0" stroke="#b197fc" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="44" cy="52" r="15" fill="#fff"/><circle cx="76" cy="52" r="15" fill="#fff"/><g class="oeil"><circle cx="46" cy="53" r="7" fill="#22184a"/><circle cx="48" cy="50" r="2.5" fill="#fff"/></g><g class="oeil"><circle cx="74" cy="53" r="7" fill="#22184a"/><circle cx="76" cy="50" r="2.5" fill="#fff"/></g><path d="M55 64l5 7 5-7z" fill="#ffa94d"/><g transform="translate(0 -8)"><path d="M22 46q38-46 76 0z" fill="#ee1515"/><path d="M60 13q16 2 22 20H38q6-18 22-20z" fill="#fff"/><circle cx="60" cy="25" r="5" fill="#e03131"/><path d="M22 46q38-10 76 0" stroke="#c92a2a" stroke-width="3" fill="none"/><path d="M80 44q20-6 32 4q-14 6-32 2z" fill="#c92a2a"/></g><path d="M22 70q-6 18 10 26" stroke="#7048e8" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M87 90a13 13 0 0 1 26 0z" fill="#e03131"/><path d="M87 90a13 13 0 0 0 26 0z" fill="#fff"/><circle cx="100" cy="90" r="13" fill="none" stroke="#212529" stroke-width="2.2"/><path d="M87 90h26" stroke="#212529" stroke-width="2.6"/><circle cx="100" cy="90" r="4.2" fill="#fff" stroke="#212529" stroke-width="2.2"/><path d="M12 24l1.4 3.6 3.6 1.4-3.6 1.4-1.4 3.6-1.4-3.6-3.6-1.4 3.6-1.4z" fill="#ffd43b"/></svg>`,champignon:`<svg class="mascotte" viewBox="0 0 120 120" aria-hidden="true"><ellipse cx="60" cy="112" rx="30" ry="5" fill="#000" opacity=".08"/><path d="M28 30l8 14M92 30l-8 14" stroke="#7048e8" stroke-width="8" stroke-linecap="round"/><ellipse cx="60" cy="68" rx="38" ry="42" fill="#845ef7"/><ellipse cx="60" cy="80" rx="24" ry="26" fill="#e5dbff"/><path d="M44 78q4 3 8 0M56 86q4 3 8 0M68 78q4 3 8 0M50 94q4 3 8 0M62 94q4 3 8 0" stroke="#b197fc" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M36 92q24 16 48 0v12q-24 12-48 0z" fill="#049cd8"/><path d="M40 72v24M80 72v24" stroke="#049cd8" stroke-width="6" stroke-linecap="round"/><circle cx="40" cy="92" r="3" fill="#ffd43b"/><circle cx="80" cy="92" r="3" fill="#ffd43b"/><circle cx="44" cy="52" r="15" fill="#fff"/><circle cx="76" cy="52" r="15" fill="#fff"/><g class="oeil"><circle cx="46" cy="53" r="7" fill="#22184a"/><circle cx="48" cy="50" r="2.5" fill="#fff"/></g><g class="oeil"><circle cx="74" cy="53" r="7" fill="#22184a"/><circle cx="76" cy="50" r="2.5" fill="#fff"/></g><g transform="translate(0 -8)"><path d="M22 46q38-46 76 0z" fill="#e52521"/><path d="M26 46q34 12 68 0q-2 8-34 10-32-2-34-10z" fill="#740001"/><circle cx="60" cy="28" r="9" fill="#fff"/><text x="60" y="33" text-anchor="middle" font-size="13" font-weight="900" fill="#740001" font-family="Arial,sans-serif">?</text></g><path d="M42 74q9-8 18-1 9-7 18 1-6 6-18 2-12 4-18-2z" fill="#5c3b1e"/><path d="M55 64l5 7 5-7z" fill="#ffa94d"/><path d="M22 70q-6 18 10 26M98 70q6 18-10 26" stroke="#7048e8" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="106" cy="30" r="7" fill="#ffd43b" stroke="#f08c00" stroke-width="2"/><path d="M106 26v8" stroke="#f08c00" stroke-width="2" stroke-linecap="round"/><circle cx="14" cy="96" r="5" fill="#ffd43b" stroke="#f08c00" stroke-width="1.6"/></svg>`,sorcier:`<svg class="mascotte" viewBox="0 0 120 120" aria-hidden="true"><ellipse cx="60" cy="112" rx="30" ry="5" fill="#000" opacity=".08"/><path d="M28 30l8 14M92 30l-8 14" stroke="#7048e8" stroke-width="8" stroke-linecap="round"/><ellipse cx="60" cy="68" rx="38" ry="42" fill="#845ef7"/><ellipse cx="60" cy="80" rx="24" ry="26" fill="#e5dbff"/><path d="M44 78q4 3 8 0M56 86q4 3 8 0M68 78q4 3 8 0M50 94q4 3 8 0M62 94q4 3 8 0" stroke="#b197fc" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="44" cy="52" r="15" fill="#fff"/><circle cx="76" cy="52" r="15" fill="#fff"/><g class="oeil"><circle cx="46" cy="53" r="7" fill="#22184a"/><circle cx="48" cy="50" r="2.5" fill="#fff"/></g><g class="oeil"><circle cx="74" cy="53" r="7" fill="#22184a"/><circle cx="76" cy="50" r="2.5" fill="#fff"/></g><path d="M26 74q34 14 68 0v9q-34 14-68 0z" fill="#740001"/><path d="M36 79.5v9M48 82v9M60 83v9M72 82v9M84 79.5v9" stroke="#d3a625" stroke-width="4"/><path d="M70 86h11v22H70z" fill="#740001"/><path d="M70 92h11M70 99h11" stroke="#d3a625" stroke-width="3"/><path d="M71 108v4M75.5 108v4M80 108v4" stroke="#740001" stroke-width="2"/><path d="M55 64l5 7 5-7z" fill="#ffa94d"/><path d="M34 40L70 0l12 40z" fill="#343a40"/><path d="M56 22l3 1.5-1 3" stroke="#ffd43b" stroke-width="1.6" fill="none"/><circle cx="66" cy="28" r="1.8" fill="#ffd43b"/><path d="M48 30l1.2 2.6 2.6 1.2-2.6 1.2-1.2 2.6-1.2-2.6-2.6-1.2 2.6-1.2z" fill="#ffd43b"/><ellipse cx="60" cy="40" rx="38" ry="7" fill="#212529"/><path d="M38 38q22 6 44 0" stroke="#7b2d26" stroke-width="4" fill="none"/><path d="M22 70q-6 18 10 26" stroke="#7048e8" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M96 98l12-48" stroke="#8d5524" stroke-width="4.5" stroke-linecap="round"/><path d="M109 42l1.6 4 4 1.6-4 1.6-1.6 4-1.6-4-4-1.6 4-1.6z" fill="#ffd43b"/><circle cx="100" cy="38" r="1.6" fill="#ffd43b"/><circle cx="116" cy="58" r="1.4" fill="#ffd43b"/></svg>`};
 const mascotte=()=>MASCOTTE_SKIN[skinId()];
 const state={view:'jour',param:null,quiz:null,add:{images:[],indice:'',date:TODAY(),busy:false,res:null,err:'',sujet:''},scan:{images:[],indice:'',busy:false,res:null,err:''},confirm:null,parent:false,ask:{},chrono:false};
 function go(view,param){state.view=view;state.param=param||null;state.confirm=null;if(view!=='quiz'){state.nouveauQuiz=null;if(state.quiz&&state.quiz.fini)state.quiz=null}render();window.scrollTo({top:0})}
@@ -1800,6 +2085,7 @@ function majBadgeQuiz(){
 function renderHeader(){
   renderStrip();
   document.getElementById('devise').textContent=SK().devise();
+  appliquerTheme();
   const skin=skinId();
   if(document.documentElement.dataset.skin!==skin){document.documentElement.dataset.skin=skin;document.querySelector('#brand svg').outerHTML=LOGO[skin];majIcone(skin)}
   const b=bilan();
@@ -1826,7 +2112,7 @@ function render(){
   const acc=besoinAccueil();document.documentElement.toggleAttribute('data-accueil',acc);
   if(acc){renderHeader();app.innerHTML=vAccueil();const af=app.querySelector('[data-autofocus]');if(af)af.focus({preventScroll:true});return}
   lierAuto();renderHeader();
-  const v={jour:modeVac()?vVacances:vJour,defi:vDefi,matieres:vMatieres,matiere:vMatiere,lecon:vLecon,ajouter:vAjouter,quiz:vQuiz,devoirs:vDevoirs,notes:vNotes,epees:vEpees,recompenses:vRecompenses,programme:vProgramme,annee:vAnnee,cours:vCours,parents:vParents}[state.view]||vJour;
+  const v={jour:modeVac()?vVacances:vJour,defi:vDefi,matieres:vMatieres,matiere:vMatiere,lecon:vLecon,ajouter:vAjouter,quiz:vQuiz,devoirs:vDevoirs,notes:vNotes,epees:vEpees,mondes:vMondes,recompenses:vRecompenses,programme:vProgramme,annee:vAnnee,cours:vCours,parents:vParents}[state.view]||vJour;
   app.innerHTML=(storeMode==='local'?`<div class="offline small">Le serveur du cartable ne répond pas : les données restent pour l'instant dans ce navigateur. Lance « Démarrer le cartable » sur l'ordinateur, puis recharge la page.</div>`:'')+sousOnglets()+v();
   const af=app.querySelector('[data-autofocus]');if(af)af.focus({preventScroll:true});
   oralApresRendu();
@@ -1871,18 +2157,18 @@ function missionDuJour(){
   const d=dv.find(x=>x.pour<=limiteDevoirs(t));
   if(d){const l=['Contrôle','Leçon à apprendre','Révision'].includes(d.type)&&leconsLiees(d)[0];
     return {devoir:true,ico:'✏️',titre:d.titre,detail:`${M(d.matiere).nom} · ${d.type||'Devoir'} ${d.pour<t?'en retard':'pour '+quandDevoir(d.pour,t)}${d.detail?' · '+d.detail:''}`,
-    btn:`${l?`<button class="btn" data-act="lecon" data-id="${l.id}">📖 Relire « ${esc(l.titre)} »</button>${sample?`<button class="btn" data-act="quiz-lecon" data-id="${l.id}" data-niveau="normal">Me tester</button>`:''}`:''}<button class="btn primary big" data-act="devoir-ok" data-id="${d.id}">C'est fait !</button><button class="btn" data-act="tab" data-v="devoirs">Tous mes devoirs</button>`}}
+    btn:`${l?`<button class="btn" data-act="lecon" data-id="${l.id}">📖 Relire « ${esc(l.titre)} »</button>${sample?`<button class="btn" data-act="quiz-lecon" data-id="${l.id}" data-niveau="normal">Me tester</button>`:''}`:''}<button class="btn primary big" data-act="devoir-ok" data-id="${d.id}">C'est fait !</button><button class="btn" data-act="tab" data-v="devoirs">Tous mes devoirs</button>`}}
   if(soireePause(t)&&!state.encore)return {ico:'🌙',titre:'Soirée tranquille',detail:"Pas d'école demain : ce soir, c'est repos. Rien à faire, sauf si tu en as envie.",
     btn:`<button class="btn ghost" data-act="encore">Une mission quand même</button>`};
   const base=baseDuJour(t);if(base)return base;
   const ej=etoileDuJour(),l=ej||(aReviser()[0]||{}).l;
-  if(l)return {ico:'📖',titre:`Relis « ${l.titre} », puis fais le quiz`,detail:`${M(l.matiere).nom} · ${etatLecon(l).raison}${ej?" · leçon du jour":''}`,
+  if(l)return {ico:'📖',titre:`Relis « ${l.titre} », puis fais le quiz`,detail:`${M(l.matiere).nom} · ${etatLecon(l).raison}${ej?" · leçon du jour":''}`,
     btn:`${sample?`<button class="btn primary big" data-act="quiz-lecon" data-id="${l.id}" data-niveau="normal">Faire le quiz</button>`:''}<button class="btn ${sample?'':'primary big'}" data-act="lecon" data-id="${l.id}">Relire d'abord</button>`};
   const p=sample&&planTravail().find(x=>x.e.etat==='fragile');
   if(p){const sp=speciale(p.c.id);return {ico:'🎯',titre:p.c.t,detail:`${M(p.c.m).nom} · un point à retravailler`,
     btn:`<button class="btn primary big" data-act="quiz-comp" data-id="${p.c.id}">M'entraîner</button>${sp?`<button class="btn" data-act="lecon" data-id="${sp.id}">Ma leçon spéciale</button>`:`<button class="btn" data-act="speciale" data-id="${p.c.id}" ${state.special&&state.special.busy?'disabled':''}>Une leçon rien que pour moi</button>`}`}}
   const sd=COURS&&semaineDuJour(),s=sd&&COURS.semaines.find(x=>x.n===sd.n),c=s&&s.items.map(x=>cours(x.id)).find(x=>x&&quizRef(x.id)===null);
-  if(c)return {ico:'📖',titre:`Lis la leçon « ${c.titre} »`,detail:`${M(c.matiere).nom} · prévue ${sd.maintenant?'cette semaine en classe':'à la rentrée'}`,
+  if(c)return {ico:'📖',titre:`Lis la leçon « ${c.titre} »`,detail:`${M(c.matiere).nom} · prévue ${sd.maintenant?'cette semaine en classe':'à la rentrée'}`,
     btn:`<button class="btn primary big" data-act="cours" data-id="${esc(c.id)}">Ouvrir la leçon</button>`};
   return {ico:'📷',titre:'Ajoute ce que tu as fait en classe',detail:"Prends ton cahier en photo : je t'en fais une fiche et un quiz.",
     btn:`<button class="btn primary big" data-act="tab" data-v="ajouter">Prendre une photo</button>`};
@@ -1901,23 +2187,26 @@ function vJour(){
   const fini=m&&!m.devoir&&!m.base&&s.aujourdhui&&!state.encore;
   const rt=routineDu(t),nbR=rt.filter(it=>r.items&&r.items[it.id]).length;
   return `${vacEnCours()?`<div class="row" style="justify-content:center"><button class="btn primary" data-act="vac-on">🏖️ Revenir à mes vacances</button></div>`:''}
-  <section class="card hello">
+  <section class="card hello mince">
     ${mascotte()}
-    <div><p class="eyebrow">${esc(longDate(t))}</p><h2>Bonjour <span class="nom">${esc(prenom())}</span> !</h2>${s.n>=2?`<p class="small muted">🔥 ${s.n} jours de suite</p>`:''}</div>
+    <div><p class="eyebrow">${esc(longDate(t))}</p><h2>Bonjour <span class="nom">${esc(prenom())}</span> !</h2></div>
+    ${s.n>=2?`<p class="small muted serie">🔥 ${s.n} jours de suite</p>`:''}
     ${carteEpee()}
   </section>
-  <div class="cols"><section class="card mission-jour"><p class="eyebrow">Ma mission du jour</p>
+  <section class="card mission-jour mission-large"><p class="eyebrow">Ma mission du jour</p>
     ${!m?`<p class="muted">J'ouvre ton cartable…</p>`
     :fini?`<div class="mj-ico" aria-hidden="true">✅</div><h2>Mission accomplie !</h2><p class="muted">Tu as déjà travaillé aujourd'hui. ${SK().fier}</p><button class="btn ghost" data-act="encore">J'en veux encore une</button>`
     :`<div class="mj-ico" aria-hidden="true">${m.ico}</div><h2>${esc(m.titre)}</h2><p class="muted">${esc(m.detail)}</p>
       ${state.special&&state.special.busy?attente("J'écris ta leçon spéciale…",{debut:state.special.debut,sous:'Cela prend environ une minute.'}):''}${state.special&&state.special.err?`<p class="small" style="color:var(--bad)">${esc(state.special.err)}</p>`:''}
       <div class="row mj-btns">${m.btn}</div>`}
   </section>
-  <section class="card"><div class="sec-title"><h3>Mon ${SK().code}</h3><span class="small muted">${nbR}/${rt.length}</span></div>
-    <p class="small muted" style="margin:4px 0 8px">+5 étoiles quand tout est coché</p>
-    <div class="stack">${rt.map(it=>`<label class="item ${r.items&&r.items[it.id]?'done':''}"><input type="checkbox" class="chk" data-act="routine" data-v="${it.id}" ${r.items&&r.items[it.id]?'checked':''}><span class="grow t">${esc(it.t)}</span></label>`).join('')}</div></section></div>
-  <section class="tip tip-jour ${tip.pause?'pause':''}"><p class="eyebrow">Astuce d'organisation</p><h3>${esc(tip.t)}</h3><p>${esc(tip.d)}</p></section>
-  <section class="card"><div class="sec-title"><h3>Défis éclair</h3><span class="small muted">Une fois par jour chacun</span></div>${boutonsDefis()}</section>`;
+  <section class="card code-bande" aria-label="Mon ${esc(SK().code)}">
+    <h3>Mon ${SK().code}</h3>
+    <div class="pastilles">${rt.map(it=>{const ok=r.items&&r.items[it.id];return `<label class="pastille ${ok?'done':''}" title="${esc(it.t)}"><input type="checkbox" class="chk" data-act="routine" data-v="${it.id}" aria-label="${esc(it.t)}" ${ok?'checked':''}><span>${esc(libelleCourt(it.id))}</span></label>`}).join('')}</div>
+    <span class="compteur small muted">${nbR}/${rt.length} · +5 ⭐</span>
+  </section>
+  <details class="tip tip-jour ${tip.pause?'pause':''}" id="astuce-jour" ${('astuce-jour' in PLIS?PLIS['astuce-jour']:!!tip.pause)?'open':''}><summary>${esc(tip.t)}</summary><p>${esc(tip.d)}</p></details>
+  <details class="card defis-jour" id="defis-jour" ${defisOuverts({missionFaite:fini,choix:PLIS['defis-jour']})?'open':''}><summary>${fini?'Encore envie ? Un défi éclair':'⚡ Défis éclair'}</summary><p class="small muted">Une fois par jour chacun</p>${boutonsDefis()}</details>`;
 }
 
 /* ---- Mes vacances ---- */
@@ -1933,7 +2222,7 @@ function itemTache(p,j,x){
   const ok=x.ok?'done':'';
   if(x.k==='lecon'){
     const ref=String(j.lecon).startsWith('ref:'),l=ref?refLecon(j.lecon):S.lecons.get(j.lecon);if(!l)return '';
-    return `<div class="item ${ok}"><span class="num" aria-hidden="true">${x.ok?'✅':'📖'}</span><div class="grow"><div class="t">Relis « ${esc(l.titre)} », puis fais le quiz</div><div class="small muted">${mchip(l.matiere)} ${x.ok?'Quiz fait, bravo !':esc(ref?'Leçon du programme':etatLecon(l).raison)}</div></div>
+    return `<div class="item ${ok}"><span class="num" aria-hidden="true">${x.ok?'✅':'📖'}</span><div class="grow"><div class="t">Relis « ${esc(l.titre)} », puis fais le quiz</div><div class="small muted">${mchip(l.matiere)} ${x.ok?'Quiz fait, bravo !':esc(ref?'Leçon du programme':etatLecon(l).raison)}</div></div>
       <button class="btn" ${ref?`data-act="cours" data-id="${esc(String(j.lecon).slice(4))}"`:`data-act="lecon" data-id="${esc(l.id)}"`}>Relire</button><button class="btn ${x.ok?'':'primary'}" data-act="quiz-lecon" data-id="${esc(j.lecon)}" data-niveau="normal">${x.ok?'Refaire':'Quiz'}</button></div>`;
   }
   if(x.k==='defi'){const tb=j.defi.type==='tables';
@@ -2011,8 +2300,8 @@ function vMatieres(){
     ${Object.keys(weeks).length?Object.entries(weeks).map(([w,ls])=>`<section class="card"><h3>Semaine du ${esc(D(w).toLocaleDateString('fr-FR',{day:'numeric',month:'long'}))}</h3><div class="stack">${ls.map(itemLecon).join('')}</div></section>`).join(''):`<div class="empty">Aucune leçon pour l'instant.</div>`}`;
   }
   return `<div class="sec-title"><h2>Mes matières</h2><div class="row"><button class="btn primary" data-act="chrono" data-v="0">Par matière</button><button class="btn" data-act="chrono" data-v="1">Chronologie</button></div></div>
-  <div class="grid">${MATIERES.map(m=>{const ls=lec.filter(l=>l.matiere===m.id);const moy=moyenne(all('notes').filter(n=>n.matiere===m.id));const dues=ls.filter(l=>etatLecon(l).due).length;
-    return `<button class="card mcard" style="--m:${m.c}" data-ico="${MAT_ICO[m.id]||'📘'}" data-act="matiere" data-v="${m.id}"><h3>${esc(m.nom)}</h3><div class="k small"><span><b>${ls.length}</b> leçon${ls.length>1?'s':''}</span>${moy!==null?`<span>Moyenne <b>${fmtN(moy)}</b>/20</span>`:''}</div><span class="small muted">${ls.length?(dues?`${dues} à réviser`:'Tout est révisé'):'Rien pour l\'instant'}</span></button>`}).join('')}</div>`;
+  <div class="grid">${MATIERES.map(m=>{const ls=lec.filter(l=>l.matiere===m.id);const moy=moyenne(all('notes').filter(n=>n.matiere===m.id));const sues=ls.filter(l=>(etatLecon(l).best??0)>=.8).length;/* ce qui est su (80 % au meilleur quiz), plutôt que ce qui reste : moins décourageant */
+    return `<button class="card mcard" style="--m:${m.c}" data-ico="${MAT_ICO[m.id]||'📘'}" data-act="matiere" data-v="${m.id}"><h3>${esc(m.nom)}</h3><div class="k small"><span><b>${ls.length}</b> leçon${ls.length>1?'s':''}</span>${moy!==null?`<span>Moyenne <b>${fmtN(moy)}</b>/20</span>`:''}</div><span class="small muted">${ls.length?(sues===ls.length?'Tout est su ✓':sues?`✓ ${sues} déjà sue${sues>1?'s':''}`:'Fais un quiz pour commencer'):'Rien pour l\'instant'}</span></button>`}).join('')}</div>`;
 }
 function itemLecon(l){const e=etatLecon(l);return `<div class="item clickable" data-act="lecon" data-id="${l.id}"><div class="grow"><div class="t">${esc(l.titre)}</div><div class="small muted">${mchip(l.matiere)} ${esc(shortDate(l.date))}${e.best!==null?` · meilleur quiz ${Math.round(e.best*100)} %`:''}${e.due?' · <strong style="color:var(--warn)">à réviser</strong>':''}</div></div><span aria-hidden="true">›</span></div>`}
 function vMatiere(){
@@ -2104,8 +2393,8 @@ async function leconSpeciale(id){
     const erreurs=e.erreurs.slice(0,8);
     const r=await askJSON(`${ROLE()}
 
-${prenom()} ne maîtrise pas encore cet objectif du programme de CM1 : « ${c.t} » (${M(c.m).nom}, ${c.d}).${dom.p?`\nPrécision du programme : ${dom.p}`:''}
-${liees.length?`\nCe qu'il a vu en classe :\n${liees.map(l=>resumeLecon(l,true)).join('\n')}`:''}${faibles.length?`\n\nSes difficultés repérées dans le cahier :\n${faibles.map(x=>'- '+x).join('\n')}`:''}${erreurs.length?`\n\nSes erreurs récentes :\n${erreurs.map(p=>`- « ${String(p.question||'').slice(0,200)} » : il a répondu « ${p.rep??''} », la bonne réponse était « ${p.bonne??''} »`).join('\n')}`:''}
+${prenom()} ne maîtrise pas encore cet objectif du programme de CM1 : « ${c.t} » (${M(c.m).nom}, ${c.d}).${dom.p?`\nPrécision du programme : ${dom.p}`:''}
+${liees.length?`\nCe qu'il a vu en classe :\n${liees.map(l=>resumeLecon(l,true)).join('\n')}`:''}${faibles.length?`\n\nSes difficultés repérées dans le cahier :\n${faibles.map(x=>'- '+x).join('\n')}`:''}${erreurs.length?`\n\nSes erreurs récentes :\n${erreurs.map(p=>`- « ${String(p.question||'').slice(0,200)} » : il a répondu « ${p.rep??''} », la bonne réponse était « ${p.bonne??''} »`).join('\n')}`:''}
 
 Écris une leçon spéciale, rien que pour lui :
 - Pars de ce qu'il sait déjà, puis explique AUTREMENT que le cahier : une image mentale, une manipulation, des étapes numérotées.
@@ -2123,7 +2412,7 @@ Réponds uniquement avec un objet JSON :
     const lid=uid();
     put('lecons',lid,{matiere:c.m,titre:'Leçon spéciale · '+(r.titre||c.t),date:TODAY(),createdAt:Date.now(),special:true,cible:id,competences:[id],
       notions:r.notions||[],resume:r.resume||'',cours:r.cours||{},entrainement:(Array.isArray(r.entrainement)?r.entrainement:[]).filter(x=>x&&x.consigne),
-      pointsFaibles:[...faibles,...erreurs.map(p=>`erreur : « ${String(p.question||'').slice(0,120)} » (il avait répondu ${p.rep??''})`)].slice(0,10),
+      pointsFaibles:[...faibles,...erreurs.map(p=>`erreur : « ${String(p.question||'').slice(0,120)} » (il avait répondu ${p.rep??''})`)].slice(0,10),
       corrections:[],transcription:'',thumbs:[],questions:[]});
     state.special=null;go('lecon',lid);toast('Ta leçon spéciale est prête. Lis-la, puis fais le quiz !');
   }catch(err){state.special={id,err:errMsg(err)};render()}
@@ -2312,7 +2601,11 @@ const HIBOU=`<svg class="hibou-attente" viewBox="0 0 150 100" aria-hidden="true"
 const HIBOU_MANGA=`<svg class="hibou-attente" viewBox="0 0 150 100" aria-hidden="true"><g class="corps"><g transform="translate(0 6) scale(.78)"><path d="M28 30l8 14M92 30l-8 14" stroke="#7048e8" stroke-width="8" stroke-linecap="round"/><ellipse cx="60" cy="68" rx="38" ry="42" fill="#845ef7"/><ellipse cx="60" cy="80" rx="24" ry="26" fill="#e5dbff"/><path d="M44 78q4 3 8 0M56 86q4 3 8 0M68 78q4 3 8 0M50 94q4 3 8 0M62 94q4 3 8 0" stroke="#b197fc" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="44" cy="52" r="15" fill="#fff"/><circle cx="76" cy="52" r="15" fill="#fff"/><circle cx="47" cy="55" r="9" fill="#22184a"/><circle cx="73" cy="55" r="9" fill="#22184a"/><circle cx="50" cy="51" r="3.2" fill="#fff"/><circle cx="76" cy="51" r="3.2" fill="#fff"/><circle cx="44" cy="58" r="1.6" fill="#fff"/><circle cx="70" cy="58" r="1.6" fill="#fff"/><path d="M31 39l16 8M89 39l-16 8" stroke="#22184a" stroke-width="4" stroke-linecap="round"/><path d="M55 64l5 7 5-7z" fill="#ffa94d"/><path d="M24 36q36-12 72 0v9q-36-12-72 0z" fill="#e03131" stroke="#151417" stroke-width="2.5" stroke-linejoin="round"/><circle cx="60" cy="34" r="5" fill="#fff" stroke="#151417" stroke-width="2"/><path d="M96 38q10-2 18-10M96 42q12 2 20-4" stroke="#e03131" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M0 60h16M2 72h12M0 84h16" stroke="#151417" stroke-width="2.5" stroke-linecap="round" opacity=".55"/></g></g><g class="epee"><path d="M76 65V24q0-5 3-9" stroke="#151417" stroke-width="6.5" stroke-linecap="round" fill="none"/><path d="M76 64V24q0-5 3-9" stroke="#e9ecef" stroke-width="3.5" stroke-linecap="round" fill="none"/><ellipse cx="76" cy="67" rx="7" ry="2.6" fill="#151417"/><path d="M76 69v10" stroke="#e03131" stroke-width="5" stroke-linecap="round"/><path d="M74 71l4 2M74 75l4 2" stroke="#151417" stroke-width="1.3"/></g>${['3/20','5/20','2/10'].map((n,i)=>`<g class="mauvaise n${i+1}"><rect x="102" y="34" width="44" height="24" rx="6" fill="#fff5f5" stroke="#e03131" stroke-width="2"/><text x="124" y="51" text-anchor="middle" font-size="15" font-weight="700" fill="#c92a2a">${n}</text></g>`).join('')}</svg>`;
 const HIBOU_FEE=`<svg class="hibou-attente" viewBox="0 0 150 100" aria-hidden="true"><g class="corps"><g transform="translate(0 6) scale(.78)"><path d="M28 30l8 14M92 30l-8 14" stroke="#7048e8" stroke-width="8" stroke-linecap="round"/><path d="M30 62C4 34-6 70 22 80M90 62c26-28 36 8 8 18" fill="#d0ebff" fill-opacity=".85" stroke="#a5d8ff" stroke-width="2.5"/><ellipse cx="60" cy="68" rx="38" ry="42" fill="#845ef7"/><ellipse cx="60" cy="80" rx="24" ry="26" fill="#e5dbff"/><path d="M44 78q4 3 8 0M56 86q4 3 8 0M68 78q4 3 8 0M50 94q4 3 8 0M62 94q4 3 8 0" stroke="#b197fc" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="44" cy="52" r="15" fill="#fff"/><circle cx="76" cy="52" r="15" fill="#fff"/><circle cx="47" cy="55" r="8" fill="#22184a"/><circle cx="73" cy="55" r="8" fill="#22184a"/><circle cx="50" cy="52" r="2.8" fill="#fff"/><circle cx="76" cy="52" r="2.8" fill="#fff"/><ellipse cx="36" cy="66" rx="5" ry="3" fill="#ff8fc7" opacity=".7"/><ellipse cx="84" cy="66" rx="5" ry="3" fill="#ff8fc7" opacity=".7"/><path d="M31 39l16 8M89 39l-16 8" stroke="#22184a" stroke-width="4" stroke-linecap="round"/><path d="M55 64l5 7 5-7z" fill="#ffa94d"/><path d="M30 34q30-14 60 0" stroke="#69db7c" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="36" cy="31" r="6" fill="#ff8fc7" stroke="#fff" stroke-width="2"/><circle cx="36" cy="31" r="2" fill="#ffd43b"/><circle cx="48" cy="25" r="6" fill="#ffa8a8" stroke="#fff" stroke-width="2"/><circle cx="48" cy="25" r="2" fill="#ffd43b"/><circle cx="60" cy="23" r="6" fill="#ff8fc7" stroke="#fff" stroke-width="2"/><circle cx="60" cy="23" r="2" fill="#ffd43b"/><circle cx="72" cy="25" r="6" fill="#ffa8a8" stroke="#fff" stroke-width="2"/><circle cx="72" cy="25" r="2" fill="#ffd43b"/><circle cx="84" cy="31" r="6" fill="#ff8fc7" stroke="#fff" stroke-width="2"/><circle cx="84" cy="31" r="2" fill="#ffd43b"/><path d="M8 74l2 5 5 2-5 2-2 5-2-5-5-2 5-2zM16 92l1.4 3 3 1.4-3 1.4-1.4 3-1.4-3-3-1.4 3-1.4z" fill="#ffd43b"/></g></g><g class="epee"><path d="M76 78V30" stroke="#ae3ec9" stroke-width="5" stroke-linecap="round"/><path d="M76 74V32" stroke="#e599f7" stroke-width="1.6"/><path d="M76 13l3.5 7.3 8 1.1-5.8 5.6 1.4 8-7.1-3.8-7.1 3.8 1.4-8-5.8-5.6 8-1.1z" fill="#ffd43b" stroke="#f08c00" stroke-width="1.8" stroke-linejoin="round"/><path d="M90 14l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1zM62 18l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" fill="#ffd43b"/></g>${['3/20','5/20','2/10'].map((n,i)=>`<g class="mauvaise n${i+1}"><rect x="102" y="34" width="44" height="24" rx="6" fill="#fff5f5" stroke="#e03131" stroke-width="2"/><text x="124" y="51" text-anchor="middle" font-size="15" font-weight="700" fill="#c92a2a">${n}</text></g>`).join('')}</svg>`;
 const HIBOU_DINO=`<svg class="hibou-attente" viewBox="0 0 150 100" aria-hidden="true"><g class="corps"><g transform="translate(0 6) scale(.78)"><path d="M28 30l8 14M92 30l-8 14" stroke="#7048e8" stroke-width="8" stroke-linecap="round"/><ellipse cx="60" cy="68" rx="38" ry="42" fill="#845ef7"/><path d="M24 74q36 14 72 0l-4 34q-32 10-64 0z" fill="#f08c00" stroke="#a35a00" stroke-width="2" stroke-linejoin="round"/><path d="M24 74l8 6 8-6 8 6 8-6 8 6 8-6 8 6 8-6 8 6 8-6" stroke="#a35a00" stroke-width="2" fill="none"/><g fill="#7a4a1f"><ellipse cx="40" cy="90" rx="4" ry="3"/><ellipse cx="58" cy="98" rx="4.5" ry="3"/><ellipse cx="76" cy="90" rx="4" ry="3"/><ellipse cx="66" cy="84" rx="3" ry="2"/><ellipse cx="48" cy="102" rx="3" ry="2"/></g><circle cx="44" cy="52" r="15" fill="#fff"/><circle cx="76" cy="52" r="15" fill="#fff"/><circle cx="47" cy="55" r="7" fill="#22184a"/><circle cx="73" cy="55" r="7" fill="#22184a"/><path d="M31 39l16 8M89 39l-16 8" stroke="#22184a" stroke-width="4" stroke-linecap="round"/><path d="M55 64l5 7 5-7z" fill="#ffa94d"/><path d="M40 32q4-14 10-6 4-14 10-4 6-12 10 4 8-8 10 6" fill="#5f3dc4"/><g transform="rotate(-14 60 22)"><rect x="44" y="19" width="32" height="6" rx="3" fill="#fff9ec" stroke="#8a6d4b" stroke-width="1.8"/><circle cx="44" cy="18.5" r="4" fill="#fff9ec" stroke="#8a6d4b" stroke-width="1.8"/><circle cx="44" cy="25.5" r="4" fill="#fff9ec" stroke="#8a6d4b" stroke-width="1.8"/><circle cx="76" cy="18.5" r="4" fill="#fff9ec" stroke="#8a6d4b" stroke-width="1.8"/><circle cx="76" cy="25.5" r="4" fill="#fff9ec" stroke="#8a6d4b" stroke-width="1.8"/><rect x="45" y="20" width="30" height="4" fill="#fff9ec"/></g><ellipse cx="11" cy="88" rx="10" ry="13" fill="#e9fac8" stroke="#74b816" stroke-width="2.5"/><circle cx="8" cy="83" r="2.2" fill="#74b816"/><circle cx="14" cy="92" r="2.6" fill="#74b816"/><circle cx="7" cy="95" r="1.6" fill="#74b816"/><path d="M3 82l4 3 3-4 4 4 3-3" stroke="#5c940d" stroke-width="1.6" fill="none"/></g></g><g class="epee"><path d="M76 78V44" stroke="#8d5524" stroke-width="6" stroke-linecap="round"/><path d="M76 48q-11-4-9-18 2-12 9-14 7 2 9 14 2 14-9 18z" fill="#a0652d" stroke="#6b3d16" stroke-width="2" stroke-linejoin="round"/><path d="M71 26l3 2M80 32l-3 2M72 38l3 1" stroke="#6b3d16" stroke-width="1.6" stroke-linecap="round"/></g>${['3/20','5/20','2/10'].map((n,i)=>`<g class="mauvaise n${i+1}"><rect x="102" y="34" width="44" height="24" rx="6" fill="#fff5f5" stroke="#e03131" stroke-width="2"/><text x="124" y="51" text-anchor="middle" font-size="15" font-weight="700" fill="#c92a2a">${n}</text></g>`).join('')}</svg>`;
-const LOGO={excalibur:`<svg width="52" height="52" viewBox="0 0 40 40" aria-hidden="true"><path d="M17.5 14.5h5v15h-5z" fill="#e9ecef" stroke="#868e96" stroke-width="1"/><path d="M20 15v14" stroke="#adb5bd" stroke-width="1"/><rect x="18.5" y="5" width="3" height="6.5" rx="1" fill="#8d5524"/><circle cx="20" cy="3.5" r="2.5" fill="#ffd43b" stroke="#f08c00" stroke-width="1"/><rect x="11" y="11" width="18" height="3.5" rx="1.75" fill="#ffd43b" stroke="#f08c00" stroke-width="1"/><path d="M4 37q0-11 9-12 4-3 9-1 8-1 11 4 4 3 3 9z" fill="var(--accent)"/><path d="M10 31q3-2 6-1M25 30q3-1 5 1" stroke="#fff" stroke-width="1.5" fill="none" opacity=".5" stroke-linecap="round"/><path d="M6 8l1 2 2 1-2 1-1 2-1-2-2-1 2-1zM33 5l.8 1.6 1.6.8-1.6.8-.8 1.6-.8-1.6-1.6-.8 1.6-.8z" fill="#ffd43b"/></svg>`,dino:`<svg width="52" height="52" viewBox="0 0 40 40" aria-hidden="true"><path d="M2 37q18-5 36 0" stroke="#5c940d" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M5 30q4-10 14-10 6 0 9-6 1-6 4-8 4-1 5 2 1 3-3 3-2 0-3 4-2 8-6 12 2 4 1 9h-3l-1-6q-3 1-6 0l-1 6h-3l-1-6q-5 0-10 2z" fill="#74b816" stroke="#2b5c06" stroke-width="1.3" stroke-linejoin="round"/><circle cx="34.5" cy="7.4" r="1" fill="#2b5c06"/><path d="M13 21l1.5-2.5 1.5 2.3 1.6-2.6 1.4 2.4 1.7-2.4" stroke="#ffa94d" stroke-width="1.6" fill="none" stroke-linejoin="round"/><g fill="#e9fac8" opacity=".9"><circle cx="15" cy="25" r="1.6"/><circle cx="20" cy="26" r="1.2"/><circle cx="23" cy="23" r="1.3"/></g></svg>`,fee:`<svg width="52" height="52" viewBox="0 0 40 40" aria-hidden="true"><path d="M8 34L24 15" stroke="#ae3ec9" stroke-width="3.2" stroke-linecap="round"/><path d="M9 33L23.5 15.6" stroke="#e599f7" stroke-width="1"/><path d="M27 4l2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.3 2.8 1-5.9-4.3-4.1 6-.8z" fill="#ffd43b" stroke="#f08c00" stroke-width="1.3" stroke-linejoin="round"/><path d="M10 9l1 2.4 2.4 1-2.4 1-1 2.4-1-2.4-2.4-1 2.4-1zM34 25l.8 1.8 1.8.8-1.8.8-.8 1.8-.8-1.8-1.8-.8 1.8-.8z" fill="#ff8fc7"/><circle cx="17" cy="6" r="1.3" fill="#74c0fc"/><circle cx="31" cy="33" r="1.3" fill="#ffd43b"/><path d="M4 37q16-8 32 0" stroke="var(--accent)" stroke-width="2" fill="none" stroke-linecap="round" opacity=".6"/></svg>`,manga:`<svg width="52" height="52" viewBox="0 0 40 40" aria-hidden="true"><path d="M2 6q18 3 36 0l-1 4q-17 2-34 0z" fill="var(--trait)"/><path d="M5 12h30v3.5H5z" fill="#e03131" stroke="var(--trait)" stroke-width="1.3"/><path d="M23 10h9v28h-9z" fill="#e03131" stroke="var(--trait)" stroke-width="1.5"/><path d="M22 35h11v4H22z" fill="var(--trait)"/><path d="M25 18v14" stroke="#ff8787" stroke-width="1.4" stroke-linecap="round"/><g transform="translate(22 24) rotate(18)"><path d="M0-9l2.4 6.6L9 0l-6.6 2.4L0 9l-2.4-6.6L-9 0l6.6-2.4z" fill="#868e96" stroke="var(--trait)" stroke-width="1.4" stroke-linejoin="round"/><path d="M0-6.5l1.2 3.6M6.5 0l-3.6 1.2" stroke="#dee2e6" stroke-width="1" stroke-linecap="round"/><circle r="1.8" fill="#fff" stroke="var(--trait)" stroke-width="1.1"/></g><path d="M10 18l-4-2M9 24H4M10 30l-4 2" stroke="var(--trait)" stroke-width="1.5" stroke-linecap="round"/></svg>`};
+const HIBOU_GALAXIE=`<svg class="hibou-attente" viewBox="0 0 150 100" aria-hidden="true"><g class="corps"><g transform="translate(0 6) scale(.78)"><path d="M28 30l8 14M92 30l-8 14" stroke="#7048e8" stroke-width="8" stroke-linecap="round"/><ellipse cx="60" cy="68" rx="38" ry="42" fill="#845ef7"/><ellipse cx="60" cy="80" rx="24" ry="26" fill="#e5dbff"/><path d="M44 78q4 3 8 0M56 86q4 3 8 0M68 78q4 3 8 0M50 94q4 3 8 0M62 94q4 3 8 0" stroke="#b197fc" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="44" cy="52" r="15" fill="#fff"/><circle cx="76" cy="52" r="15" fill="#fff"/><circle cx="47" cy="55" r="7" fill="#22184a"/><circle cx="73" cy="55" r="7" fill="#22184a"/><path d="M31 39l16 8M89 39l-16 8" stroke="#22184a" stroke-width="4" stroke-linecap="round"/><path d="M55 64l5 7 5-7z" fill="#ffa94d"/><path d="M25 44q35-30 70 0" stroke="#495057" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="24" cy="50" r="7" fill="#ced4da" stroke="#495057" stroke-width="2.5"/><circle cx="96" cy="50" r="7" fill="#ced4da" stroke="#495057" stroke-width="2.5"/><path d="M24 57q2 12 16 14" stroke="#495057" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="41" cy="71" r="3" fill="#e03131"/><path d="M8 80l1.4 3.6 3.6 1.4-3.6 1.4-1.4 3.6-1.4-3.6-3.6-1.4 3.6-1.4z" fill="#ffd43b"/></g></g><g class="epee"><path d="M76 66V18" stroke="#4dabf7" stroke-width="10" stroke-linecap="round" opacity=".35"/><path d="M76 66V18" stroke="#4dabf7" stroke-width="6" stroke-linecap="round"/><path d="M76 64V20" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><rect x="72" y="66" width="8" height="16" rx="2" fill="#ced4da" stroke="#495057" stroke-width="1.6"/><path d="M72 71h8M72 75h8" stroke="#495057" stroke-width="1.2"/></g>${['3/20','5/20','2/10'].map((n,i)=>`<g class="mauvaise n${i+1}"><rect x="102" y="34" width="44" height="24" rx="6" fill="#fff5f5" stroke="#e03131" stroke-width="2"/><text x="124" y="51" text-anchor="middle" font-size="15" font-weight="700" fill="#c92a2a">${n}</text></g>`).join('')}</svg>`;
+const HIBOU_DRESSEUR=`<svg class="hibou-attente" viewBox="0 0 150 100" aria-hidden="true"><g class="corps"><g transform="translate(0 6) scale(.78)"><path d="M28 30l8 14M92 30l-8 14" stroke="#7048e8" stroke-width="8" stroke-linecap="round"/><ellipse cx="60" cy="68" rx="38" ry="42" fill="#845ef7"/><ellipse cx="60" cy="80" rx="24" ry="26" fill="#e5dbff"/><path d="M44 78q4 3 8 0M56 86q4 3 8 0M68 78q4 3 8 0M50 94q4 3 8 0M62 94q4 3 8 0" stroke="#b197fc" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="44" cy="52" r="15" fill="#fff"/><circle cx="76" cy="52" r="15" fill="#fff"/><circle cx="47" cy="55" r="7" fill="#22184a"/><circle cx="73" cy="55" r="7" fill="#22184a"/><path d="M31 39l16 8M89 39l-16 8" stroke="#22184a" stroke-width="4" stroke-linecap="round"/><path d="M55 64l5 7 5-7z" fill="#ffa94d"/><g transform="translate(0 -8)"><path d="M22 46q38-46 76 0z" fill="#ee1515"/><path d="M60 13q16 2 22 20H38q6-18 22-20z" fill="#fff"/><circle cx="60" cy="25" r="5" fill="#e03131"/><path d="M22 46q38-10 76 0" stroke="#c92a2a" stroke-width="3" fill="none"/><path d="M80 44q20-6 32 4q-14 6-32 2z" fill="#c92a2a"/></g></g></g><g class="epee"><path d="M76 66V40" stroke="#495057" stroke-width="2" stroke-dasharray="3 4" stroke-linecap="round"/><path d="M65 28a11 11 0 0 1 22 0z" fill="#e03131"/><path d="M65 28a11 11 0 0 0 22 0z" fill="#fff"/><circle cx="76" cy="28" r="11" fill="none" stroke="#212529" stroke-width="2.2"/><path d="M65 28h22" stroke="#212529" stroke-width="2.6"/><circle cx="76" cy="28" r="3.5" fill="#fff" stroke="#212529" stroke-width="2.2"/></g>${['3/20','5/20','2/10'].map((n,i)=>`<g class="mauvaise n${i+1}"><rect x="102" y="34" width="44" height="24" rx="6" fill="#fff5f5" stroke="#e03131" stroke-width="2"/><text x="124" y="51" text-anchor="middle" font-size="15" font-weight="700" fill="#c92a2a">${n}</text></g>`).join('')}</svg>`;
+const HIBOU_CHAMPIGNON=`<svg class="hibou-attente" viewBox="0 0 150 100" aria-hidden="true"><g class="corps"><g transform="translate(0 6) scale(.78)"><path d="M28 30l8 14M92 30l-8 14" stroke="#7048e8" stroke-width="8" stroke-linecap="round"/><ellipse cx="60" cy="68" rx="38" ry="42" fill="#845ef7"/><ellipse cx="60" cy="80" rx="24" ry="26" fill="#e5dbff"/><path d="M44 78q4 3 8 0M56 86q4 3 8 0M68 78q4 3 8 0M50 94q4 3 8 0M62 94q4 3 8 0" stroke="#b197fc" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M36 92q24 16 48 0v12q-24 12-48 0z" fill="#049cd8"/><circle cx="44" cy="52" r="15" fill="#fff"/><circle cx="76" cy="52" r="15" fill="#fff"/><circle cx="47" cy="55" r="7" fill="#22184a"/><circle cx="73" cy="55" r="7" fill="#22184a"/><path d="M31 39l16 8M89 39l-16 8" stroke="#22184a" stroke-width="4" stroke-linecap="round"/><g transform="translate(0 -8)"><path d="M22 46q38-46 76 0z" fill="#43b047"/><path d="M26 46q34 12 68 0q-2 8-34 10-32-2-34-10z" fill="#1b6e2e"/><circle cx="60" cy="28" r="9" fill="#fff"/><text x="60" y="33" text-anchor="middle" font-size="13" font-weight="900" fill="#1b6e2e" font-family="Arial,sans-serif">?</text></g><path d="M42 74q9-8 18-1 9-7 18 1-6 6-18 2-12 4-18-2z" fill="#5c3b1e"/><path d="M55 64l5 7 5-7z" fill="#ffa94d"/></g></g><g class="epee"><path d="M76 82V30" stroke="#8d5524" stroke-width="5" stroke-linecap="round"/><rect x="62" y="14" width="28" height="18" rx="3" fill="#ced4da" stroke="#495057" stroke-width="2"/><path d="M68 14v18M84 14v18" stroke="#495057" stroke-width="1.5"/></g>${['3/20','5/20','2/10'].map((n,i)=>`<g class="mauvaise n${i+1}"><rect x="102" y="34" width="44" height="24" rx="6" fill="#fff5f5" stroke="#e03131" stroke-width="2"/><text x="124" y="51" text-anchor="middle" font-size="15" font-weight="700" fill="#c92a2a">${n}</text></g>`).join('')}</svg>`;
+const HIBOU_SORCIER=`<svg class="hibou-attente" viewBox="0 0 150 100" aria-hidden="true"><g class="corps"><g transform="translate(0 6) scale(.78)"><path d="M28 30l8 14M92 30l-8 14" stroke="#7048e8" stroke-width="8" stroke-linecap="round"/><ellipse cx="60" cy="68" rx="38" ry="42" fill="#845ef7"/><ellipse cx="60" cy="80" rx="24" ry="26" fill="#e5dbff"/><path d="M44 78q4 3 8 0M56 86q4 3 8 0M68 78q4 3 8 0M50 94q4 3 8 0M62 94q4 3 8 0" stroke="#b197fc" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="44" cy="52" r="15" fill="#fff"/><circle cx="76" cy="52" r="15" fill="#fff"/><circle cx="47" cy="55" r="7" fill="#22184a"/><circle cx="73" cy="55" r="7" fill="#22184a"/><path d="M31 39l16 8M89 39l-16 8" stroke="#22184a" stroke-width="4" stroke-linecap="round"/><path d="M26 74q34 14 68 0v9q-34 14-68 0z" fill="#740001"/><path d="M36 79.5v9M48 82v9M60 83v9M72 82v9M84 79.5v9" stroke="#d3a625" stroke-width="4"/><path d="M70 86h11v22H70z" fill="#740001"/><path d="M70 92h11M70 99h11" stroke="#d3a625" stroke-width="3"/><path d="M71 108v4M75.5 108v4M80 108v4" stroke="#740001" stroke-width="2"/><path d="M55 64l5 7 5-7z" fill="#ffa94d"/><path d="M34 40L70 0l12 40z" fill="#343a40"/><path d="M56 22l3 1.5-1 3" stroke="#ffd43b" stroke-width="1.6" fill="none"/><circle cx="66" cy="28" r="1.8" fill="#ffd43b"/><path d="M48 30l1.2 2.6 2.6 1.2-2.6 1.2-1.2 2.6-1.2-2.6-2.6-1.2 2.6-1.2z" fill="#ffd43b"/><ellipse cx="60" cy="40" rx="38" ry="7" fill="#212529"/><path d="M38 38q22 6 44 0" stroke="#7b2d26" stroke-width="4" fill="none"/></g></g><g class="epee"><path d="M76 80L80 24" stroke="#8d5524" stroke-width="4" stroke-linecap="round"/><path d="M81 12l1.8 4.4 4.4 1.8-4.4 1.8-1.8 4.4-1.8-4.4-4.4-1.8 4.4-1.8z" fill="#ffd43b"/><circle cx="72" cy="12" r="1.6" fill="#ffd43b"/><circle cx="90" cy="24" r="1.6" fill="#ffd43b"/></g>${['3/20','5/20','2/10'].map((n,i)=>`<g class="mauvaise n${i+1}"><rect x="102" y="34" width="44" height="24" rx="6" fill="#fff5f5" stroke="#e03131" stroke-width="2"/><text x="124" y="51" text-anchor="middle" font-size="15" font-weight="700" fill="#c92a2a">${n}</text></g>`).join('')}</svg>`;
+const LOGO={excalibur:`<svg width="52" height="52" viewBox="0 0 40 40" aria-hidden="true"><path d="M17.5 14.5h5v15h-5z" fill="#e9ecef" stroke="#868e96" stroke-width="1"/><path d="M20 15v14" stroke="#adb5bd" stroke-width="1"/><rect x="18.5" y="5" width="3" height="6.5" rx="1" fill="#8d5524"/><circle cx="20" cy="3.5" r="2.5" fill="#ffd43b" stroke="#f08c00" stroke-width="1"/><rect x="11" y="11" width="18" height="3.5" rx="1.75" fill="#ffd43b" stroke="#f08c00" stroke-width="1"/><path d="M4 37q0-11 9-12 4-3 9-1 8-1 11 4 4 3 3 9z" fill="var(--accent)"/><path d="M10 31q3-2 6-1M25 30q3-1 5 1" stroke="#fff" stroke-width="1.5" fill="none" opacity=".5" stroke-linecap="round"/><path d="M6 8l1 2 2 1-2 1-1 2-1-2-2-1 2-1zM33 5l.8 1.6 1.6.8-1.6.8-.8 1.6-.8-1.6-1.6-.8 1.6-.8z" fill="#ffd43b"/></svg>`,dino:`<svg width="52" height="52" viewBox="0 0 40 40" aria-hidden="true"><path d="M2 37q18-5 36 0" stroke="#5c940d" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M5 30q4-10 14-10 6 0 9-6 1-6 4-8 4-1 5 2 1 3-3 3-2 0-3 4-2 8-6 12 2 4 1 9h-3l-1-6q-3 1-6 0l-1 6h-3l-1-6q-5 0-10 2z" fill="#74b816" stroke="#2b5c06" stroke-width="1.3" stroke-linejoin="round"/><circle cx="34.5" cy="7.4" r="1" fill="#2b5c06"/><path d="M13 21l1.5-2.5 1.5 2.3 1.6-2.6 1.4 2.4 1.7-2.4" stroke="#ffa94d" stroke-width="1.6" fill="none" stroke-linejoin="round"/><g fill="#e9fac8" opacity=".9"><circle cx="15" cy="25" r="1.6"/><circle cx="20" cy="26" r="1.2"/><circle cx="23" cy="23" r="1.3"/></g></svg>`,fee:`<svg width="52" height="52" viewBox="0 0 40 40" aria-hidden="true"><path d="M8 34L24 15" stroke="#ae3ec9" stroke-width="3.2" stroke-linecap="round"/><path d="M9 33L23.5 15.6" stroke="#e599f7" stroke-width="1"/><path d="M27 4l2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.3 2.8 1-5.9-4.3-4.1 6-.8z" fill="#ffd43b" stroke="#f08c00" stroke-width="1.3" stroke-linejoin="round"/><path d="M10 9l1 2.4 2.4 1-2.4 1-1 2.4-1-2.4-2.4-1 2.4-1zM34 25l.8 1.8 1.8.8-1.8.8-.8 1.8-.8-1.8-1.8-.8 1.8-.8z" fill="#ff8fc7"/><circle cx="17" cy="6" r="1.3" fill="#74c0fc"/><circle cx="31" cy="33" r="1.3" fill="#ffd43b"/><path d="M4 37q16-8 32 0" stroke="var(--accent)" stroke-width="2" fill="none" stroke-linecap="round" opacity=".6"/></svg>`,manga:`<svg width="52" height="52" viewBox="0 0 40 40" aria-hidden="true"><path d="M2 6q18 3 36 0l-1 4q-17 2-34 0z" fill="var(--trait)"/><path d="M5 12h30v3.5H5z" fill="#e03131" stroke="var(--trait)" stroke-width="1.3"/><path d="M23 10h9v28h-9z" fill="#e03131" stroke="var(--trait)" stroke-width="1.5"/><path d="M22 35h11v4H22z" fill="var(--trait)"/><path d="M25 18v14" stroke="#ff8787" stroke-width="1.4" stroke-linecap="round"/><g transform="translate(22 24) rotate(18)"><path d="M0-9l2.4 6.6L9 0l-6.6 2.4L0 9l-2.4-6.6L-9 0l6.6-2.4z" fill="#868e96" stroke="var(--trait)" stroke-width="1.4" stroke-linejoin="round"/><path d="M0-6.5l1.2 3.6M6.5 0l-3.6 1.2" stroke="#dee2e6" stroke-width="1" stroke-linecap="round"/><circle r="1.8" fill="#fff" stroke="var(--trait)" stroke-width="1.1"/></g><path d="M10 18l-4-2M9 24H4M10 30l-4 2" stroke="var(--trait)" stroke-width="1.5" stroke-linecap="round"/></svg>`,galaxie:`<svg width="52" height="52" viewBox="0 0 40 40" aria-hidden="true"><circle cx="15" cy="25" r="9" fill="var(--accent)"/><path d="M9 21q6-3 12 1M8 28q5 2 11 0" stroke="#fff" stroke-width="1.3" fill="none" opacity=".45" stroke-linecap="round"/><ellipse cx="15" cy="25" rx="14" ry="3.6" transform="rotate(-18 15 25)" fill="none" stroke="#ffd43b" stroke-width="1.8"/><path d="M26 32L36 6" stroke="#4dabf7" stroke-width="4.5" stroke-linecap="round" opacity=".4"/><path d="M26 32L36 6" stroke="#4dabf7" stroke-width="2.6" stroke-linecap="round"/><path d="M26.6 30.4L35.6 7" stroke="#fff" stroke-width="1" stroke-linecap="round"/><path d="M23.4 38.6l2.8-7.2" stroke="#495057" stroke-width="3.4" stroke-linecap="round"/><path d="M6 6l1 2.2 2.2 1-2.2 1-1 2.2-1-2.2-2.2-1 2.2-1zM29 2l.7 1.4 1.4.7-1.4.7-.7 1.4-.7-1.4-1.4-.7 1.4-.7z" fill="#ffd43b"/><circle cx="24" cy="11" r="1" fill="#ffd43b"/></svg>`,dresseur:`<svg width="52" height="52" viewBox="0 0 40 40" aria-hidden="true"><path d="M5 20a15 15 0 0 1 30 0z" fill="var(--accent)"/><path d="M5 20a15 15 0 0 0 30 0z" fill="#fff"/><circle cx="20" cy="20" r="15" fill="none" stroke="#212529" stroke-width="2.2"/><path d="M5 20h30" stroke="#212529" stroke-width="2.6"/><circle cx="20" cy="20" r="4.8" fill="#fff" stroke="#212529" stroke-width="2.2"/><path d="M33 5l.8 1.8 1.8.8-1.8.8-.8 1.8-.8-1.8-1.8-.8 1.8-.8z" fill="#ffd43b"/></svg>`,champignon:`<svg width="52" height="52" viewBox="0 0 40 40" aria-hidden="true"><path d="M3 22q0-18 17-18t17 18z" fill="var(--accent)"/><circle cx="20" cy="11" r="4.5" fill="#fff"/><circle cx="9" cy="17" r="3" fill="#fff"/><circle cx="31" cy="17" r="3" fill="#fff"/><path d="M12 22h16v10q-8 5-16 0z" fill="#fff3e0" stroke="#b08968" stroke-width="1.2"/><ellipse cx="17" cy="26" rx="1.3" ry="2.4" fill="#212529"/><ellipse cx="23" cy="26" rx="1.3" ry="2.4" fill="#212529"/></svg>`,sorcier:`<svg width="52" height="52" viewBox="0 0 40 40" aria-hidden="true"><path d="M8 32L23 3l9 29z" fill="var(--accent)"/><ellipse cx="20" cy="32" rx="18" ry="4" fill="var(--accent)"/><path d="M10 30q10 3 21 0" stroke="#ffd43b" stroke-width="2" fill="none"/><path d="M20 15l1 2.3 2.3 1-2.3 1-1 2.3-1-2.3-2.3-1 2.3-1z" fill="#ffd43b"/><circle cx="34" cy="8" r="1.3" fill="#ffd43b"/><circle cx="6" cy="14" r="1" fill="#ffd43b"/></svg>`};
 /* L'icône de l'onglet reprend le logo du skin ; Excalibur garde celle écrite dans l'en-tête de la page.
    Une icône ne lit pas les variables CSS : on y met des couleurs fixes. */
 const ICONE_EXCALIBUR=document.querySelector('link[rel="icon"]').href;
@@ -2320,7 +2613,7 @@ function majIcone(skin){
   const svg=LOGO[skin].replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" ').replace(/var\(--trait\)/g,'#151417').replace(/var\(--accent\)/g,'#d9480f').replace(/var\(--surface\)/g,'#fff');
   document.querySelector('link[rel="icon"]').href=skin==='excalibur'?ICONE_EXCALIBUR:'data:image/svg+xml,'+encodeURIComponent(svg);
 }
-const HIBOU_SKIN={excalibur:HIBOU,manga:HIBOU_MANGA,fee:HIBOU_FEE,dino:HIBOU_DINO};
+const HIBOU_SKIN={excalibur:HIBOU,manga:HIBOU_MANGA,fee:HIBOU_FEE,dino:HIBOU_DINO,galaxie:HIBOU_GALAXIE,dresseur:HIBOU_DRESSEUR,champignon:HIBOU_CHAMPIGNON,sorcier:HIBOU_SORCIER};
 /* Durée écoulée au format m:ss (0:00, 1:05, 10:00). */
 function duree(ms){const s=Math.max(0,Math.floor(ms/1000));return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`}
 const casesPhotos=c=>Array.from({length:c.n},(_,k)=>`<span class="case${k<c.i-1?' faite':k===c.i-1?' en-cours':''}"></span>`).join('');
@@ -2346,7 +2639,7 @@ function vAjouter(){
       <span class="small muted">Jusqu'à ${maxImages} photos : une leçon, des exercices, une évaluation, ton agenda, un mot de la maîtresse… Je trouve tout seul de quoi il s'agit.</span>
     </label>
     <input type="file" id="photo-in" accept="image/*" multiple hidden>
-    ${a.images.length?`<div class="thumbs">${a.images.map((im,i)=>`<div class="stack" style="gap:4px;align-items:center"><img src="${esc(im.thumb||'')}" alt="Photo ${i+1}"><button class="btn ghost small" data-act="rm-img" data-v="${i}">Retirer</button></div>`).join('')}</div>`:''}
+    ${a.images.length?`<div class="thumbs">${a.images.map((im,i)=>`<div class="stack" style="gap:4px;align-items:center"><img src="${esc(im.thumb||'')}" alt="Photo ${i+1}">${photoDejaRangee(im)}<button class="btn ghost small" data-act="rm-img" data-v="${i}">Retirer</button></div>`).join('')}</div>`:''}
     <h3>2. Dis-moi en quelques mots (facultatif)</h3>
     <div class="form-grid"><label class="f">Ce qu'on a fait<input type="text" id="add-indice" value="${esc(a.indice)}" placeholder="ex : les fractions, mon agenda, l'évaluation de dictée…"></label><label class="f">Date<input type="date" id="add-date" value="${esc(a.date)}"></label></div>
     ${a.charge?attente(`Je charge la photo ${a.charge.i} sur ${a.charge.n}…`,{charge:a.charge}):''}
@@ -2378,9 +2671,10 @@ function vApercu(){
   </section>
   ${rien?'':`<form class="stack" data-form="save-res">
     ${LL.map((l,j)=>{const ex=l.exercices,nJ=ex.filter(x=>x.juste===true).length;
-      return `<section class="card stack"><label class="row" style="font-weight:700"><input type="checkbox" class="chk" name="kl${j}" checked> ${plus?`Ranger la leçon ${j+1} sur ${LL.length}`:r.genre==='lecon'?'Ranger la leçon':'Ranger la leçon de cette notion'} (+5 étoiles)</label>
+      return `<section class="card stack">${l.deja?`<input type="hidden" name="kl${j}" value="on"><h3>${plus?`Leçon ${j+1} sur ${LL.length}`:'La fiche'}</h3>`:`<label class="row" style="font-weight:700"><input type="checkbox" class="chk" name="kl${j}" checked> ${plus?`Ranger la leçon ${j+1} sur ${LL.length}`:r.genre==='lecon'?'Ranger la leçon':'Ranger la leçon de cette notion'} (+5 étoiles)</label>`}
       <div class="form-grid"><label class="f">Titre<input type="text" name="lTitre${j}" value="${esc(l.titre||'')}" required></label><label class="f">Matière<select name="lMat${j}">${matOptions(l.matiere)}</select></label><label class="f">Date<input type="date" name="lDate${j}" value="${esc(a.date)}"></label></div>
       ${l.resume?`<p><strong>En bref :</strong> ${rich(l.resume)}</p>`:''}
+      ${vDejaRangee(l,j)}${vEtatFiche(l.fiche)}
       ${ex.length?`<div><h3>Tes exercices : ${nJ} juste${nJ>1?'s':''} sur ${ex.length}</h3>${lignesExercices(ex)}</div>`:''}
       ${l.pointsFaibles.length?`<div class="note-box"><strong>Ce qu'on va retravailler ensemble :</strong><ul>${l.pointsFaibles.map(x=>`<li>${rich(x)}</li>`).join('')}</ul><p class="small muted">Les quiz de cette leçon insisteront sur ces points.</p></div>`:''}
       ${(l.corrections||[]).filter(Boolean).length?`<div class="note-box"><strong>J'ai repéré quelque chose à corriger :</strong><ul>${l.corrections.filter(Boolean).map(x=>`<li>${rich(x)}</li>`).join('')}</ul></div>`:''}
@@ -2406,12 +2700,44 @@ function vApercu(){
     <div class="row"><button class="btn primary big">Ranger dans mon cartable</button><button type="button" class="btn" data-act="reset-add">Annuler</button></div>
   </form>`}`;
 }
+// Chaque leçon trouvée : sa fiche est-elle remplie, et est-elle déjà dans le cartable ?
+function comparerAuCartable(r,images){
+  r.lecons.forEach(l=>{
+    const im=r.lecons.length>1&&l.photos.length?l.photos.map(k=>images[k-1]).filter(Boolean):images;
+    l.empreintes=empreintesDe(im);l.fiche=etatFiche(l.exercices);
+    const d=dejaRangee(l,l.empreintes,all('lecons'));
+    if(d){const avant=etatFiche(d.lecon.exercices);
+      // Mettre à jour seulement si la nouvelle photo apporte des réponses en plus.
+      l.deja={id:d.lecon.id,titre:d.lecon.titre,date:d.lecon.date,par:d.par,avant,plus:!!l.fiche&&l.fiche.faites>(avant?avant.faites:0)}}
+  })}
+const ETAT_FICHE={vierge:['var(--warn)','Fiche pas encore faite'],partielle:['var(--warn)','Fiche commencée'],complete:['var(--ok)','Fiche complétée']};
+function vEtatFiche(f){if(!f)return '';const [c,t]=ETAT_FICHE[f.etat];
+  const d=f.etat==='vierge'?"Je ne vois aucune réponse écrite. Quand tu l'auras faite, reprends-la en photo : je la corrigerai.":f.etat==='partielle'?`Tu as répondu à ${f.faites} question${f.faites>1?'s':''} sur ${f.total} : il en reste ${f.total-f.faites}.`:`Tu as répondu aux ${f.total} question${f.total>1?'s':''}.`;
+  return `<p><strong style="color:${c}">${t}.</strong> ${d}</p>`}
+function vDejaRangee(l,j){const d=l.deja;if(!d)return '';
+  const ou=`« ${esc(d.titre)} », rangée le ${esc(longDate(d.date))}`;
+  const quoi=d.par==='photo'?`Tu as déjà rangé cette photo : ${ou}.`:`Cette fiche ressemble à ${ou}.`;
+  const av=d.avant?` À ce moment-là : ${d.avant.faites} réponse${d.avant.faites>1?'s':''} sur ${d.avant.total}.`:'';
+  const opt=(v,t,on)=>`<label class="row"><input type="radio" name="act${j}" value="${v}" ${on?'checked':''}> ${t}</label>`;
+  return `<div class="note-box stack" style="gap:6px"><strong>Déjà dans ton cartable</strong><p>${quoi}${av}${d.plus?' Maintenant tu en as écrit plus : je peux mettre la fiche à jour.':''}</p>
+    ${opt('maj','Mettre à jour la fiche déjà rangée',d.plus)}${opt('non','Ne pas la ranger une deuxième fois',!d.plus)}${opt('nouvelle','La ranger quand même comme une nouvelle leçon',false)}</div>`}
+// Les nouvelles réponses remplacent les anciennes ; le cours et les quiz déjà faits restent.
+function majLecon(id,l,thumbs){const v=S.lecons.get(id);if(!v)return null;
+  const uniq=a=>[...new Set(a.filter(Boolean))];
+  put('lecons',id,{...v,exercices:l.exercices.length?l.exercices:v.exercices||[],pointsFaibles:l.exercices.length?l.pointsFaibles:v.pointsFaibles||[],
+    corrections:uniq([...(v.corrections||[]),...(l.corrections||[])]),transcription:l.transcription||v.transcription||'',
+    thumbs:uniq([...(v.thumbs||[]),...thumbs]),empreintes:uniq([...(v.empreintes||[]),...(l.empreintes||[])]),majLe:Date.now()});
+  return id}
 function enregistrerRes(fd){
   const a=state.add,r=a.res;let nd=0,nc=0,note=false;
   // Avec plusieurs leçons, chacune ne garde que les miniatures de ses propres photos.
+  let nMaj=0;
   const ids=r.lecons.flatMap((l,j)=>{if(!fd['kl'+j])return [];
-    const im=r.lecons.length>1&&l.photos.length?l.photos.map(k=>a.images[k-1]).filter(Boolean):a.images;
-    return [nouvelleLecon(l,{titre:fd['lTitre'+j],matiere:fd['lMat'+j],date:fd['lDate'+j]||a.date,genre:r.genre,thumbs:im.map(i=>i.thumb).filter(Boolean)})]});
+    const im=r.lecons.length>1&&l.photos.length?l.photos.map(k=>a.images[k-1]).filter(Boolean):a.images,thumbs=im.map(i=>i.thumb).filter(Boolean);
+    const act=l.deja?fd['act'+j]||'non':'nouvelle';
+    if(act==='non')return [];
+    if(act==='maj'){const id=majLecon(l.deja.id,l,thumbs);if(id){nMaj++;return [id]}}
+    return [nouvelleLecon(l,{titre:fd['lTitre'+j],matiere:fd['lMat'+j],date:fd['lDate'+j]||a.date,genre:r.genre,thumbs,empreintes:l.empreintes})]});
   const lecs=ids.map(id=>S.lecons.get(id)).filter(Boolean);
   // Un devoir donné le jour d'une leçon porte en général sur elle : la leçon de même matière sert d'indice si l'IA n'a rien relié.
   r.devoirs.forEach((x,i)=>{if(!fd['k'+i])return;const m=fd['mat'+i]||x.matiere,lec=lecs.find(l=>l.matiere===m);
@@ -2425,17 +2751,26 @@ function enregistrerRes(fd){
     const p=val/sur;gagne(ptsNote({valeur:val,sur,createdAt:Date.now()}),p>=.8?'Superbe note, bravo !':p>=.6?'Belle note !':"Merci de l'avoir rentrée. On va travailler ça ensemble.")}
   state.add={images:[],indice:'',date:TODAY(),busy:false,res:null,err:'',sujet:''};
   const fait=[ids.length&&(ids.length>1?`${ids.length} leçons`:'la leçon'),nd&&`${nd} devoir${nd>1?'s':''}${nc?' (révisions planifiées)':''}`,note&&'la note'].filter(Boolean);
-  if(fait.length>1||ids.length>1||(!ids.length&&!note))toast(fait.length?`Rangé : ${fait.join(', ')}.`:'Rien de coché, rien de rangé.');
+  if(nMaj&&fait.length<=1&&ids.length<=1)toast('Fiche mise à jour dans ton cartable.');
+  else if(fait.length>1||ids.length>1||(!ids.length&&!note))toast(fait.length?`Rangé : ${fait.join(', ')}.`:'Rien de coché, rien de rangé.');
   if(ids.length)go('lecon',ids[0]);else if(nd)go('devoirs');else if(note)go('notes');else render();
   window.scrollTo({top:0});
 }
+// L'empreinte du fichier reconnaît une photo déjà rangée, même prise un autre jour sur un autre écran.
+async function empreinteFichier(file){
+  try{const h=await crypto.subtle.digest('SHA-256',await file.arrayBuffer());return 'sha256:'+[...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('')}catch(e){return null}
+}
+const empreintesDe=ims=>ims.flatMap(i=>[i.empreinte,i.thumb]).filter(Boolean);
+// « Tu as déjà rangé cette photo » : sous la miniature, avant même de la lire.
+function photoDejaRangee(im){const d=dejaRangee(null,empreintesDe([im]),all('lecons'));
+  return d?`<span class="small" style="color:var(--bad);max-width:130px;text-align:center">Déjà rangée : « ${esc(d.lecon.titre)} », ${esc(longDate(d.lecon.date))}</span>`:''}
 async function prepImage(file){
   try{
     const bmp=await createImageBitmap(file);
     const draw=(max,q)=>new Promise(res=>{const s=Math.min(1,max/Math.max(bmp.width,bmp.height));const cv=document.createElement('canvas');cv.width=Math.round(bmp.width*s);cv.height=Math.round(bmp.height*s);cv.getContext('2d').drawImage(bmp,0,0,cv.width,cv.height);cv.toBlob(b=>res({b,cv}),'image/jpeg',q)});
     const big=await draw(1800,.86);const small=await draw(320,.6);
-    return {blob:big.b||file,thumb:small.cv.toDataURL('image/jpeg',.6)};
-  }catch(e){return {blob:file,thumb:null}}
+    return {blob:big.b||file,thumb:small.cv.toDataURL('image/jpeg',.6),empreinte:await empreinteFichier(file)};
+  }catch(e){return {blob:file,thumb:null,empreinte:await empreinteFichier(file)}}
 }
 /* Les photos sont réduites l'une après l'autre : le bloc d'attente dit laquelle, sans tout redessiner entre deux. */
 function majCharge(a){const el=app.querySelector('[data-charge]');if(!el||!a.charge)return;
@@ -2455,7 +2790,7 @@ async function ajouterFichiers(files,a=state.add){if(a.charge)return;
 }
 function nouvelleLecon(r,base){
   const id=uid();
-  const l={matiere:base.matiere,titre:base.titre||r.titre||'Leçon',date:base.date||TODAY(),createdAt:Date.now(),notions:r.notions||[],resume:r.resume||'',transcription:r.transcription||'',cours:r.cours||{},corrections:r.corrections||[],lienProgramme:r.lienProgramme||'',competences:[],pourAllerPlusLoin:r.pourAllerPlusLoin||'',exercices:r.exercices||[],pointsFaibles:r.pointsFaibles||[],genre:base.genre||'lecon',thumbs:base.thumbs||[],questions:[]};
+  const l={matiere:base.matiere,titre:base.titre||r.titre||'Leçon',date:base.date||TODAY(),createdAt:Date.now(),notions:r.notions||[],resume:r.resume||'',transcription:r.transcription||'',cours:r.cours||{},corrections:r.corrections||[],lienProgramme:r.lienProgramme||'',competences:[],pourAllerPlusLoin:r.pourAllerPlusLoin||'',exercices:r.exercices||[],pointsFaibles:r.pointsFaibles||[],genre:base.genre||'lecon',thumbs:base.thumbs||[],empreintes:base.empreintes||[],questions:[]};
   const ll=avecLien(l,r.competences);put('lecons',id,ll);gagne(ptsLecon(ll),'Leçon rangée dans ton cartable.');return id;
 }
 
@@ -2496,7 +2831,7 @@ function leconAttente(ids){
 }
 function vQuiz(){
   const q=state.quiz;if(!q)return `<div class="empty">Aucun quiz en cours.</div>`;
-  if(state.nouveauQuiz)return `<div class="quiz card stack"><h2>Un quiz est déjà en cours</h2><p>« ${esc(q.titre)} » n'est pas terminé. Si tu commences « ${esc(state.nouveauQuiz.titre)} », il sera perdu.</p><div class="row"><button class="btn primary" data-act="quiz-garder">Reprendre mon quiz</button><button class="btn" data-act="quiz-remplacer">Commencer le nouveau</button></div></div>`;
+  if(state.nouveauQuiz)return `<div class="quiz card stack"><h2>Un quiz est déjà en cours</h2><p>« ${esc(q.titre)} » n'est pas terminé. Si tu commences « ${esc(state.nouveauQuiz.titre)} », il sera perdu.</p><div class="row"><button class="btn primary" data-act="quiz-garder">Reprendre mon quiz</button><button class="btn" data-act="quiz-remplacer">Commencer le nouveau</button></div></div>`;
   if(q.loading||(q.attente&&!q.err)){
     const lec=leconAttente(q.leconIds);
     if(q.loading||lec){
@@ -2664,6 +2999,14 @@ function vEpees(){
   <section class="card stack">${js.map(j=>`<div class="item" style="gap:12px;align-items:center"><span style="width:30px;flex:none">${dessinEpee(j.note.couleur)}</span><div class="grow"><b>${esc(longDate(j.date))}</b><br><small class="muted">${Math.round(j.note.pct*100)} % de bonnes réponses</small></div><b style="color:var(--ink)">${esc(nomEpee(j.note,arme))}</b></div>`).join('')}</section>`
   :`<div class="empty">${noteDuJour(all('quiz'),TODAY())?`${esc(arme.ton[0].toUpperCase()+arme.ton.slice(1))} arrive ici ce soir à 18 h.`:`Ton premier quiz forgera ${arme.feminin?'ta première':'ton premier'} ${esc(nom)}.`}</div>`}`;
 }
+/* Le choix du monde (l'habillage) et du clair / sombre appartient à l'enfant : il change le vocabulaire, les niveaux, l'objet du jour et les couleurs. */
+function vMondes(){
+  return `<h2>Mon monde</h2>
+  <section class="card stack"><p>Choisis le monde dans lequel tu veux apprendre. Tes étoiles et tes progrès restent les mêmes.</p>
+  <div class="row">${Object.entries(SKINS).map(([id,k])=>`<button class="btn ${skinId()===id?'primary':''}" data-act="skin" data-v="${id}" aria-pressed="${skinId()===id}">${k.ico} ${esc(k.nom)}</button>`).join('')}</div></section>
+  <section class="card stack"><h3>Clair ou sombre</h3>
+  <div class="row">${Object.entries(THEMES).map(([id,l])=>`<button class="btn ${themeId()===id?'primary':''}" data-act="theme" data-v="${id}" aria-pressed="${themeId()===id}">${l}</button>`).join('')}</div></section>`;
+}
 function vNotes(){
   const ns=all('notes').sort((a,b)=>a.date<b.date?1:-1);const moy=moyenne(ns);
   const par=MATIERES.map(m=>({m,ns:ns.filter(n=>n.matiere===m.id)})).filter(o=>o.ns.length);
@@ -2728,7 +3071,7 @@ function bilanSemaine(){
     missions:mis.length?{faites:mis.filter(Boolean).length,total:mis.length}:null,
     progres:evol.filter(x=>rang[x.n]>rang[x.a]&&rang[x.n]>=2),recul:evol.filter(x=>x.n==='fragile'||rang[x.n]<rang[x.a])};
 }
-function vSemaine(){
+function vSemaine(pied=''){
   const w=bilanSemaine(),ecart=(n,a)=>a===n?'pareil que la semaine d\'avant':`${n>a?'+':''}${n-a} par rapport à la semaine d'avant`;
   const ligneComp=x=>`<div class="item small"><span class="grow">${esc(x.c.t)}<br><span class="muted">${mchip(x.c.m)} ${ETATS[x.a]} → <b>${ETATS[x.n]}</b></span></span></div>`;
   return `<section class="card stack sem-parents"><div class="sec-title"><h3>Sa semaine</h3><span class="small muted">du ${esc(shortDate(w.jours[0].d))} au ${esc(shortDate(w.jours[6].d))}</span></div>
@@ -2743,76 +3086,231 @@ function vSemaine(){
     ${w.parMat.length?`<div class="tablewrap"><table class="t"><tr><th>Matière</th><th>Quiz</th><th>Réussite</th></tr>${w.parMat.map(o=>`<tr><td>${mchip(o.m.id)}</td><td>${o.qs.length}</td><td>${w.moyDe(o.qs)} %</td></tr>`).join('')}</table></div>`:'<p class="small muted">Aucun quiz cette semaine.</p>'}
     ${w.progres.length?`<details id="sem-progres" ${ouvert('sem-progres')}><summary>📈 ${w.progres.length} point${w.progres.length>1?'s':''} du programme en progrès</summary><div class="stack" style="margin-top:8px">${w.progres.slice(0,8).map(ligneComp).join('')}</div></details>`:''}
     ${w.recul.length?`<details id="sem-recul" ${ouvert('sem-recul')}><summary>⚠️ ${w.recul.length} point${w.recul.length>1?'s':''} à surveiller</summary><div class="stack" style="margin-top:8px">${w.recul.slice(0,8).map(ligneComp).join('')}</div></details>`:''}
-    <p class="small muted">Chiffres des 7 derniers jours, aujourd'hui compris.</p>
+    <p class="small muted">Chiffres des 7 derniers jours, aujourd'hui compris.</p>${pied}
   </section>`;
 }
 const pinDefini=()=>!!(S.config.get('pin')||{}).defini;
 /* ---- Réglage de l'IA (espace parents et accueil) ----
-   Le code parent reste en mémoire le temps que l'espace est ouvert : le serveur le redemande à chaque changement. */
+   Le code parent reste en mémoire le temps que l'espace est ouvert : le serveur le redemande à chaque changement.
+   Les clés API se règlent à part (vCle) : ici on choisit seulement qui travaille. */
 const IA_MODES={
-  local:{ico:'💻',nom:'Ollama sur ce PC',txt:"Gratuit, et rien ne sort de la maison. Lent sur un petit PC : 30 secondes par question de quiz environ."},
-  reseau:{ico:'🌐',nom:'Ollama sur le réseau',txt:"Un ordinateur plus puissant de la maison fait le travail. Gratuit, et rien ne sort de la maison."},
-  claude:{ico:'✨',nom:'Claude (clé API)',txt:"Rapide et plus fiable, surtout pour lire les photos. Payant selon les jetons utilisés. Les photos, les leçons et le prénom sont envoyés à Anthropic."},
+  local:{ico:'💻',nom:'Ollama',txt:"Sur ce PC. Gratuit, et rien ne sort de la maison. Lent sur un petit PC : 30 secondes par question de quiz environ."},
+  claude:{ico:'✨',nom:'Claude',txt:"Rapide et plus fiable, surtout pour lire les photos. Payant selon les jetons utilisés. Les photos, les leçons et le prénom sont envoyés à Anthropic."},
+  mistral:{ico:'🌬️',nom:'Mistral',txt:"Mistral Small, d'une entreprise française. Rapide, et nettement moins cher que Claude. Les photos, les leçons et le prénom sont envoyés à Mistral AI."},
 };
+// Les IA en ligne, avec la clé qu'il leur faut.
+const IA_CLE={claude:{p:'anthropic',nom:'Anthropic',a:()=>iaInfo.cle},mistral:{p:'mistral',nom:'Mistral',a:()=>iaInfo.cleMistral}};
+const modeIA=ia=>IA_MODES[ia]&&ia!=='ollama'?ia:'local';
+const ICI_CLES=()=>'collez-la dans « Clés API », plus haut';
+// Claude et Mistral ne se choisissent qu'une fois leur clé enregistrée.
+const iaDispo=id=>!IA_CLE[id]||!!IA_CLE[id].a();
 function vIA(){
   if(!iaInfo)return '';
-  const f=state.iaf||(state.iaf={mode:iaInfo.ia==='claude'?'claude':iaInfo.ollamaLocal?'local':'reseau'}),m=IA_MODES[f.mode];
+  const f=state.iaf||(state.iaf={mode:modeIA(iaInfo.ia)});
+  if(!iaDispo(f.mode))f.mode='local';
+  const m=IA_MODES[f.mode],k=IA_CLE[f.mode];
+  const bloquees=Object.keys(IA_CLE).filter(id=>!iaDispo(id)).map(id=>IA_MODES[id].nom);
   const liste=f.modeles||[],voulu=f.modele||iaInfo.ollamaModel,modele=liste.includes(voulu+':latest')?voulu+':latest':voulu;
+  const boutons=`<button class="btn primary" ${f.busy?'disabled':''}>${f.busy?'Un instant…':state.acc?'Enregistrer et continuer':'Enregistrer'}</button><button type="button" class="btn" data-act="ia-tester" ${f.busy?'disabled':''}>Tester</button>${state.acc?`<button type="button" class="btn ghost" data-act="acc-ia-plus-tard">Régler plus tard</button>`:''}`;
+  const choix=Object.entries(IA_MODES).map(([id,x])=>{const ok=iaDispo(id);return `<button type="button" class="btn ${f.mode===id?'primary':''}" data-act="ia-mode" data-v="${id}" aria-pressed="${f.mode===id}" ${ok?'':`disabled title="Il faut d'abord une clé ${IA_CLE[id].nom}"`}>${x.ico} ${x.nom}</button>`}).join('');
   return `<form class="stack" data-form="ia">
-    <div class="row">${Object.entries(IA_MODES).map(([id,x])=>`<button type="button" class="btn ${f.mode===id?'primary':''}" data-act="ia-mode" data-v="${id}" aria-pressed="${f.mode===id}">${x.ico} ${x.nom}</button>`).join('')}</div>
-    <p class="small muted">${m.txt}</p>
-    ${f.mode==='reseau'?`<label class="f">Adresse de cet ordinateur<input type="text" id="ia-url" name="ollamaUrl" value="${esc(f.url||(iaInfo.ollamaLocal?'':iaInfo.ollamaUrl))}" placeholder="192.168.1.20 ou PC-SALON" autocomplete="off" spellcheck="false" required></label>
-    <p class="small muted">Sur cet ordinateur, Ollama doit accepter le réseau : mettre la variable d'environnement <code>OLLAMA_HOST=0.0.0.0</code>, puis relancer Ollama.</p>`:''}
-    ${f.mode!=='claude'?`<label class="f">Modèle${liste.length?`<select name="ollamaModel">${(liste.includes(modele)?liste:[modele,...liste]).map(n=>`<option ${n===modele?'selected':''}>${esc(n)}</option>`).join('')}</select>`:`<input type="text" id="ia-modele" name="ollamaModel" value="${esc(modele)}" autocomplete="off" spellcheck="false" required>`}</label>`
-    :`<label class="f">Clé API (créée sur platform.claude.com)<input type="password" id="ia-cle" name="cle" autocomplete="off" placeholder="${iaInfo.cle?'Une clé est déjà enregistrée sur ce PC':'sk-ant-…'}" ${iaInfo.cle?'':'required'}></label>`}
+    <div class="row">${choix}${k?boutons:''}</div>
+    <p class="small muted">${m.txt}${k&&!k.a()?` Il faut une clé ${k.nom} : ${ICI_CLES()}.`:''}</p>
+    ${bloquees.length?`<p class="small muted">${bloquees.join(' et ')} ${bloquees.length>1?'se débloquent':'se débloque'} quand ${bloquees.length>1?'leur clé est enregistrée':'sa clé est enregistrée'} dans « Clés API », plus haut.</p>`:''}
+    ${f.mode==='local'?`<div class="row ligne"><label class="f">Modèle${liste.length?`<select name="ollamaModel">${(liste.includes(modele)?liste:[modele,...liste]).map(n=>`<option ${n===modele?'selected':''}>${esc(n)}</option>`).join('')}</select>`:`<input type="text" id="ia-modele" name="ollamaModel" value="${esc(modele)}" autocomplete="off" spellcheck="false" required>`}</label>${boutons}</div>`:''}
     ${f.msg?`<p class="small" role="status">${f.ok?'✅':'⚠️'} ${esc(f.msg)}</p>`:''}
-    <div class="row"><button class="btn primary" ${f.busy?'disabled':''}>${f.busy?'Un instant…':state.acc?'Enregistrer et continuer':'Enregistrer'}</button><button type="button" class="btn" data-act="ia-tester" ${f.busy?'disabled':''}>Tester</button>${f.mode==='claude'&&iaInfo.cle?`<button type="button" class="btn ghost danger" data-act="ia-oublier" ${f.busy?'disabled':''}>Oublier la clé</button>`:''}${state.acc?`<button type="button" class="btn ghost" data-act="acc-ia-plus-tard">Régler plus tard</button>`:''}</div>
   </form>`;
 }
 function iaRetour(f,r){
-  const adr=f.mode==='reseau'?'cet ordinateur':'ce PC';
-  if(r.ok)return f.mode==='claude'?'Claude répond, la clé est bonne.':`Ollama répond sur ${adr}.`;
-  if(r.code==='no_ollama')return f.mode==='reseau'?"Personne ne répond à cette adresse. Vérifiez que l'ordinateur est allumé, qu'Ollama y tourne et qu'il accepte le réseau.":"Ollama ne répond pas sur ce PC. S'il vient d'être choisi, fermez la fenêtre noire et relancez le cartable : il sera installé et démarré.";
-  if(r.code==='no_model')return r.modeles&&r.modeles.length?`Ce modèle n'est pas sur ${adr} : choisissez-en un dans la liste.`:`Aucun modèle sur ${adr}. Il faut en télécharger un avec « ollama pull ».`;
-  if(r.code==='bad_url')return "Cette adresse n'est pas valable. Exemple : 192.168.1.20";
-  if(r.code==='bad_key_format')return "Cette clé n'a pas la bonne forme. Copiez-la de nouveau, en entier.";
+  const nom=f.mode==='mistral'?'Mistral':'Claude',cle=f.mode==='mistral'?'Mistral':'Anthropic';
+  if(r.ok)return f.mode==='local'?'Ollama répond sur ce PC.':`${nom} répond.`;
+  if(r.code==='no_ollama')return "Ollama ne répond pas sur ce PC. S'il vient d'être choisi, fermez la fenêtre noire et relancez le cartable : il sera installé et démarré.";
+  if(r.code==='no_model')return r.modeles&&r.modeles.length?"Ce modèle n'est pas sur ce PC : choisissez-en un dans la liste.":"Aucun modèle sur ce PC. Il faut en télécharger un avec « ollama pull ».";
   if(r.code==='bad_model')return "Ce nom de modèle n'est pas valable.";
   if(r.code==='pin')return "Le code parent a changé : fermez puis rouvrez l'espace parents.";
-  if(r.code==='no_key')return "Il faut coller une clé API.";
-  if(r.code==='bad_key')return "Cette clé est refusée.";
-  if(r.code==='network')return "Impossible de joindre Claude. Vérifiez la connexion internet.";
+  // Un serveur lancé avant une mise à jour ne connaît pas encore le nouveau choix (Mistral) et le refuse.
+  if(r.code==='bad_request'||r.code==='not_found')return "Le cartable a été mis à jour : fermez la fenêtre noire, relancez « Démarrer le cartable », puis recommencez.";
+  if(r.code==='no_key')return `Il n'y a pas encore de clé ${cle} : ${ICI_CLES()}.`;
+  if(r.code==='bad_key')return `La clé ${cle} est refusée.`;
+  if(r.code==='network')return `Impossible de joindre ${nom}. Vérifiez la connexion internet.`;
   return errMsg(r);
 }
-async function envoyerIA({essai=false,oublierCle=false}={}){
+async function envoyerIA({essai=false}={}){
   const f=state.iaf,form=document.querySelector('[data-form="ia"]');if(!f||!form)return;
   const fd=Object.fromEntries(new FormData(form));
-  f.url=fd.ollamaUrl||f.url;f.modele=fd.ollamaModel||f.modele;f.busy=true;f.msg='';render();
+  f.modele=fd.ollamaModel||f.modele;f.busy=true;f.msg='';render();
   let r;
-  try{r=await fetch('/api/ia',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({pin:state.pinParent,essai,oublierCle,ia:f.mode==='claude'?'claude':'ollama',ollamaUrl:f.mode==='reseau'?fd.ollamaUrl:'',ollamaModel:fd.ollamaModel||'',cle:fd.cle||''})}).then(x=>x.json())}
+  try{r=await fetch('/api/ia',{method:'POST',headers:{'content-type':'application/json','x-parent':state.jeton||''},body:JSON.stringify({essai,ia:f.mode==='local'?'ollama':f.mode,ollamaModel:fd.ollamaModel||''})}).then(x=>x.json())}
   catch(e){r={ok:false,code:'network'}}
-  f.busy=false;f.ok=!!r.ok;f.msg=oublierCle?'':iaRetour(f,r);if(r.modeles)f.modeles=r.modeles;
+  if(r.code==='parent'){finParent('Code parent demandé à nouveau.');render();return}
+  f.busy=false;f.ok=!!r.ok;f.msg=iaRetour(f,r);if(r.modeles)f.modeles=r.modeles;
   if(r.enregistre){
     await brancherIA();
-    if(oublierCle){f.msg='Clé oubliée.';f.ok=true}
-    else if(r.ok){if(state.acc){state.iaf=null;state.acc={etape:4}}else{f.msg='Enregistré. '+f.msg}toast("Réglage de l'IA enregistré.")}
+    if(r.ok){if(state.acc){state.iaf=null;state.acc={etape:4}}else{f.msg='Enregistré. '+f.msg}toast("Réglage de l'IA enregistré.")}
     else f.msg='Enregistré, mais : '+f.msg;
   }
   render();
 }
+/* ---- Lecture des photos : l'IA du cartable, ou Mistral OCR qui recopie le texte avant ---- */
+function ocrModes(){
+  const ia=modeIA(iaInfo&&iaInfo.ia),x=IA_MODES[ia];
+  return {
+    ia:{ico:x.ico,nom:x.nom,txt:ia==='local'?"Gratuit, et les photos restent à la maison. Lent, et le modèle lit parfois mal l'écriture à la main.":`${x.nom} regarde les photos lui-même : il voit aussi les couleurs des corrections de la maîtresse.`},
+    mistral:{ico:'📄',nom:'Mistral OCR',txt:"Un logiciel spécialisé recopie le texte des photos, puis l'IA du cartable fait le reste. Payant à la photo : environ 4 $ pour 1 000 photos. Les photos sont envoyées à Mistral AI (entreprise française). Les couleurs des corrections de la maîtresse ne sont pas transmises."},
+  };
+}
+function vOCR(){
+  if(!iaInfo)return '';
+  const f=state.ocrf||(state.ocrf={mode:iaInfo.ocr==='mistral'?'mistral':'ia'}),modes=ocrModes();
+  if(f.mode==='mistral'&&!iaInfo.cleMistral)f.mode='ia';
+  return `<form class="stack" data-form="ocr">
+    <div class="row">${Object.entries(modes).map(([id,x])=>{const ok=id!=='mistral'||!!iaInfo.cleMistral;return `<button type="button" class="btn ${f.mode===id?'primary':''}" data-act="ocr-mode" data-v="${id}" aria-pressed="${f.mode===id}" ${ok?'':'disabled title="Il faut d\'abord une clé Mistral"'}>${x.ico} ${x.nom}</button>`}).join('')}<button class="btn primary" ${f.busy?'disabled':''}>${f.busy?'Un instant…':'Enregistrer'}</button><button type="button" class="btn" data-act="ocr-tester" ${f.busy?'disabled':''}>Tester</button></div>
+    <p class="small muted">${modes[f.mode].txt}${!iaInfo.cleMistral?' Mistral OCR se débloque quand une clé Mistral est enregistrée dans « Clés API », plus haut.':''}</p>
+    ${f.msg?`<p class="small" role="status">${f.ok?'✅':'⚠️'} ${esc(f.msg)}</p>`:''}
+  </form>`;
+}
+function ocrRetour(f,r){
+  // L'IA du cartable lit les photos : mêmes messages que le « Tester » de l'IA.
+  if(f.mode==='ia')return iaRetour({mode:modeIA(iaInfo&&iaInfo.ia)},r);
+  if(r.ok)return 'Mistral répond.';
+  return ({not_found:"Le cartable a été mis à jour : fermez la fenêtre noire, relancez « Démarrer le cartable », puis recommencez.",no_key:"Il n'y a pas encore de clé Mistral : ajoutez-la dans « Clés API » plus bas.",ocr_bad_key:"La clé Mistral est refusée.",ocr_network:"Impossible de joindre Mistral. Vérifiez la connexion internet.",pin:"Le code parent a changé : fermez puis rouvrez l'espace parents."})[r.code]||errMsg(r);
+}
+async function envoyerOCR({essai=false}={}){
+  const f=state.ocrf;if(!f)return;
+  f.busy=true;f.msg='';render();
+  let r;
+  try{r=await fetch('/api/ocr',{method:'POST',headers:{'content-type':'application/json','x-parent':state.jeton||''},body:JSON.stringify({ocr:f.mode,essai})}).then(x=>x.json())}
+  catch(e){r={ok:false,code:'network'}}
+  if(r.code==='parent'){finParent('Code parent demandé à nouveau.');render();return}
+  f.busy=false;f.ok=!!r.ok;f.msg=ocrRetour(f,r);
+  if(r.enregistre){
+    await brancherIA();
+    if(r.ok){f.msg=('Enregistré. '+f.msg).trim();toast('Réglage de la lecture des photos enregistré.')}
+    else f.msg='Enregistré, mais : '+f.msg;
+  }
+  render();
+}
+/* ---- Clés API, à part du choix : enregistrées seulement si elles marchent ---- */
+const CLES={
+  anthropic:{nom:'Anthropic (Claude)',ou:'platform.claude.com',ex:'sk-ant-…',a:()=>iaInfo.cle,qui:'Claude'},
+  mistral:{nom:'Mistral',ou:'console.mistral.ai',ex:'Collez la clé ici',a:()=>iaInfo.cleMistral,qui:'Mistral'},
+};
+function vCle(p){
+  if(!iaInfo)return '';
+  const k=CLES[p],f=(state.clef||(state.clef={}))[p]||{},deja=k.a();
+  return `<form class="stack" data-form="cle" data-f="${p}">
+    <input type="password" id="cle-${p}" name="cle" autocomplete="off" placeholder="${deja?'Une clé est déjà enregistrée sur ce PC':k.ex}">
+    <div class="row"><button class="btn primary" ${f.busy?'disabled':''}>${f.busy?'Un instant…':'Enregistrer'}</button><button type="button" class="btn" data-act="cle-tester" data-v="${p}" ${f.busy||!deja?'disabled':''}>Tester</button>${deja?`<button type="button" class="btn ghost danger" data-act="cle-oublier" data-v="${p}" ${f.busy?'disabled':''}>Oublier la clé</button>`:''}</div>
+    <p class="small muted">${deja?'✔ Une clé est enregistrée.':'Pas encore de clé.'} Elle se crée sur ${k.ou}.</p>
+    ${f.msg?`<p class="small" role="status">${f.ok?'✅':'⚠️'} ${esc(f.msg)}</p>`:''}
+  </form>`;
+}
+// Les clés passent avant le choix de l'IA : sans clé, Claude et Mistral restent grisés et le cartable tourne avec Ollama.
+const vCles=()=>`${Object.keys(CLES).map(p=>`<div class="cle-bloc stack"><label class="rg-nom" for="cle-${p}">${CLES[p].nom}</label>${vCle(p)}</div>`).join('')}
+    <p class="small muted">Sans clé, le cartable utilise Ollama sur ce PC. Une clé n'est gardée que si elle marche. Elle reste sur ce PC (fichier <code>.env</code>), n'est jamais réaffichée et n'est pas copiée sur une clé USB.</p>`;
+async function envoyerCle(p,{essai=false,oublier=false}={}){
+  const k=CLES[p],form=document.querySelector(`[data-form="cle"][data-f="${p}"]`);if(!k||!form)return;
+  const cle=String(new FormData(form).get('cle')||'').trim();
+  const avant={ia:iaInfo.ia,ocr:iaInfo.ocr};
+  const f=(state.clef||(state.clef={}))[p]={busy:true};render();
+  let r;
+  try{r=await fetch('/api/cle',{method:'POST',headers:{'content-type':'application/json','x-parent':state.jeton||''},body:JSON.stringify({fournisseur:p,cle:essai?'':cle,essai,oublier})}).then(x=>x.json())}
+  catch(e){r={ok:false,code:'network'}}
+  if(r.code==='parent'){finParent('Code parent demandé à nouveau.');render();return}
+  f.busy=false;f.ok=!!r.ok;
+  f.msg=r.ok?(essai?`${k.qui} répond, la clé est bonne.`:'')
+    :({not_found:"Le cartable a été mis à jour : fermez la fenêtre noire, relancez « Démarrer le cartable », puis recommencez.",no_key:"Collez d'abord une clé.",bad_key:'Cette clé est refusée.',ocr_bad_key:'Cette clé est refusée.',network:`Impossible de joindre ${k.qui}. Vérifiez la connexion internet.`,ocr_network:`Impossible de joindre ${k.qui}. Vérifiez la connexion internet.`,bad_key_format:"Cette clé n'a pas la bonne forme. Copiez-la de nouveau, en entier.",pin:"Le code parent a changé : fermez puis rouvrez l'espace parents."})[r.code]||errMsg(r);
+  if(r.enregistre){
+    await brancherIA();
+    if(!state.acc){state.iaf=null;state.ocrf=null} // les choix se relisent : oublier une clé peut les avoir changés
+    if(oublier)f.msg='Clé oubliée.'+((p==='anthropic'&&avant.ia==='claude')||(p==='mistral'&&avant.ia==='mistral')?" L'IA du cartable repasse sur Ollama.":'')+(p==='mistral'&&avant.ocr==='mistral'?" L'IA du cartable lit de nouveau les photos.":'');
+    else{f.msg=`Clé enregistrée : ${k.qui} répond.`;toast('Clé enregistrée.')}
+  }
+  render();
+}
+// D'où viennent les étoiles : les gains des 7 derniers jours, pour juger une demande en connaissance de cause.
+function etoilesDetail(){
+  const depuis=addDays(TODAY(),-6),g=bilan().gains.filter(x=>x.date>=depuis);
+  return `<details class="small"><summary>D'où viennent les étoiles (7 derniers jours)</summary>${g.length?g.map(x=>`<div class="reward"><span>${esc(x.date)} · ${esc(x.why)}</span><span class="cost">+${x.pts}</span></div>`).join(''):'<p class="small muted">Aucun gain ces 7 derniers jours.</p>'}</details>`;
+}
+// Un réglage par ligne : le nom à gauche, les commandes à droite (dessous sur un écran étroit).
+const reglage=(nom,corps,pour='')=>`<div class="reglage">${pour?`<label class="rg-nom" for="${pour}">${nom}</label>`:`<span class="rg-nom">${nom}</span>`}<div class="rg-corps">${corps}</div></div>`;
 function vParents(){
   const c=cfg();
-  if(!state.parent)return `<section class="card"><h3>Espace parents</h3><p class="small muted" style="margin-bottom:8px">Pour suivre le programme de CM1, gérer les récompenses et valider les demandes ${esc(deP())}.</p><form class="row" data-form="pin"><input type="password" id="pin" name="pin" inputmode="numeric" placeholder="${pinDefini()?'Code parent':'Choisissez un code (4 chiffres)'}" style="max-width:240px" required><button class="btn">${pinDefini()?'Ouvrir':'Créer le code'}</button></form></section>`;
+  if(!state.parent)return `<section class="card"><h3>Espace parents</h3><p class="small muted" style="margin-bottom:8px">Pour suivre le programme de CM1, gérer les récompenses et valider les demandes ${esc(deP())}.</p><form class="row" data-form="pin"><input type="password" id="pin" name="pin" inputmode="numeric" data-autofocus placeholder="${pinDefini()?'Code parent':'Choisissez un code (4 chiffres)'}" style="max-width:240px" required><button class="btn">${pinDefini()?'Ouvrir':'Créer le code'}</button></form></section>`;
   const ach=all('achats').filter(a=>a.statut==='demandé');const rec=all('recompenses').sort((a,b)=>a.cout-b.cout);
-  return `${vSemaine()}<section class="card stack"><div class="sec-title"><h3>Espace parents</h3><button class="btn ghost" data-act="parent-off">Fermer</button></div>
-    <p class="eyebrow">Suivi scolaire</p><div class="row"><button class="btn primary" data-act="tab" data-v="programme">🗺️ Programme CM1 : où en est ${esc(prenom())}</button></div>
-    <p class="eyebrow">Demandes à valider</p>${ach.length?ach.map(a=>`<div class="reward"><span>${esc(a.titre)} <span class="cost">${a.palier?'offert':a.cout}</span></span><span class="row"><button class="btn primary" data-act="valider" data-id="${a.id}">Accorder</button><button class="btn" data-act="refuser" data-id="${a.id}">Refuser</button></span></div>`).join(''):'<p class="small muted">Aucune demande en attente.</p>'}
-    <p class="eyebrow">Récompenses proposées</p>${rec.map(r=>`<div class="reward"><span>${esc(r.titre)}</span><span class="row"><span class="cost">${r.cout}</span><button class="btn ghost danger" data-act="del-rec" data-id="${r.id}">Retirer</button></span></div>`).join('')}
-    <form class="form-grid" data-form="rec"><label class="f">Nouvelle récompense<input type="text" id="rec-t" name="titre" required></label><label class="f">Prix en étoiles<input type="number" id="rec-c" name="cout" min="1" value="50" required></label><div><button class="btn">Ajouter</button></div></form>
+  // Dans l'ordre de ce qu'on vient faire : valider, suivre, gérer les récompenses, puis les réglages qu'on touche rarement.
+  const zone=c.zone||ZONE_DEFAUT;
+  // Quatre pages : Suivi (ce qu'on vient voir presque à chaque fois), Réglages (récompenses, enfant, apparence, wifi),
+  // Réglages IA (l'IA, la lecture des photos et les clés API) et Coût (ce qu'ont coûté les requêtes IA, jour par jour).
+  const page=['reglages','reglages2','couts'].includes(state.pp)?state.pp:'suivi';
+  const onglet=(v,l)=>`<button class="btn ${page===v?'primary':''}" data-act="parent-page" data-v="${v}" aria-pressed="${page===v}">${l}</button>`;
+  return `<section class="card sec-title" style="padding-block:10px"><div class="row"><h3>Espace parents</h3>${onglet('suivi','📈 Suivi')}${onglet('reglages','⚙️ Réglages')}${onglet('reglages2','🤖 Réglages IA')}${onglet('couts','💶 Coût')}</div><button class="btn ghost" data-act="parent-off">Fermer</button></section>
+  ${page==='suivi'?`<section class="card stack"><h3>À valider</h3>${ach.length?ach.map(a=>`<div class="reward"><span>${esc(titreDemande(a))} <span class="cost">${a.palier?'offert':a.cout}</span></span><span class="row"><button class="btn primary" data-act="valider" data-id="${a.id}">Accorder</button><button class="btn" data-act="refuser" data-id="${a.id}">Refuser</button></span></div>`).join(''):'<p class="small muted">Aucune demande en attente.</p>'}
+    ${etoilesDetail()}</section>
+  ${vSemaine(`<div class="row"><button class="btn primary" data-act="tab" data-v="programme">🗺️ Programme CM1 : où en est ${esc(prenom())}</button></div>`)}
+  `:page==='couts'?vCouts()
+  :page==='reglages2'?`<section class="card stack"><h3>🔑 Clés API</h3>${vCles()}</section>
+  <section class="card stack"><h3>🤖 Intelligence artificielle</h3>
+    ${reglage("IA du cartable",vIA())}
+    ${reglage('Lecture des photos',vOCR())}
+  </section>`
+  :`<section class="card stack"><h3>Récompenses</h3>${rec.map(r=>`<div class="reward"><span>${esc(r.titre)}</span><span class="row"><span class="cost">${r.cout}</span><button class="btn ghost danger" data-act="del-rec" data-id="${r.id}">Retirer</button></span></div>`).join('')}
+    <form class="row rec-ajout" data-form="rec"><input type="text" id="rec-t" name="titre" placeholder="Nouvelle récompense" aria-label="Nouvelle récompense" required><input type="number" id="rec-c" name="cout" min="1" value="50" aria-label="Prix en étoiles" required><span aria-hidden="true">⭐</span><button class="btn">Ajouter</button></form>
     ${!rec.length?`<div><button class="btn" data-act="suggestions">Ajouter des récompenses suggérées</button></div>`:''}
-    <p class="small muted">Repère : un quiz de 10 questions rapporte 13 étoiles avec 8 bonnes réponses, 30 sans faute. Une bonne journée complète rapporte 30 à 50 étoiles.</p>
-    <p class="eyebrow">Habillage du cartable</p><div class="row">${Object.entries(SKINS).map(([id,k])=>`<button class="btn ${skinId()===id?'primary':''}" data-act="skin" data-v="${id}" aria-pressed="${skinId()===id}">${k.ico} ${esc(k.nom)}</button>`).join('')}</div>
-    <form class="form-grid" data-form="prenom"><label class="f">Prénom affiché<input type="text" id="cfg-prenom" name="prenom" value="${esc(c.prenom||'')}" required></label><div><button class="btn">Enregistrer</button></div></form>
-    <p class="eyebrow">L'IA du cartable</p>${vIA()}
+    <p class="small muted">Repère : un quiz de 10 questions rapporte 13 étoiles avec 8 bonnes réponses, 30 sans faute. Une bonne journée complète rapporte 30 à 50 étoiles.</p></section>
+  <section class="card stack"><h3>🧒 L'enfant</h3>
+    ${reglage('Prénom',`<form class="row" data-form="prenom"><input type="text" id="cfg-prenom" name="prenom" value="${esc(c.prenom||'')}" style="flex:1 1 180px;max-width:320px" required><button class="btn">Enregistrer</button></form>`,'cfg-prenom')}
+    ${reglage('Zone de vacances',`<select id="zone-parent" style="max-width:200px">${['A','B','C'].map(z=>`<option value="${z}" ${z===zone?'selected':''}>Zone ${z}</option>`).join('')}</select>`,'zone-parent')}
+  </section>
+  ${vReseau()}`}`;
+}
+/* Coût des requêtes IA, calculé par le serveur à partir de data/consommation.log. Ollama est gratuit et n'y figure pas. */
+async function chargerCouts(){
+  state.couts={charge:true};
+  try{const r=await fetch('/api/couts',{headers:{'x-parent':state.jeton||''}});state.couts=r.ok?await r.json():{err:true}}
+  catch{state.couts={err:true}}
+  if(state.pp==='couts')render();
+}
+const NOM_MODELE={'claude-sonnet-5-5':'Claude Sonnet','claude-haiku-5-5':'Claude Haiku','claude-opus-5-5':'Claude Opus','mistral-small-latest':'Mistral Small','mistral-large-latest':'Mistral Large (relecture)','mistral-ocr-latest':'Mistral OCR (photos)'};
+const dollars=x=>x.toLocaleString('fr-FR',{style:'currency',currency:'USD',currencyDisplay:'narrowSymbol',minimumFractionDigits:2,maximumFractionDigits:x<0.1?3:2});
+function vCouts(){
+  const c=state.couts||{};
+  const tete=`<h3>💶 Coût des requêtes IA</h3>`;
+  if(c.charge)return `<section class="card stack">${tete}<p class="small muted">Calcul en cours…</p></section>`;
+  if(c.err||!c.jours)return `<section class="card stack">${tete}<p class="small muted">Impossible de lire le journal. Relancez le cartable s'il vient d'être mis à jour.</p><div><button class="btn" data-act="parent-page" data-v="couts">Réessayer</button></div></section>`;
+  const jours=c.jours;
+  if(!jours.length)return `<section class="card stack">${tete}<p class="small muted">Aucune requête payante pour l'instant. Avec Ollama, rien n'est facturé.</p></section>`;
+  const mois=TODAY().slice(0,7);
+  const somme=l=>l.reduce((s,j)=>s+j.cout,0);
+  const date=d=>new Date(d+'T12:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short',year:d.slice(0,4)===TODAY().slice(0,4)?undefined:'numeric'});
+  const detail=j=>Object.entries(j.modeles).sort((a,b)=>b[1].cout-a[1].cout).map(([m,x])=>`${esc(NOM_MODELE[m]||m)} : ${x.requetes} · ${x.inconnu?'prix inconnu':dollars(x.cout)}`).join('<br>');
+  return `<section class="card stack">${tete}
+    <div class="row"><span>Ce mois-ci : <b>${dollars(somme(jours.filter(j=>j.jour.startsWith(mois))))}</b></span><span class="muted">·</span><span>Depuis le début : <b>${dollars(somme(jours))}</b></span></div>
+    <div style="overflow-x:auto"><table class="small" style="width:100%;border-collapse:collapse">
+      <thead><tr style="text-align:left"><th style="padding:6px 8px">Jour</th><th style="padding:6px 8px;text-align:right">Requêtes</th><th style="padding:6px 8px;text-align:right">Coût</th><th style="padding:6px 8px">Détail</th></tr></thead>
+      <tbody>${jours.map(j=>`<tr style="border-top:1px solid color-mix(in srgb,currentColor 15%,transparent);vertical-align:top"><td style="padding:6px 8px;white-space:nowrap">${date(j.jour)}</td><td style="padding:6px 8px;text-align:right">${j.requetes}</td><td style="padding:6px 8px;text-align:right;white-space:nowrap"><b>${dollars(j.cout)}</b>${j.inconnu?' *':''}</td><td style="padding:6px 8px" class="muted">${detail(j)}</td></tr>`).join('')}</tbody>
+    </table></div>
+    <p class="small muted">Estimation à partir des jetons lus et écrits notés à chaque requête, aux prix publics en dollars (Claude Sonnet 2 $ / 10 $ le million de jetons, Haiku 0,10 $ / 0,50 $, Mistral Small 0,10 $ / 0,30 $, Mistral Large 0,50 $ / 1,50 $, Mistral OCR 2 $ les 1 000 pages). La facture réelle peut différer un peu : forfait Mistral inclus, mise en cache de Claude. ${jours.some(j=>j.inconnu)?'* Un modèle sans prix connu n’est pas compté.':''}</p>
+  </section>`;
+}
+/* Ouvrir le cartable depuis un autre appareil branché sur le même wifi (réglé par HOST dans .env). */
+function vReseau(){
+  const r=iaInfo&&iaInfo.reseau;if(!r)return '';
+  const lien=h=>`<code>http://${esc(h)}:${r.port}</code>`;
+  const etat=r.ouvert
+    ?`<p>✅ Le cartable est ouvert au réseau de la maison. Sur l'autre appareil, connecté au <b>même wifi</b>, ouvrez le navigateur et tapez :</p>
+      <ul class="small">${r.adresses.map(a=>`<li>${lien(a)}</li>`).join('')}<li>${lien(r.nom)} <span class="muted">(le nom de ce PC, si l'adresse ne marche pas)</span></li></ul>
+      ${r.adresses.length?'':'<p class="small muted">Ce PC ne semble connecté à aucun réseau pour le moment.</p>'}`
+    :`<p>Pour l'instant, le cartable ne s'ouvre que sur ce PC. Pour l'ouvrir depuis un autre ordinateur de la maison :</p>
+      <ol class="small">
+        <li>Dans le dossier du cartable, ouvrez le fichier <code>.env</code> avec le Bloc-notes et ajoutez la ligne <code>HOST=0.0.0.0</code>.</li>
+        <li>Fermez la fenêtre noire et relancez <b>Démarrer le cartable</b>.</li>
+        <li>Si Windows demande d'autoriser Node.js, cochez <b>Réseaux privés</b> seulement.</li>
+        <li>Revenez ici : les adresses à taper sur l'autre appareil s'afficheront.</li>
+      </ol>`;
+  return `<section class="card stack"><h3>📶 Depuis un autre appareil</h3>${etat}
+    <p class="small muted">Les deux appareils doivent être sur le même wifi, et ce PC doit rester allumé avec la fenêtre noire ouverte : c'est lui qui garde les données. L'espace parents demande toujours le code. À n'activer que sur le wifi de la maison, jamais sur un réseau public.</p>
   </section>`;
 }
 
@@ -2831,7 +3329,7 @@ function vAccueil(){
       <form class="form-grid" data-form="acc-pin"><label class="f">Code parent<input type="password" name="pin" inputmode="numeric" autocomplete="new-password" pattern="\\d{4,8}" required data-autofocus></label><label class="f">Le même code, encore une fois<input type="password" name="pin2" inputmode="numeric" autocomplete="new-password" required></label><div><button class="btn primary">Créer le code</button></div></form>`;
   else if(e===2){const z=cfg().zone||ZONE_DEFAUT;corps=`${tete(SK().heros,'Le prénom apparaît partout dans le cartable. La zone sert au calendrier des vacances scolaires.')}
       <form class="form-grid" data-form="acc-prenom"><label class="f">Prénom de l'enfant<input type="text" name="prenom" value="${esc(cfg().prenom||'')}" autocomplete="off" required data-autofocus></label><label class="f">Zone de vacances<select name="zone">${['A','B','C'].map(x=>`<option value="${x}" ${x===z?'selected':''}>Zone ${x}</option>`).join('')}</select></label><div><button class="btn primary">Continuer</button></div></form>`}
-  else if(e===3)corps=`${tete("L'IA du cartable",`Elle lit les photos, prépare les quiz et explique les erreurs. Choisissez où elle tourne. Vous pourrez changer plus tard dans l'espace parents.`)}${vIA()}`;
+  else if(e===3)corps=`${tete("L'IA du cartable",`Elle lit les photos, prépare les quiz et explique les erreurs. Si vous avez une clé Claude ou Mistral, collez-la d'abord ; sinon, elle tourne avec Ollama sur ce PC. Vous pourrez changer plus tard dans l'espace parents.`)}<p class="eyebrow">Clés API (facultatif)</p>${vCles()}<p class="eyebrow">Choix de l'IA</p>${vIA()}`;
   else if(e===4){const deja=all('recompenses').sort((a,b)=>a.cout-b.cout),titres=new Set(deja.map(r=>r.titre));
     corps=`${tete('Les récompenses',`${esc(prenom())} gagne des étoiles en travaillant et les échange contre des récompenses, que vous validez. Cochez celles que vous proposez et ajustez leur prix. Vous pourrez tout changer plus tard dans l'espace parents.`)}
       <form class="stack" data-form="acc-rec">
@@ -2859,7 +3357,12 @@ function vAccueil(){
 function marquerDevoir(id,fait){const d=S.devoirs.get(id);if(!d)return;const nd={...d,fait,faitLe:fait?TODAY():null};put('devoirs',d.id,nd);if(fait)gagne(ptsDevoir(nd),TODAY()<=d.pour?'Fait à temps, bravo !':'Mieux vaut tard que jamais.')}
 /* Les plis restent ouverts quand la page se redessine (après une case cochée, un défi…). */
 const PLIS={};const ouvert=id=>PLIS[id]?'open':'';
-document.addEventListener('toggle',e=>{if(e.target.id)PLIS[e.target.id]=e.target.open},true);
+// Seuls les basculements faits par l'enfant sont retenus (un <details open> inséré par innerHTML déclenche aussi « toggle »).
+const PLIS_USER=new Set();
+const marquePli=e=>{const s=e.target.closest&&e.target.closest('summary');const d=s&&s.parentElement;if(d&&d.tagName==='DETAILS'&&d.id)PLIS_USER.add(d.id)};
+document.addEventListener('click',marquePli,true);
+document.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')marquePli(e)},true);
+document.addEventListener('toggle',e=>{const id=e.target.id;if(!id)return;if(PLIS_USER.has(id)){PLIS_USER.delete(id);PLIS[id]=e.target.open}},true);
 document.addEventListener('click',async e=>{
   const el=e.target.closest('[data-act]');if(!el||el.tagName==='INPUT')return;
   if(el.tagName==='A')e.preventDefault();
@@ -2903,13 +3406,13 @@ document.addEventListener('click',async e=>{
     case 'quiz-regen':{const q=state.quiz;if(q){q.genErr=null;render();prepareQuestions(q,q.i+1)}break}
     case 'quiz-finir':{const q=state.quiz;if(q){finirQuiz();render()}break}
     case 'explique':{const q=state.quiz,x=q.questions[q.i],r=q.rep[q.i],idx=q.i;q.extra[idx]={busy:true};render();const debut=Date.now();
-      try{const {text}=await sample(`${ROLE()}\n\n${prenom()} n'a pas bien compris cette question de quiz.\nQuestion : « ${texteQuestion(x)} »\nSa réponse : « ${x.type==='qcm'?x.choix[r.v]:x.type==='vf'?(r.v?'Vrai':'Faux'):r.v} »\nExplication déjà donnée : « ${x.explication} »\nRéexplique autrement, en 120 à 180 mots, avec une autre approche que l'explication déjà donnée : commence par comprendre pourquoi sa réponse lui a semblé juste, puis utilise une image ou un exemple de la vie de tous les jours, déroule le raisonnement pas à pas sur la question, et finis par une astuce pour ne plus se tromper. Pas de titre, pas de liste à puces.`,{modelTier:'quick'});q.extra[idx]={text}}catch(err){q.extra[idx]={};toast(errMsg(err))}
+      try{const {text}=await sample(`${ROLE()}\n\n${prenom()} n'a pas bien compris cette question de quiz.\nQuestion : « ${texteQuestion(x)} »\nSa réponse : « ${x.type==='qcm'?x.choix[r.v]:x.type==='vf'?(r.v?'Vrai':'Faux'):r.v} »\nExplication déjà donnée : « ${x.explication} »\nRéexplique autrement, en 120 à 180 mots, avec une autre approche que l'explication déjà donnée : commence par comprendre pourquoi sa réponse lui a semblé juste, puis utilise une image ou un exemple de la vie de tous les jours, déroule le raisonnement pas à pas sur la question, et finis par une astuce pour ne plus se tromper. Pas de titre, pas de liste à puces.`,{modelTier:'quick'});q.extra[idx]={text}}catch(err){q.extra[idx]={};toast(errMsg(err))}
       if(q.t0)q.t0+=Date.now()-debut; // l'attente de l'IA ne compte pas dans la durée
       if(state.quiz===q&&state.view==='quiz')render();break}
     case 'rm-img':state.add.images.splice(Number(v),1);render();break;
     case 'reset-add':state.add={images:[],indice:'',date:TODAY(),busy:false,res:null,err:'',sujet:''};render();break;
     case 'analyser':{const a=state.add;a.indice=(document.getElementById('add-indice')||{}).value||'';a.date=(document.getElementById('add-date')||{}).value||TODAY();a.busy=true;a.debut=Date.now();a.err='';render();
-      try{const r=await analyserPhotos(a.images.map(i=>i.blob),a.indice,a.date);r.devoirs.forEach(x=>{x.deja=dejaNote(x)});a.res=r}catch(err){console.warn('analyser',err);a.err=errMsg(err);a.errSrc='photo'}
+      try{const r=await analyserPhotos(a.images.map(i=>i.blob),a.indice,a.date);r.devoirs.forEach(x=>{x.deja=dejaNote(x)});comparerAuCartable(r,a.images);a.res=r}catch(err){console.warn('analyser',err);a.err=errMsg(err);a.errSrc='photo'}
       a.busy=false;render();break}
     case 'scan-rm':state.scan.images.splice(Number(v),1);render();break;
     case 'scan-reset':state.scan={images:[],indice:'',busy:false,res:null,err:''};render();break;
@@ -2926,14 +3429,19 @@ document.addEventListener('click',async e=>{
     case 'valider':{const a=S.achats.get(id);if(a)put('achats',id,{...a,statut:'validé'});break}
     case 'refuser':{const a=S.achats.get(id);if(a)put('achats',id,{...a,statut:'refusé'});break}
     case 'del-rec':del('recompenses',id);break;
-    case 'acc-fin':put('config','main',{...cfg(),accueil:'fait'});state.acc=null;state.parent=false;state.pinParent='';state.iaf=null;confettis();go('jour');break;
+    case 'acc-fin':await put('config','main',{...cfg(),accueil:'fait'});state.acc=null;finParent();confettis();go('jour');break;
     case 'acc-ia-plus-tard':state.iaf=null;state.acc={etape:4};render();break;
     case 'ia-mode':{const f=state.iaf;f.mode=v;f.msg='';f.modeles=null;render();break}
     case 'ia-tester':envoyerIA({essai:true});break;
-    case 'ia-oublier':envoyerIA({oublierCle:true});break;
+    case 'ocr-mode':{const f=state.ocrf;f.mode=v;f.msg='';render();break}
+    case 'ocr-tester':envoyerOCR({essai:true});break;
+    case 'cle-tester':envoyerCle(v,{essai:true});break;
+    case 'cle-oublier':envoyerCle(v,{oublier:true});break;
     case 'suggestions':SUGGESTIONS.forEach(([t,c])=>put('recompenses',uid(),{titre:t,cout:c}));break;
-    case 'parent-off':state.parent=false;state.pinParent='';state.iaf=null;render();break;
-    case 'skin':put('config','main',{...cfg(),skin:el.dataset.v});toast(`Habillage ${SKINS[el.dataset.v].nom.split(' ·')[0]} choisi.`);break;
+    case 'parent-off':finParent();state.pp=null;render();break;
+    case 'parent-page':state.pp=v;if(v==='couts')chargerCouts();render();window.scrollTo({top:0});break;
+    case 'skin':put('config','main',{...cfg(),skin:el.dataset.v});toast(`Monde ${SKINS[el.dataset.v].nom.split(' ·')[0]} choisi.`);break;
+    case 'theme':put('config','main',{...cfg(),theme:v});toast({clair:'Couleurs claires choisies.',sombre:'Couleurs sombres choisies.',auto:"Les couleurs suivent l'ordinateur."}[v]);break;
     case 'prog-mat':go('programme',v);break;
     case 'comp-etat':{const c=COMP(id);if(!c)break;const cur=etatComp(c).etat;const next={avenir:'vu',vu:'fragile',fragile:'progres',progres:'acquis',acquis:'avenir'}[cur];put('programme',id,{etat:next,date:TODAY(),ts:Date.now()});break}
     case 'speciale':leconSpeciale(id);break;
@@ -2945,7 +3453,7 @@ document.addEventListener('click',async e=>{
 document.addEventListener('input',e=>{if(e.target.matches&&e.target.matches('[data-brouillon]')&&state.quiz){(state.quiz.brouillons=state.quiz.brouillons||{})[state.quiz.i]=e.target.value}});
 document.addEventListener('change',e=>{
   const el=e.target;
-  if(el.id==='zone-sel'){el.blur();put('config','main',{...cfg(),zone:el.value||null});return}
+  if(el.id==='zone-parent'){el.blur();put('config','main',{...cfg(),zone:el.value||null});return}
   if(el.id==='photo-in'&&el.files){ajouterFichiers(el.files);el.value='';return}
   if(el.id==='scan-in'&&el.files){ajouterFichiers(el.files,state.scan);el.value='';return}
   if(el.dataset.act==='devoir-fait'){marquerDevoir(el.dataset.id,el.checked);return}
@@ -2953,7 +3461,7 @@ document.addEventListener('change',e=>{
     const avant=p.jours.find(j=>j.date===el.dataset.id),complet=avant&&missionFaite(p,avant);
     const np={...p,[k]:{...(p[k]||{}),[el.dataset.id]:el.checked}};put('config',p.id,np);
     if(el.checked){const fini=avant&&!complet&&missionFaite(np,avant);const n=ptsVac(k,el.dataset.id)+(fini?bonusMission(el.dataset.id):0);gagne(n,fini?'Mission du jour complète !':k==='lu'?'Bonne lecture !':'')}return}
-  if(el.dataset.act==='routine'){const t=TODAY();const r=S.routine.get(t)||{items:{}};const items={...(r.items||{}),[el.dataset.v]:el.checked};put('routine',t,{items});const nb=o=>routineDu(t).filter(it=>o&&o[it.id]).length,n=ptsRoutine(t,nb(items))-ptsRoutine(t,nb(r.items));if(n>0)gagne(n,nb(items)===routineDu(t).length?`${SK().code[0].toUpperCase()+SK().code.slice(1)} complet !`:'');return}
+  if(el.dataset.act==='routine'){const avaitFocus=document.activeElement===el,idRt=el.dataset.v;setTimeout(()=>{if(!avaitFocus)return;const n=document.querySelector(`[data-act="routine"][data-v="${idRt}"]`);if(n&&document.activeElement!==n)n.focus({preventScroll:true})},0);const t=TODAY();const r=S.routine.get(t)||{items:{}};const items={...(r.items||{}),[el.dataset.v]:el.checked};put('routine',t,{items});const nb=o=>routineDu(t).filter(it=>o&&o[it.id]).length,n=ptsRoutine(t,nb(items))-ptsRoutine(t,nb(r.items));if(n>0)gagne(n,nb(items)===routineDu(t).length?`${SK().code[0].toUpperCase()+SK().code.slice(1)} complet !`:'');return}
 });
 document.addEventListener('dragover',e=>{const d=e.target.closest&&e.target.closest('#drop,#scan-drop');if(d){e.preventDefault();d.classList.add('over')}});
 document.addEventListener('dragleave',e=>{const d=e.target.closest&&e.target.closest('#drop,#scan-drop');if(d)d.classList.remove('over')});
@@ -2969,7 +3477,7 @@ document.addEventListener('submit',async e=>{
   if(kind==='manuel'){const lignes=(fd.txt||'').split('\n').map(s=>s.trim()).filter(Boolean);const id=nouvelleLecon({cours:{aRetenir:lignes}},{titre:fd.titre,matiere:fd.matiere,date:fd.date});go('lecon',id);return}
   if(kind==='edit-lecon'){const l=S.lecons.get(f.dataset.id);if(l){put('lecons',l.id,{...l,titre:fd.titre||l.titre,matiere:fd.matiere,date:fd.date||l.date});toast('Leçon modifiée.')}return}
   if(kind==='ask'){const l=S.lecons.get(f.dataset.id);if(!l||!sample)return;const q=fd.q;state.ask[l.id]={busy:true,text:''};render();
-    try{const {text}=await sample(`${ROLE()}\n\nVoici la leçon ${deP()} :\n${resumeLecon(l)}\n\n${prenom()} demande : « ${q} »\nRéponds-lui en 100 à 200 mots, pas à pas : explique le pourquoi, donne un exemple concret de sa vie, montre le raisonnement, puis finis par une petite question ou une astuce pour vérifier qu'il a compris. Si la question n'a rien à voir avec l'école, ramène-le gentiment vers sa leçon.`,{modelTier:'default',cache:false,onText:({text})=>{state.ask[l.id].text=text;const el=app.querySelector('.thinking span');if(el)el.innerHTML=rich(text)}});
+    try{const {text}=await sample(`${ROLE()}\n\nVoici la leçon ${deP()} :\n${resumeLecon(l)}\n\n${prenom()} demande : « ${q} »\nRéponds-lui en 100 à 200 mots, pas à pas : explique le pourquoi, donne un exemple concret de sa vie, montre le raisonnement, puis finis par une petite question ou une astuce pour vérifier qu'il a compris. Si la question n'a rien à voir avec l'école, ramène-le gentiment vers sa leçon.`,{modelTier:'default',cache:false,onText:({text})=>{state.ask[l.id].text=text;const el=app.querySelector('.thinking span');if(el)el.innerHTML=rich(text)}});
       const cur=S.lecons.get(l.id)||l;put('lecons',l.id,{...cur,questions:[...(cur.questions||[]),{q,a:text}].slice(-10)});state.ask[l.id]={}}catch(err){state.ask[l.id]={err:errMsg(err)}}
     render();return}
   if(kind==='scan-save'){let n=0,nc=0;
@@ -2987,21 +3495,24 @@ document.addEventListener('submit',async e=>{
   // Le code parent est vérifié par le serveur, qui le garde haché : il n'arrive jamais dans la page.
   if(kind==='pin'){const creer=!pinDefini();if(creer&&!/^\d{4,8}$/.test(fd.pin)){toast('Choisissez un code de 4 à 8 chiffres.');return}
     let r;try{r=await fetch('/api/pin',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({pin:fd.pin,creer})}).then(x=>x.json())}catch(e){toast("Le serveur du cartable ne répond pas.");return}
-    if(r.ok){if(creer){S.config.set('pin',{id:'pin',defini:true});toast('Code parent créé.')}state.parent=true;state.pinParent=fd.pin;render()}else toast(r.code==='deja'?'Un code existe déjà.':'Code incorrect.');return}
+    if(r.ok){if(creer){S.config.set('pin',{id:'pin',defini:true});toast('Code parent créé.')}state.parent=true;state.jeton=r.jeton||'';if(window.claude)window.claude.parent=state.jeton||null;render()}else toast(r.code==='deja'?'Un code existe déjà.':'Code incorrect.');return}
   if(kind==='rec'){put('recompenses',uid(),{titre:fd.titre,cout:Math.max(1,Number(fd.cout)||1)});f.reset();return}
   if(kind==='acc-pin'){const creer=!pinDefini();
     if(creer&&!/^\d{4,8}$/.test(fd.pin)){toast('Choisissez un code de 4 à 8 chiffres.');return}
     if(creer&&fd.pin!==fd.pin2){toast('Les deux codes ne sont pas pareils.');return}
     let r;try{r=await fetch('/api/pin',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({pin:fd.pin,creer})}).then(x=>x.json())}catch(e){toast("Le serveur du cartable ne répond pas.");return}
     if(!r.ok){toast('Code incorrect.');return}
-    if(creer){S.config.set('pin',{id:'pin',defini:true});put('config','main',{...cfg(),accueil:'en-cours'})}
-    state.parent=true;state.pinParent=fd.pin;state.acc={etape:(cfg().prenom||'').trim()&&!creer?3:2};render();return}
+    state.jeton=r.jeton||'';if(window.claude)window.claude.parent=state.jeton||null;
+    if(creer){S.config.set('pin',{id:'pin',defini:true});await put('config','main',{...cfg(),accueil:'en-cours'})}
+    state.parent=true;state.acc={etape:(cfg().prenom||'').trim()&&!creer?3:2};render();return}
   if(kind==='acc-prenom'){const p=(fd.prenom||'').trim();if(!p)return;put('config','main',{...cfg(),prenom:p,zone:fd.zone||ZONE_DEFAUT,accueil:'en-cours'});state.acc={etape:3};render();return}
   if(kind==='acc-rec'){
     SUGGESTIONS.forEach(([t,c],i)=>{if(fd['s'+i])put('recompenses',uid(),{titre:t,cout:Math.max(1,Number(fd['c'+i])||c)})});
     const t=(fd.t||'').trim();if(t)put('recompenses',uid(),{titre:t,cout:Math.max(1,Number(fd.c)||1)});
     state.acc={etape:5};render();return}
   if(kind==='ia'){envoyerIA();return}
+  if(kind==='ocr'){envoyerOCR();return}
+  if(kind==='cle'){envoyerCle(f.dataset.f);return}
   if(kind==='prenom'){put('config','main',{...cfg(),prenom:(fd.prenom||'').trim()});toast('Enregistré.');return}
 });
 const h=(location.hash||'').slice(1);if(TABS.some(t=>t[0]===h))state.view=h;

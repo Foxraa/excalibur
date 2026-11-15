@@ -6,3 +6,6 @@ photos/
 node_modules/
 .claude/tmp/
 .superpowers/
+appli/test-results/
+appli/playwright-report/
+programme_cm1/*.avant-mise-a-jour.md

@@ -17,6 +17,12 @@ Pour arrêter Excalibur, fermer la fenêtre noire. Pour repartir d'un cartable v
 
 Aucun réglage n'est obligatoire. Pour les options (tablette, chiffrement de la base…), copier `appli\.env.example` en `appli\.env` et suivre les commentaires.
 
+## Mettre à jour
+
+Fermer le cartable (la fenêtre noire), puis double-cliquer sur **`appli\Mettre a jour le cartable.bat`**. Il télécharge la dernière version publiée sur GitHub et remplace le code. Le cartable de l'enfant (`appli\data`), les réglages et les clés API (`appli\.env`) et les photos ne sont pas touchés. Par précaution, la base est d'abord recopiée dans `appli\data\cartable.avant-mise-a-jour.duckdb`. Si `programme_cm1\10_Progression_annuelle.md` a changé, l'ancienne version est gardée à côté, avec `.avant-mise-a-jour` dans son nom. Relancer ensuite **Demarrer le cartable.bat** : s'il faut de nouveaux modules, il les installe tout seul.
+
+Si le cartable est déjà à jour, le fichier le dit et ne change rien. Sans internet, rien n'est modifié.
+
 ## En savoir plus
 
 Le mode d'emploi complet est dans [appli/LISEZMOI.md](appli/LISEZMOI.md) : les onglets, les étoiles, la sauvegarde et la version sur clé USB, qui fonctionne sans rien installer sur le PC.

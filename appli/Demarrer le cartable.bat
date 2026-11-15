@@ -17,22 +17,19 @@ if exist .env goto choix_fait
 echo.
 echo Quelle IA pour le cartable ?
 echo   1 = Ollama sur ce PC : gratuit, rien ne sort de la maison, plusieurs Go a telecharger
-echo   2 = Ollama sur un autre ordinateur de la maison : gratuit, il faut son adresse
-echo   3 = Claude : payant, avec une cle API, les donnees partent chez Anthropic
+echo   2 = Claude : payant, avec une cle API, les donnees partent chez Anthropic
+echo   3 = Mistral : payant et moins cher, avec une cle API, les donnees partent chez Mistral AI
 choice /c 123 /n /m "Ton choix (1, 2 ou 3) : "
-if errorlevel 3 goto choix_claude
-if errorlevel 2 goto choix_reseau
+if errorlevel 3 goto choix_mistral
+if errorlevel 2 goto choix_claude
 > .env echo IA=ollama
-goto choix_fait
-:choix_reseau
-set "ADRESSE="
-set /p "ADRESSE=Adresse de cet ordinateur (exemple 192.168.1.20) : "
-if not defined ADRESSE goto choix
-> .env echo IA=ollama
->> .env echo OLLAMA_URL=%ADRESSE%
 goto choix_fait
 :choix_claude
 > .env echo IA=claude
+echo La cle API se colle dans le cartable, a l'etape "L'IA du cartable".
+goto choix_fait
+:choix_mistral
+> .env echo IA=mistral
 echo La cle API se colle dans le cartable, a l'etape "L'IA du cartable".
 :choix_fait
 
@@ -55,8 +52,9 @@ if not defined CHOIX_IA if defined CLE set "CHOIX_IA=claude"
 if not defined CHOIX_IA set "CHOIX_IA=ollama"
 if not defined CHOIX_QUICK set "CHOIX_QUICK=%CHOIX_IA%"
 
-rem Rien a faire ici pour Ollama si l'IA tourne ailleurs
-if /i "%CHOIX_IA%"=="claude" if /i "%CHOIX_QUICK%"=="claude" goto lancer
+rem Rien a faire ici pour Ollama si l'IA tourne ailleurs (OLLAMA_URL vers un autre PC, mis a la main dans .env)
+rem Claude et Mistral tournent en ligne : pas besoin d'Ollama
+if /i not "%CHOIX_IA%"=="ollama" if /i not "%CHOIX_QUICK%"=="ollama" goto lancer
 if not defined ADRESSE goto ollama_ici
 echo %ADRESSE%| findstr /i "localhost 127.0.0.1" >nul || goto lancer
 :ollama_ici

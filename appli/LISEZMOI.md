@@ -1,10 +1,10 @@
 # Excalibur — version locale
 
-L'appli tourne sur ce PC. L'IA est au choix : Ollama sur ce PC, Ollama sur un autre ordinateur de la maison, ou Claude avec une clé API. Avec Ollama, rien ne part sur internet. Les données sont dans `data/cartable.duckdb`.
+L'appli tourne sur ce PC. L'IA est au choix : Ollama sur ce PC, ou Claude ou Mistral avec une clé API, et la lecture des photos peut passer par Mistral OCR. Avec Ollama, rien ne part sur internet. Les données sont dans `data/cartable.duckdb`.
 
 ## Première installation (une seule fois)
 
-Au premier lancement, **Demarrer le cartable.bat** installe Node.js s'il manque (avec winget ; Windows demande d'accepter l'installation), puis demande où tourne l'IA. Si c'est sur ce PC, il installe aussi Ollama et télécharge le modèle (`gemma4:e4b`, plusieurs Go). Sinon, il n'installe rien de plus.
+Au premier lancement, **Demarrer le cartable.bat** installe Node.js s'il manque (avec winget ; Windows demande d'accepter l'installation), puis demande quelle IA utiliser : Ollama sur ce PC, Claude ou Mistral. Avec Ollama, il installe aussi Ollama et télécharge le modèle (`gemma4:e4b`, plusieurs Go). Avec Claude ou Mistral, il n'installe rien de plus.
 
 Un cartable vide s'ouvre sur un accueil en cinq étapes : le code parent, puis le prénom et la zone de vacances, l'IA, les récompenses, et enfin un écran qui explique les étoiles à l'enfant. Les onglets n'apparaissent qu'à la fin. Si la page est rechargée en cours de route, l'accueil reprend après le code parent.
 
@@ -17,13 +17,23 @@ Sur un petit PC, Ollama est lent : une question de quiz prend 30 à 40 secondes,
 
 ## Choisir l'IA
 
-Le choix se fait dans l'**espace parents**, rubrique « L'IA du cartable » (aussi à l'accueil d'un cartable neuf). Le bouton **Tester** essaie le réglage sans le garder ; **Enregistrer** l'applique tout de suite, sans relancer.
+Les choix se font dans l'**espace parents**, page **Réglages IA**, carte « Intelligence artificielle », avec les clés API juste en dessous. L'IA se choisit aussi à l'accueil d'un cartable neuf. Le bouton **Tester** essaie le réglage sans le garder ; **Enregistrer** l'applique tout de suite, sans relancer.
 
-- **Ollama sur ce PC** : gratuit, rien ne sort de la maison. Si Ollama n'était pas encore installé, fermer la fenêtre noire et relancer le cartable.
-- **Ollama sur le réseau** : un ordinateur plus puissant de la maison fait le travail. On donne son adresse (`192.168.1.20`, `PC-SALON`, ou une adresse complète ; le port 11434 est ajouté tout seul). Sur cet ordinateur, Ollama doit accepter le réseau : mettre la variable d'environnement `OLLAMA_HOST=0.0.0.0`, relancer Ollama et autoriser le port 11434 dans le pare-feu. Ollama n'a pas de mot de passe : à réserver au réseau de la maison.
-- **Claude** : payant selon les jetons utilisés, avec une clé API créée sur [platform.claude.com](https://platform.claude.com). Plus rapide et plus fiable, surtout pour lire les photos. Les photos, les leçons et le prénom sont alors envoyés à Anthropic.
+- **IA du cartable** :
+  - **Ollama** : sur ce PC, gratuit, rien ne sort de la maison. Si Ollama n'était pas encore installé, fermer la fenêtre noire et relancer le cartable.
+  - **Claude** : payant selon les jetons utilisés. Plus rapide et plus fiable, surtout pour lire les photos. Les photos, les leçons et le prénom sont alors envoyés à Anthropic.
+  - **Mistral** : le modèle Mistral Small (`mistral-small-latest`, autre modèle possible avec `MISTRAL_MODEL=` dans `.env`). Payant selon les jetons, nettement moins cher que Claude (environ 0,15 $ par million de jetons lus et 0,60 $ par million écrits fin 2026, à vérifier sur mistral.ai). Il voit les photos. Chaque appel est noté dans `data/consommation.log`. Les photos, les leçons et le prénom sont alors envoyés à Mistral AI. Pas encore essayé sur de vrais devoirs : à comparer avec Ollama et Claude.
+- **Lecture des photos** (leçons, exercices, agenda) :
+  - **L'IA du cartable** (Ollama, Claude ou Mistral) regarde les photos elle-même. C'est le réglage de départ.
+  - **Mistral OCR** : un logiciel spécialisé recopie d'abord le texte des photos, puis l'IA du cartable reçoit ce texte à la place des images. C'est payé à la photo (environ 4 $ pour 1 000 photos fin 2026), et chaque lecture est notée dans `data/consommation.log`. Les photos sont envoyées à Mistral AI. Les couleurs ne passent pas : l'IA ne voit plus les corrections de la maîtresse au stylo rouge ou vert.
 
-Le choix et la clé sont gardés dans `.env`. La clé ne revient jamais au navigateur et n'est pas copiée sur une clé USB. Le bouton **Oublier la clé** la retire.
+### Clés API
+
+Les clés se règlent à part, dans la carte « Clés API », en haut de la page Réglages IA. Claude, Mistral et Mistral OCR restent grisés tant que leur clé n'est pas enregistrée ; sans aucune clé, le cartable tourne avec Ollama (même si `.env` demande Claude ou Mistral). Les clés : **Anthropic** (pour Claude, créée sur [platform.claude.com](https://platform.claude.com)) et **Mistral** (pour l'IA Mistral et pour la lecture des photos, une seule clé pour les deux, créée sur [console.mistral.ai](https://console.mistral.ai)). Une clé n'est enregistrée que si elle marche. **Oublier la clé** la retire ; si elle servait, l'IA repasse sur Ollama, et la lecture des photos sur l'IA du cartable.
+
+Les choix (`IA`, `OCR=mistral`) et les clés (`ANTHROPIC_API_KEY`, `MISTRAL_API_KEY`) sont gardés dans `.env`. Les clés ne reviennent jamais au navigateur et ne sont pas copiées sur une clé USB.
+
+Ollama sur un autre ordinateur de la maison n'est plus proposé, ni dans l'espace parents ni par le lanceur. Une ligne `OLLAMA_URL=` ajoutée à la main dans `.env` reste prise en compte (et le lanceur n'installe alors pas Ollama), mais enregistrer « Ollama » dans l'espace parents la retire.
 
 ## Les quatre onglets
 
@@ -49,6 +59,8 @@ Dans l'espace parents, « Habillage du cartable » propose quatre skins :
 
 Le skin change les couleurs et les formes, le logo et l'icône de l'onglet, les hiboux, le nom des niveaux et des badges, les encouragements et le ton de l'IA. Les étoiles, les niveaux atteints et les données restent les mêmes. Il y a 50 niveaux dans chaque skin : le premier coûte 150 étoiles, chaque suivant 40 de plus (54 390 étoiles au total pour le niveau 50). Atteindre le niveau N rapporte N étoiles, qui comptent pour les récompenses mais pas pour monter de niveau. Tous les 10 niveaux, l'enfant choisit une récompense offerte, que les parents valident comme les autres ; si elle est refusée, il peut en choisir une autre. Les couleurs des onglets ne changent pas, pour que l'enfant se repère toujours.
 
+Chaque habillage existe en clair et en sombre. Dans les réglages, « Couleurs » propose *Comme l'ordinateur* (par défaut, suit le mode clair ou sombre de Windows), *Clair* ou *Sombre*. Le choix vaut pour tous les habillages.
+
 ## Les étoiles
 
 +1 par bonne réponse, +5 par chose finie, ×2 sans faute, +4 pour 10 ou 11 sur 12 au défi des tables. On gagne moitié moins pour un quiz Facile, les tables de 2, 5 ou 10, ou un quiz déjà réussi dans la semaine (le quart si déjà réussi deux fois).
@@ -61,14 +73,19 @@ L'épée du jour va du rouge au bleu et ne redescend jamais dans la journée. Ro
 
 Il est gardé haché par le serveur. On ne peut donc pas le lire dans la page, même avec les outils du navigateur. Code oublié : supprimer la ligne `config / pin` de la base, puis en créer un nouveau.
 
+Le bon code ouvre une session de 15 minutes, comptées depuis la dernière action. Le serveur la reconnaît à un jeton que la page garde en mémoire. Elle se ferme quand on quitte l'espace parents, au bout de 15 minutes sans rien faire, ou si le serveur redémarre : la page redemande alors le code. Tant que la session est ouverte, rien d'autre n'est demandé.
+
+Sans session, le serveur refuse ce qui relève des parents : les récompenses, la validation des demandes, les réglages, le programme, et le réglage de l'IA. Les données de l'enfant (leçons, quiz, notes) restent libres. Tant qu'aucun code n'existe, tout est permis.
+
 ## Les calculs des quiz
 
 L'IA donne l'opération de chaque question de calcul, et le cartable refait le calcul lui-même. Si l'IA s'est trompée dans son corrigé, la bonne réponse est rétablie, ou la question est écartée.
 
-## Depuis une tablette de la maison
+## Depuis un autre appareil de la maison (même wifi)
 
-Ajouter `HOST=0.0.0.0` dans `.env`, relancer, puis ouvrir `http://<nom-ou-IP-du-PC>:3000` sur la tablette.
-Windows demandera d'autoriser Node.js sur le réseau privé.
+Ajouter `HOST=0.0.0.0` dans `.env`, relancer, puis ouvrir `http://<nom-ou-IP-du-PC>:3000` sur l'autre appareil.
+Windows demandera d'autoriser Node.js : cocher seulement les réseaux privés.
+L'espace parents, onglet Réglages, bloc « Depuis un autre appareil », rappelle ces étapes et affiche les adresses à taper.
 
 ## Sur une clé USB (autre PC, sans rien installer)
 
@@ -78,9 +95,20 @@ Fermer le cartable, brancher une clé en **exFAT ou NTFS** (le modèle fait 5,5 
 
 Tout est dans `data/cartable.duckdb`. Le serveur y recopie chaque modification au bout de 3 secondes, ainsi qu'au démarrage et à la fermeture. Si un fichier `cartable.duckdb.wal` traîne à côté, c'est seulement que la dernière modification a moins de 3 secondes : il sera vidé au prochain lancement. Pour une copie à la main, fermer le cartable, puis copier `data/cartable.duckdb`. Le dossier est dans OneDrive, donc il est déjà sauvegardé.
 
+## Mettre à jour
+
+Fermer le cartable, puis double-cliquer sur **Mettre a jour le cartable.bat**. Il télécharge la dernière version de la branche `main` sur GitHub et remplace le code, sans toucher à `data`, à `.env` ni aux photos. La base est d'abord recopiée dans `data/cartable.avant-mise-a-jour.duckdb`, et une progression annuelle retouchée à la main est gardée dans `programme_cm1/10_Progression_annuelle.avant-mise-a-jour.md`. Si la liste des modules a changé, `node_modules` est supprimé, et le lanceur les réinstalle au démarrage suivant. La version installée est notée dans `.version`. Un fichier supprimé d'une version à l'autre reste sur le disque, sans gêner.
+
+Dans une copie suivie par git (le PC où l'on développe), le fichier refuse et renvoie vers `git pull`. Les nouveautés n'arrivent chez les autres qu'une fois fusionnées dans `main` et poussées sur GitHub.
+
 ## Repartir de zéro
 
 Fermer le cartable, puis double-cliquer sur **Reinitialiser le cartable.bat** et taper `OUI`. Rien n'est effacé : le dossier `data` est renommé en `data-avant-reinitialisation-<date>`, et le cartable démarre vide au lancement suivant, sur l'accueil (code parent, prénom, récompenses, étoiles). Pour revenir en arrière, supprimer le nouveau dossier `data` et redonner son nom `data` à l'ancien.
+
+## Tester le cartable
+
+- `npm test` vérifie les règles (étoiles, épée, tables, questions, session parent…) en quelques secondes.
+- `npm run test:parcours` joue un cartable neuf de bout en bout dans Edge : accueil, quiz depuis la mission, code du héros, demande de récompense, refus sans code parent, espace parents. Le serveur de test tourne sur le port 3100 avec un dossier de données jetable, et l'IA est simulée : la vraie base n'est jamais touchée, et ni Ollama ni Claude ne sont appelés. Pour utiliser Chrome à la place d'Edge : `E2E_NAVIGATEUR=chrome`.
 
 Le code est suivi par git. Les données, les photos et le fichier `.env` n'y sont pas.
 

@@ -222,7 +222,8 @@ test("une phrase sans faute ne peut pas demander le mot mal écrit", () => {
   assert.ok(c({ type: "courte", question: SANS_FAUTE, reponses: ["personnes"] }, FR).refus);
   assert.ok(c({ type: "courte", question: SANS_FAUTE, faute: "personnes", reponses: ["personnes"] }, FR).refus);
   assert.ok(c({ type: "courte", question: SANS_FAUTE, faute: "personne", reponses: ["personnes"] }, FR).refus);
-  assert.ok(c({ type: "qcm", question: FAUTE, choix: ["chien", "à", "faim"], bonne: 1 }, FR).refus);
+  // En qcm, le mot fautif est le bon choix : la relecture vérifie ensuite qu'il est vraiment mal écrit.
+  assert.equal(c({ type: "qcm", question: FAUTE, choix: ["chien", "à", "faim"], bonne: 1 }, FR).question.faute, "à");
   assert.ok(c({ type: "courte", question: "Corrige le mot mal écrit dans : « Les personnes sont là. »", reponses: ["personnes"] }, FR).refus);
 });
 
@@ -369,4 +370,288 @@ test("chaque photo de paysage a son fichier, sa description et son auteur", asyn
   }
   assert.equal(photosPour("geographie"), PAYSAGES);
   assert.deepEqual(photosPour("maths"), []);
+});
+
+test("un faux choix qui sort des homophones travaillés est retiré : il pourrait être juste", () => {
+  const q = "Dans le parc, deux garçons jouent au foot. Complète : Les enfants ___ contents car ___ ballon est tout neuf.";
+  const r = c({ type: "qcm", question: q, choix: ["son / sont", "sont / leur", "sont / son", "son / son"], bonne: 2 }).question;
+  assert.deepEqual(r.choix, ["son / sont", "sont / son", "son / son"]);
+  assert.equal(r.choix[r.bonne], "sont / son");
+  const un = c({ type: "qcm", question: "Les deux sœurs rangent ___ chambre avant de partir en vacances chez leur grand-mère.", choix: ["son", "sont", "leur"], bonne: 0 }).question;
+  assert.deepEqual(un.choix, ["son", "sont"]);
+  assert.ok(c({ type: "qcm", question: "Les enfants ___ contents car ___ ballon est neuf et rouge.", choix: ["sont / son", "sont / leur"], bonne: 0 }).refus);
+});
+
+test("en maths, une bonne réponse recopiée telle quelle depuis la question est refusée", () => {
+  const q = "Une horloge à aiguilles indique 3 h 25 min 40 s. Quelle est la bonne façon d'écrire cette heure avec les unités ?";
+  assert.ok(c({ type: "qcm", question: q, choix: ["3 h 25 min 40 h", "3 min 25 h 40 s", "3 h 25 s 40 min", "3 h 25 min 40 s"], bonne: 3 }, { matiere: "maths" }).refus);
+  assert.ok(c({ type: "courte", question: q, reponses: ["3 h 25 min 40 s"] }, { matiere: "maths" }).refus);
+  // Les deux durées sont dans la question : il faut les comparer.
+  assert.ok(c({ type: "qcm", question: "Qu'est-ce qui dure le plus longtemps : 1 h 10 min ou 75 min ?", choix: ["1 h 10 min", "75 min"], bonne: 1 }, { matiere: "maths" }).question);
+  assert.ok(c({ type: "qcm", question: "Il est 3 h 25. Quelle heure sera-t-il dans 10 minutes ?", choix: ["3 h 35", "3 h 15"], bonne: 0 }, { matiere: "maths" }).question);
+});
+
+test("une question qui annonce « la phrase suivante » sans l'écrire est refusée", () => {
+  const qcm = (question, choix, bonne = 0) => c({ type: "qcm", question, choix, bonne });
+  assert.ok(qcm("Dans la phrase suivante, quel verbe est du 2e groupe ?", ["Nous partons en vacances.", "Ils dorment tôt.", "Elle vient demain.", "Tu choisis un dessert."], 3).refus);
+  assert.ok(courte("Recopie le verbe de la phrase ci-dessous.", "mange").refus);
+  // La phrase est bien écrite : la question passe.
+  assert.ok(qcm("Dans la phrase suivante, quel verbe est du 2e groupe : « Tu choisis un dessert » ?", ["choisis", "dessert"]).question);
+  assert.ok(courte("Trouve le verbe dans la phrase suivante : Le chat dort sur le canapé.", "dort").question);
+  assert.ok(qcm("Dans quelle phrase le verbe est-il du 2e groupe ?", ["Ils dorment tôt.", "Tu choisis un dessert."], 1).question);
+});
+
+test("une phrase à deux trous exige un mot par trou dans chaque choix", () => {
+  const q = "Dans cette phrase, quel mot complète le mieux la phrase ? Mon frère ___ un vélo rouge ___ bleu.";
+  assert.ok(c({ type: "qcm", question: q, choix: ["a", "à", "est", "et"], bonne: 0 }).refus);
+  const r = c({ type: "qcm", question: q, choix: ["a / et", "à / est", "et", "a / est"], bonne: 0 }).question;
+  assert.deepEqual(r.choix, ["a / et", "à / est", "a / est"]);
+  assert.ok(courte(q, "a").refus);
+  assert.ok(courte(q, "a / et").question);
+});
+
+test("chercher une faute dans une phrase à trous est refusé", () => {
+  const q = "Quel mot est mal écrit dans cette phrase ? Pendant les vacances, ma cousine ___ appris ___ nager dans le lac.";
+  assert.ok(c({ type: "courte", question: q, reponses: ["a / à"], faute: "___" }, { matiere: "francais" }).refus);
+  assert.ok(c({ type: "qcm", question: q, choix: ["a / à", "à / a"], bonne: 0 }, { matiere: "francais" }).refus);
+});
+
+test("une faute annoncée n'est gardée que si la relecture trouve la même", () => {
+  const { accordFaute, promptFaute } = globalThis;
+  const x = { type: "courte", question: "Quel mot est mal écrit dans cette phrase ? Le professeur a donné des exercices à faire.", faute: "a", reponses: ["à", "a"] };
+  assert.equal(accordFaute(x, { faute: "" }), false);
+  assert.equal(accordFaute(x, { faute: "exercices" }), false);
+  assert.equal(accordFaute(x, { faute: "a", correction: "à" }), true);
+  assert.equal(accordFaute(x, null), null);
+  assert.equal(accordFaute(x, { raisonnement: "…" }), null);
+  assert.ok(!promptFaute(x).includes('"a"'));
+});
+
+test("un mot déjà bien écrit n'est pas une faute", () => {
+  const { accordFaute } = globalThis;
+  const q = "Quel mot est mal écrit dans : Pendant les vacances, ma cousine a appris à préparer une potion pour son baptême ?";
+  const x = { type: "courte", question: q, faute: "baptême", reponses: ["baptême", "baptême"] };
+  assert.equal(accordFaute(x, { faute: "baptême", correction: "baptême" }), false);
+  // Même mot écrit avec un accent composé (e + ^) : c'est le même mot, il n'y a pas de faute.
+  const decompose = "baptême";
+  assert.ok(c({ type: "courte", question: q, faute: decompose, reponses: ["baptême"] }, FR).refus);
+  // La relecture désigne la forme juste comme fautive : la question est écartée.
+  const y = { type: "courte", question: q.replace("baptême", "batême"), faute: "batême", reponses: ["baptême", "batême"] };
+  assert.equal(accordFaute(y, { faute: "baptême" }), false);
+  assert.equal(accordFaute(y, { faute: "batême", correction: "baptême" }), true);
+});
+
+test("une question qui parle d'un mot en gras doit le montrer en gras", () => {
+  assert.ok(c({ type: "qcm", question: "Dans quelle phrase le mot en gras est-il bien écrit ?", choix: ["Les élèves ont rangé leurs affaires.", "Les éléves ont rangé leurs affaires."], bonne: 0 }).refus);
+  assert.ok(c({ type: "qcm", question: "Dans « Les **éléves** sont là », le mot en gras est-il bien écrit ?", choix: ["Oui", "Non"], bonne: 1 }).question);
+});
+
+test("une phrase à trou n'est gardée que si la relecture trouve le même mot sans voir les choix", () => {
+  const { accordTrou, promptTrou, aRelireTrou } = globalThis;
+  const x = { type: "qcm", question: "Les élèves ___ leur cartable avant de rentrer à la maison.", choix: ["a", "à"], bonne: 0 };
+  assert.ok(aRelireTrou(x));
+  assert.ok(!aRelireTrou({ type: "qcm", question: "Quel est le pluriel de cheval ?", choix: ["chevals", "chevaux"], bonne: 1 }));
+  assert.equal(accordTrou(x, { mot: "rangent" }), false);
+  assert.equal(accordTrou(x, { mot: "" }), false);
+  assert.equal(accordTrou(x, { mot: "« a »" }), true);
+  assert.equal(accordTrou(x, {}), null);
+  assert.ok(!/Choix|« à »/.test(promptTrou(x)));
+  const deux = { type: "qcm", question: "Mon frère ___ un vélo rouge ___ bleu.", choix: ["a / et", "à / est"], bonne: 0 };
+  assert.ok(promptTrou(deux).includes("2 trous"));
+  assert.equal(accordTrou(deux, { mot: "a / et" }), true);
+});
+
+test("« dans quelle phrase … bien écrit » : les faux choix n'ont qu'une faute, sur le même mot", () => {
+  const q = "Dans quelle phrase le verbe est-il bien écrit ?";
+  const r = c({ type: "qcm", question: q, choix: ["Les enfants joue au foot dans le parc.", "Les enfants jouent au foot dans les parc.", "Les enfants jouent au foot dans le parc.", "Les enfants jou à le foot dans le parc."], bonne: 2 }).question;
+  assert.deepEqual(r.choix, ["Les enfants joue au foot dans le parc.", "Les enfants jouent au foot dans le parc."]);
+  assert.equal(r.bonne, 1);
+  assert.ok(c({ type: "qcm", question: q, choix: ["Les enfants jouent au foot dans les parc.", "Les enfants jouent au foot dans le parc."], bonne: 1 }).question);
+  assert.ok(c({ type: "qcm", question: q, choix: ["Les enfants jou à le foot dans le parc.", "Les enfants jouent au foot dans le parc."], bonne: 1 }).refus);
+});
+
+test("deux trous à compléter dans une seule case deviennent un QCM de combinaisons", () => {
+  const q = "Complète avec 'a' ou 'à' : Ce matin, mon frère ___ pris son vélo ___ la maison.";
+  const r = courte(q, "a / à").question;
+  assert.equal(r.type, "qcm");
+  assert.deepEqual([...r.choix].sort(), ["a / a", "a / à", "à / a", "à / à"]);
+  assert.equal(r.choix[r.bonne], "a / à");
+  assert.ok(courte(q, "a").refus);
+  assert.ok(courte(q, "et / à").refus);
+});
+
+test("deux trous d'homophones sans mots nommés : QCM de combinaisons, consigne au pluriel", () => {
+  const q = "Complète cette phrase avec le mot qui convient : Pendant les vacances, ma cousine ___ appris ___ nager dans le lac.";
+  const r = courte(q, "a / à").question;
+  assert.equal(r.type, "qcm");
+  assert.equal(r.choix[r.bonne], "a / à");
+  assert.equal(r.choix.length, 4);
+  assert.match(r.question, /^Complète cette phrase avec les mots qui conviennent :/);
+  assert.equal(courte(q, "son / son").question.choix.length, 4);
+  assert.ok(courte("Écris les verbes : Hier, nous ___ et vous ___ au parc.", "chantions / dansiez").refus);
+});
+
+test("le chiffre des centaines n'accepte qu'un chiffre", () => {
+  const r = courte("Dans le nombre 3 457, quel est le chiffre des centaines ?", "4", "40", "345").question;
+  assert.deepEqual(r.reponses, ["4"]);
+  assert.ok(courte("Dans le nombre 3 457, quel est le chiffre des centaines ?", "34").refus);
+  assert.deepEqual(courte("Dans le nombre 2 304, quel est le nombre de centaines ?", "23", "vingt-trois").question.reponses, ["23", "vingt-trois"]);
+});
+
+test("après la résolution, les réponses acceptées qui donnent un autre nombre sont retirées", () => {
+  const { reponsesConfirmees } = globalThis;
+  const x = { type: "courte", question: "Combien de centaines dans 8 400 ?", reponses: ["84", "840", "quatre-vingt-quatre", "8 400"] };
+  assert.deepEqual(reponsesConfirmees(x, { resultat: "84" }), ["84", "quatre-vingt-quatre"]);
+  assert.deepEqual(reponsesConfirmees({ type: "courte", reponses: ["3427", "3 427"] }, { resultat: "3 427" }), ["3427", "3 427"]);
+  assert.deepEqual(reponsesConfirmees(x, { resultat: "je ne sais pas" }), x.reponses);
+});
+
+test("un siècle en chiffres romains se juge sans le e de l'ordinal", () => {
+  assert.ok(memeReponse("v", "ve"));
+  assert.ok(memeReponse("ve", "v"));
+  assert.ok(memeReponse("v eme siecle", "ve"));
+  assert.ok(memeReponse("xiv", "xive siecle"));
+  assert.ok(!memeReponse("iv", "ve"));
+  assert.ok(!memeReponse("vi", "v"));
+  assert.ok(!memeReponse("il", "ile"));
+  assert.ok(!memeReponse("c", "ce"));
+});
+
+test("« dans quelle phrase » sans choix, et l'orthographe hors du français, sont refusés", () => {
+  const q = "Dans quelle phrase le mot de sciences est-il bien écrit ?";
+  assert.ok(c({ type: "courte", question: q, reponses: ["expérience"] }, { matiere: "sciences" }).refus);
+  assert.ok(c({ type: "qcm", question: q, choix: ["On fait une expérience.", "On fait une expérrience."], bonne: 0 }, { matiere: "sciences" }).refus);
+  assert.ok(c({ type: "courte", question: "Dans quelle phrase le verbe est-il au futur ?", reponses: ["La 2"] }, { matiere: "francais" }).refus);
+  assert.ok(c({ type: "qcm", question: "Dans quelle phrase le verbe est-il au futur ?", choix: ["Je chanterai.", "Je chantais."], bonne: 0 }, { matiere: "francais" }).question);
+  assert.ok(c({ type: "courte", question: "Comment appelle-t-on une démarche pour tester une idée ?", reponses: ["une expérience"] }, { matiere: "sciences" }).question);
+});
+
+test("questions générées en masse : les défauts relevés sont refusés", () => {
+  const q = (question, choix, bonne, ctx) => c({ type: "qcm", question, choix, bonne }, ctx);
+  // Le trou ne remplace rien.
+  assert.ok(q("Dans la phrase « Les enfants aiment ___ jouer dans le parc. », quel verbe est à l'infinitif ?", ["aiment", "jouer", "le", "dans"], 1, { matiere: "francais" }).refus);
+  // Un homophone peut revenir ailleurs dans la phrase.
+  assert.ok(q("Il ___ grand et il est fort comme son père depuis toujours.", ["est", "et"], 0, { matiere: "francais" }).question);
+  // Graphique ou photo absents.
+  assert.ok(c({ type: "vf", question: "Dans le graphique, la barre la plus haute représente 20 élèves.", bonne: true }, { matiere: "maths" }).refus);
+  assert.ok(q("Dans quel paysage trouve-t-on des vignes ?", ["Sur la photo du pont", "Sur la photo de Marseille"], 0, { matiere: "geographie", photos: [] }).refus);
+  assert.ok(c({ type: "qcm", question: "Sur cette carte, où se trouve la légende ?", image: "ville", choix: ["En haut", "En bas"], bonne: 0 }, { matiere: "geographie", photos: ["ville"] }).refus);
+  // Réponse à taper trop longue.
+  assert.ok(c({ type: "courte", question: "Pourquoi les villes construisent-elles des parcs ?", reponses: ["Pour que les habitants puissent se reposer et jouer"] }, { matiere: "geographie" }).refus);
+  // « mal conjugué » est une recherche de faute.
+  assert.ok(c({ type: "courte", question: "Quel est le verbe mal conjugué dans cette phrase ? « Le chat attrapa une souris et il la mangea. »", reponses: ["mangea"] }, { matiere: "francais" }).refus);
+});
+
+test("la relecture critique écarte les erreurs et retire les variantes fausses", () => {
+  const { accordJuge, promptJuge } = globalThis;
+  const qcm = { type: "qcm", question: "Quel calcul donne le même résultat que 9 × 6 ?", choix: ["9 + 6", "6 × 9", "9 × 7 - 3", "9 × 5 + 9"], bonne: 1 };
+  assert.equal(accordJuge(qcm, { exacte: true, autreJuste: "9 × 5 + 9", comprehensible: true }).ok, false);
+  assert.equal(accordJuge(qcm, { exacte: true, autreJuste: "", comprehensible: true }).ok, true);
+  assert.equal(accordJuge(qcm, { exacte: false, comprehensible: true }).ok, false);
+  assert.equal(accordJuge(qcm, { exacte: true, comprehensible: false }).ok, false);
+  assert.equal(accordJuge(qcm, null), null);
+  const courte = { type: "courte", question: "My mother ___ the dinner every Sunday.", reponses: ["cooks", "cook"] };
+  assert.deepEqual(accordJuge(courte, { exacte: true, reponsesFausses: ["cook"], comprehensible: true }).reponses, ["cooks"]);
+  assert.equal(accordJuge(courte, { exacte: true, reponsesFausses: ["cooks", "cook"], comprehensible: true }).ok, false);
+  assert.match(promptJuge(qcm, "Mathématiques"), /6 × 9   ← prévu comme juste/);
+});
+
+test("second lot : phrase absente, nom de photo, unité, sont traités", () => {
+  assert.ok(c({ type: "qcm", question: "Dans cette phrase, quel mot est un verbe du 1er groupe ?", choix: ["jardin", "mange"], bonne: 1 }, { matiere: "francais" }).refus);
+  assert.ok(c({ type: "qcm", question: "Dans cette phrase, quel verbe est à l'imparfait ? « Quand j'étais petit, je ___ souvent avec mon frère dans le jardin. »", choix: ["jouais", "jouerai"], bonne: 0 }, { matiere: "francais" }).question);
+  assert.ok(c({ type: "vf", question: "Le paysage de la photo [littoral-calanque] est un paysage de montagne.", bonne: false }, { matiere: "geographie", photos: ["littoral-calanque"] }).refus);
+  assert.ok(c({ type: "qcm", question: "Quel élément naturel est présent dans la photo 'littoral-calanque' ?", image: "littoral-calanque", choix: ["Des falaises", "Un désert"], bonne: 0 }, { matiere: "geographie", photos: ["littoral-calanque"] }).refus);
+  assert.ok(memeReponse("400", "400 ans"));
+  assert.ok(memeReponse("26", "26 eleves"));
+  assert.ok(!memeReponse("40", "400 ans"));
+  assert.ok(!memeReponse("ans", "400 ans"));
+});
+
+test("la phrase écrite après la question compte comme phrase citée", () => {
+  const x = { type: "courte", question: "Quel mot est mal écrit dans cette phrase ? Le loup à peur et il se cache derrière le grand arbre.", faute: "à", reponses: ["a"] };
+  assert.ok(!c(x, FR).refus, JSON.stringify(c(x, FR)));
+  assert.ok(c({ type: "qcm", question: "Dans cette phrase, quel mot est un verbe ?", choix: ["chat", "mange", "le", "vite"], bonne: 1 }, FR).refus);
+});
+
+test("phrase à deux trous : une relecture hors des choix ne tranche pas", () => {
+  const { accordTrou } = globalThis;
+  const x = { type: "qcm", question: "Pendant les vacances, ma cousine ___ appris ___ nager dans le lac.", choix: ["a / à", "à / a", "a / a", "à / à"], bonne: 0 };
+  assert.equal(accordTrou(x, { mot: "a / le" }), null);
+  assert.equal(accordTrou(x, { mot: "à / a" }), false);
+  assert.equal(accordTrou(x, { mot: "a / à" }), true);
+  const y = { type: "qcm", question: "Les élèves ___ leurs affaires dans leur cartable.", choix: ["ses", "ces"], bonne: 0 };
+  assert.equal(accordTrou(y, { mot: "rangent" }), false);
+});
+
+test("« quel mot est mal écrit ? » en qcm avec les mots de la phrase est accepté", () => {
+  const x = { type: "qcm", question: "Dans cette phrase, quel mot est mal écrit ? « Pendant les vacances, mon oncle a appris à nagé dans la mer. »", choix: ["a", "appris", "nagé", "mer"], bonne: 2 };
+  const r = c(x, FR);
+  assert.ok(r.question, JSON.stringify(r));
+  assert.equal(r.question.faute, "nagé");
+  assert.ok(c({ ...x, choix: ["a", "appris", "nager", "mer"] }, FR).refus);
+});
+
+test("la relecture écarte une phrase à plusieurs fautes", () => {
+  const { accordFaute } = globalThis;
+  const x = { type: "courte", question: "Quel mot est mal écrit dans : Les enfants comencent à preparé leur sac ?", faute: "comencent", reponses: ["commencent", "comencent"] };
+  assert.equal(accordFaute(x, { fautes: ["comencent", "preparé"], faute: "comencent" }), false);
+  assert.equal(accordFaute(x, { fautes: ["comencent"], faute: "comencent", correction: "commencent" }), true);
+  assert.equal(accordFaute(x, { fautes: [] }), false);
+  assert.equal(accordFaute(x, { fautes: ["comencent"] }), true);
+});
+
+test("une question trop proche d'une précédente est refusée", () => {
+  const { tropProche, serieFautes } = globalThis;
+  const avant = [{ type: "courte", question: "Quel mot est mal écrit dans cette phrase ? Les enfants sont allé à la fête de l'école.", faute: "allé" }];
+  assert.ok(tropProche({ question: "Quel mot est mal écrit dans cette phrase ? Les filles sont allé au cinéma.", faute: "allé" }, avant));
+  assert.ok(tropProche({ question: "Quel mot est mal écrit dans cette phrase ? Les enfants sont allés à la fete de l'école.", faute: "fete" }, avant));
+  assert.equal(tropProche({ question: "Quel mot est mal écrit dans cette phrase ? Le dragon cracha du feu sur les chevalier du roi.", faute: "chevalier" }, avant), null);
+  assert.equal(tropProche({ type: "qcm", question: "Le chat ___ faim.", choix: ["a", "à"], bonne: 0 }, avant), null);
+  assert.equal(serieFautes([{ faute: "a" }, { question: "x" }, { faute: "b" }, { faute: "c" }]), 2);
+  assert.equal(serieFautes([]), 0);
+});
+
+test("une heure d'horloge à midi ou minuit ne se dit ni du matin ni du soir", () => {
+  const m = (question, ...r) => c({ type: "courte", question, reponses: r }, { matiere: "maths" });
+  assert.ok(m("Écris l'heure du soir en utilisant les unités correctes. La petite aiguille (celle des heures) est sur le 12, la grande aiguille (celle des minutes) est sur le 6.", "12 h 30 min").refus);
+  assert.ok(m("La petite aiguille est sur le 12 et la grande sur le 12. Quelle heure est-il le matin ?", "0 h").refus);
+  // Une heure du soir qui tombe l'après-midi, ou une heure du matin écrite après midi : la correction se contredit.
+  assert.ok(m("Il est 2 h 30 de l'après-midi. Écris l'heure du soir.", "14 h 30").refus);
+  assert.ok(m("Le réveil sonne à 7 h du matin. Écris cette heure.", "19 h").refus);
+  // Minuit s'écrit 0 h, jamais 12 h.
+  assert.ok(m("Écris minuit et demi avec les heures et les minutes.", "12 h 30").refus);
+  assert.ok(m("Écris minuit et demi avec les heures et les minutes.", "0 h 30").question);
+  assert.ok(m("La petite aiguille est sur le 7 et la grande sur le 6. Écris cette heure du soir.", "19 h 30").question);
+  assert.ok(m("La petite aiguille est sur le 12 et la grande sur le 6. Il est midi passé. Écris l'heure.", "12 h 30").question);
+});
+
+test("une réponse jugée « juste sur le fond » n'est pas comptée fausse", () => {
+  const { jugementCoherent: j } = globalThis;
+  assert.equal(j({ correct: false, commentaire: "Ta réponse '00h30' est juste sur le fond car elle montre l'heure." }).ok, true);
+  assert.equal(j({ correct: false, commentaire: "Ta réponse est correcte, mais l'orthographe…" }).ok, true);
+  assert.equal(j({ correct: false, commentaire: "Tu as bien pensé aux minutes, mais l'heure n'est pas juste sur le fond." }).ok, false);
+  assert.equal(j({ correct: false, commentaire: "Tu as trouvé le bon nombre de minutes, mais pas les heures." }).ok, false);
+  assert.equal(j({ correct: "true", commentaire: "" }).ok, true);
+  assert.equal(j(null).ok, false);
+});
+
+test("deux questions qui n'ont en commun que « verbe » et « bien » ne sont pas trop proches", () => {
+  const { tropProche } = globalThis;
+  const avant = [{ type: "qcm", question: "Dans quelle phrase le verbe est-il bien écrit ?", choix: ["…", "…"], bonne: 0 }];
+  assert.equal(tropProche({ question: "Dans « Les enfants joue au ballon », le verbe est bien écrit." }, avant), null);
+});
+
+test("une phrase à trou en réponse courte est relue aussi", () => {
+  const { aRelireTrou, accordTrou } = globalThis;
+  const x = { type: "courte", question: "Le chien ___ (cacher) sa balle sous le canapé.", reponses: ["cache"] };
+  assert.ok(aRelireTrou(x));
+  assert.equal(accordTrou(x, { mot: "cache" }), true);
+  assert.equal(accordTrou(x, { mot: "pousse" }), false);
+});
+
+test("une question qui recopie un exemple de la consigne est trop proche", () => {
+  const { tropProche } = globalThis;
+  const ex = [{ question: "Le chien à faim et il cherche sa gamelle dans le jardin." }];
+  assert.ok(tropProche({ question: "Quel mot est mal écrit dans : Le chat à faim et il cherche sa gamelle sur le tapis ?", faute: "à" }, ex));
+  assert.equal(tropProche({ question: "Quel mot est mal écrit dans : Le chevalier à perdu son épée dans la forêt ?", faute: "à" }, ex), null);
 });
