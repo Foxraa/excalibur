@@ -9,14 +9,14 @@ if not exist data (
   exit /b 0
 )
 
-rem Le cartable doit etre ferme (meme port que Demarrer le cartable.bat)
+rem Le cartable doit etre ferme (meme port que lanceur.ps1)
 set "PORT=3000"
 if exist .env for /f "usebackq tokens=1,* delims==" %%a in (".env") do (
   if /i "%%a"=="PORT" set "PORT=%%b"
 )
 powershell -NoProfile -Command "try{(New-Object Net.Sockets.TcpClient).Connect('127.0.0.1',%PORT%);exit 1}catch{exit 0}"
 if errorlevel 1 (
-  echo Le cartable est ouvert. Ferme sa fenetre noire, puis relance ce fichier.
+  echo Le cartable est ouvert. Arrete-le (espace parents, Reglages, "Arreter le cartable"), puis relance ce fichier.
   pause
   exit /b 1
 )
@@ -46,5 +46,5 @@ if errorlevel 1 (
 echo.
 echo C'est fait. L'ancien cartable est dans le dossier data-avant-reinitialisation-%QUAND%.
 echo Pour le retrouver : supprimer le dossier data, puis renommer ce dossier en data.
-echo Lance Demarrer le cartable.bat pour commencer avec un cartable vide.
+echo Ouvre le cartable avec l'icone Excalibur pour commencer avec un cartable vide.
 pause

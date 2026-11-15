@@ -629,8 +629,8 @@ function reseauMaison() {
 // et relance le cartable. Les données, .env et les photos ne sont jamais touchés.
 const RACINE = path.dirname(here);
 const DEPOT = "Foxraa/excalibur";
-const CODE_MAJ = 42; // « Demarrer le cartable.bat » ferme sa fenêtre sur ce code au lieu d'attendre une touche
-const CODE_REDEMARRER = 43; // « Demarrer le cartable.bat » relance le serveur sur ce code
+const CODE_MAJ = 42; // lanceur.ps1 s'arrête sur ce code sans attendre de touche : mise-a-jour.ps1 le relance
+const CODE_REDEMARRER = 43; // lanceur.ps1 relance le serveur sur ce code
 const estGit = () => fs.access(path.join(RACINE, ".git")).then(() => true, () => false);
 // Copie de travail git : on compare HEAD à main sur GitHub. La mise à jour n'avance que si elle se fait
 // en « fast-forward » (pas de commit local absent de main) et sans modification en cours dans les fichiers suivis.
@@ -740,7 +740,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (p === "/api/mise-a-jour" && req.method === "POST") return await lancerMiseAJour(req, res);
     // Arrêt ou redémarrage depuis l'espace parents : lancé par l'icône du bureau, le cartable n'a pas de fenêtre
-    // noire à fermer. Code 43 : « Demarrer le cartable.bat » relit .env, redémarre Ollama si besoin et relance le serveur.
+    // noire à fermer. Code 43 : lanceur.ps1 relit .env, redémarre Ollama si besoin et relance le serveur.
     if (p === "/api/arreter" && req.method === "POST") {
       if (!sessions.valide(req.headers["x-parent"])) return json(res, 403, { code: "parent" });
       const { redemarrer = false } = await readBody(req, 1000).catch(() => ({}));

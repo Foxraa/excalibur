@@ -3330,7 +3330,7 @@ async function arreterCartable(redemarrer){
   if(!confirm(redemarrer?"Redémarrer le cartable ? Il se ferme quelques secondes puis se rouvre.":"Arrêter le cartable ? Pour le rouvrir, double-cliquez sur l'icône Excalibur du bureau."))return;
   let r;try{r=await fetch('/api/arreter',{method:'POST',headers:{'x-parent':state.jeton||'','content-type':'application/json'},body:JSON.stringify({redemarrer})}).then(x=>x.json())}catch{toast("Le serveur du cartable ne répond pas.");return}
   if(!r.ok){toast(r.code==='parent'?"Le code parent a changé : fermez puis rouvrez l'espace parents.":"Le cartable n'a pas pu s'arrêter.");return}
-  if(!redemarrer){app.innerHTML=`<section class="card stack"><h3>⏹️ Le cartable est arrêté</h3><p>Vous pouvez fermer cet onglet. Pour le rouvrir, double-cliquez sur l'icône <b>Excalibur</b> du bureau.</p></section>`;return}
+  if(!redemarrer){app.innerHTML=`<section class="card stack"><h3>⏹️ Le cartable est arrêté</h3><p>Vous pouvez fermer cette fenêtre. Pour le rouvrir, double-cliquez sur l'icône <b>Excalibur</b> du bureau.</p></section>`;return}
   state.redemarrage=true;render();
   let ferme=false;const t0=Date.now();
   const tour=async()=>{
@@ -3345,7 +3345,7 @@ async function arreterCartable(redemarrer){
 function vCartable(){
   const corps=state.redemarrage
     ?`<p>⏳ Redémarrage en cours : cette page se rechargera toute seule.</p>`
-    :`<p class="small muted">Le cartable tourne sur ce PC tant qu'il n'est pas arrêté, même onglet fermé. Pour le rouvrir : l'icône <b>Excalibur</b> du bureau.</p><div class="row"><button class="btn" data-act="cartable-redemarrer">Redémarrer</button><button class="btn ghost danger" data-act="cartable-arreter">Arrêter le cartable</button></div>`;
+    :`<p class="small muted">Le cartable tourne sur ce PC tant qu'il n'est pas arrêté, même fenêtre fermée. Pour le rouvrir : l'icône <b>Excalibur</b> du bureau.</p><div class="row"><button class="btn" data-act="cartable-redemarrer">Redémarrer</button><button class="btn ghost danger" data-act="cartable-arreter">Arrêter le cartable</button></div>`;
   return `<section class="card stack"><h3>🖥️ Le cartable sur ce PC</h3>${corps}</section>`;
 }
 /* Coût des requêtes IA, calculé par le serveur à partir de data/consommation.log. Ollama est gratuit et n'y figure pas. */
