@@ -32,7 +32,7 @@ const DATA = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.jo
 const DB_FILE = path.join(DATA, "cartable.duckdb");
 const OLD_JSON = path.join(DATA, "db.json");
 const CONSO_FILE = path.join(DATA, "consommation.log");
-const COLS = new Set(["lecons", "quiz", "notes", "devoirs", "routine", "recompenses", "achats", "config", "programme"]);
+const COLS = new Set(["lecons", "quiz", "notes", "devoirs", "routine", "recompenses", "achats", "config", "programme", "signalements"]);
 const MAX_IMAGES = 4;
 
 /* ---------- Choix de l'IA ---------- */

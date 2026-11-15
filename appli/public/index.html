@@ -1027,7 +1027,7 @@ const STAR='<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><
 const use=n=>(window.claude&&typeof window.claude.use==='function')?window.claude.use(n).catch(()=>null):Promise.resolve(null);
 
 /* ============ Stockage (db partagée, sinon navigateur) ============ */
-const COLS=['lecons','quiz','notes','devoirs','routine','recompenses','achats','config','programme'];
+const COLS=['lecons','quiz','notes','devoirs','routine','recompenses','achats','config','programme','signalements'];
 const S={};COLS.forEach(c=>S[c]=new Map());
 let db=null,storeMode='loading',loadedCols=new Set();
 const LKEY='excalibur-v1';
@@ -2382,7 +2382,7 @@ function preuves(){
   all('quiz').filter(q=>q.termine).forEach(q=>{
     const ts=q.createdAt||D(q.date);
     const def=[...new Set([...(q.competences||[]),...(q.leconIds||[]).filter(x=>String(x).startsWith('prog:')).map(x=>String(x).slice(5))])];
-    (q.questions||[]).forEach((x,i)=>{const r=q.reponses&&q.reponses[i];if(!r)return;
+    (q.questions||[]).forEach((x,i)=>{const r=q.reponses&&q.reponses[i];if(!r||S.signalements.has(idSignal(q.id,i)))return;
       (COMP(x.competence)?[x.competence]:def).forEach(id=>add(id,{ts,ok:r.ok?1:0,poids:1,src:'quiz',question:x.question,rep:r.v,bonne:bonneRep(x)}))});
   });
   all('lecons').forEach(l=>{const ts=l.createdAt||D(l.date);const ex=(l.exercices||[]).filter(e=>e.juste===true||e.juste===false);
@@ -3295,6 +3295,40 @@ function etoilesDetail(){
   const depuis=addDays(TODAY(),-6),g=bilan().gains.filter(x=>x.date>=depuis);
   return `<details class="small"><summary>D'où viennent les étoiles (7 derniers jours)</summary>${g.length?g.map(x=>`<div class="reward"><span>${esc(x.date)} · ${esc(x.why)}</span><span class="cost">+${x.pts}</span></div>`).join(''):'<p class="small muted">Aucun gain ces 7 derniers jours.</p>'}</details>`;
 }
+/* Signalements : le parent relit les derniers quiz et marque une question fausse ou mal posée.
+   Le signalement garde la question entière, pour corriger ensuite les consignes données à l'IA ;
+   la question ne compte plus dans le suivi du programme. */
+const MOTIFS={'mal-posee':'Question mal posée ou ambiguë','reponse-fausse':'La « bonne » réponse est fausse','correction':'Bonne réponse refusée à l\'enfant','hors-programme':'Hors programme ou trop difficile','autre':'Autre'};
+function idSignal(qid,i){return `${qid}-${i}`}
+function vQuizRecents(){
+  const qs=all('quiz').filter(q=>q.termine&&(q.questions||[]).length).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,15);
+  const nb=all('signalements').length;
+  if(!qs.length)return `<section class="card stack"><h3>🔎 Derniers quiz</h3><p class="small muted">Aucun quiz terminé pour l'instant.</p></section>`;
+  const ligne=q=>{const ouvert=state.quizOuvert===q.id,ns=q.questions.filter((_,i)=>S.signalements.has(idSignal(q.id,i))).length;
+    return `<div class="reward"><span>${esc(shortDate(q.date))} · ${esc(q.titre||'Quiz')} <span class="small muted">${q.score}/${q.total}${ns?` · ⚠️ ${ns} signalée${ns>1?'s':''}`:''}</span></span><button class="btn ${ouvert?'primary':''}" data-act="quiz-voir" data-id="${q.id}" aria-expanded="${ouvert}">${ouvert?'Fermer':'Voir les questions'}</button></div>${ouvert?detailQuiz(q):''}`};
+  return `<section class="card stack"><h3>🔎 Derniers quiz</h3><p class="small muted">Une question fausse ou mal posée ? Signalez-la : elle ne comptera plus dans le suivi, et elle servira à améliorer les quiz.${nb?` ${nb} question${nb>1?'s':''} signalée${nb>1?'s':''} en tout.`:''}</p>${qs.map(ligne).join('')}</section>`;
+}
+function detailQuiz(q){
+  return `<ol class="stack" style="padding-left:20px">${q.questions.map((x,i)=>{
+    const r=(q.reponses||[])[i]||{},sid=idSignal(q.id,i),sg=S.signalements.get(sid);
+    const choix=x.type==='qcm'&&Array.isArray(x.choix)?`<div class="small">Choix : ${x.choix.map((c,j)=>j===Number(x.bonne)?`<strong>${esc(c)}</strong>`:esc(c)).join(' · ')}</div>`
+      :x.type==='courte'&&(x.reponses||[]).length>1?`<div class="small">Réponses acceptées : ${x.reponses.map(esc).join(' · ')}</div>`:'';
+    const form=state.sig===sid?`<form class="stack" data-form="signal" data-id="${q.id}" data-i="${i}" style="margin-top:6px">
+      <select name="motif" aria-label="Ce qui ne va pas" required>${Object.entries(MOTIFS).map(([k,t])=>`<option value="${k}">${esc(t)}</option>`).join('')}</select>
+      <input type="text" name="commentaire" maxlength="500" placeholder="Ce qui ne va pas, ou la bonne réponse (facultatif)" aria-label="Commentaire">
+      <div class="row"><button class="btn primary">Signaler</button><button class="btn ghost" type="button" data-act="signal-annuler">Annuler</button></div></form>`:'';
+    return `<li><div>${esc(x.question)}</div>${choix}
+      <div class="small">Réponse ${esc(deP())} : <strong style="color:var(${r.ok?'--ok':'--warn'})">${esc(r.v??'—')}</strong> ${r.ok?'✓':`✗ · attendu : ${esc(bonneRep(x)??'')}`}</div>
+      ${sg?`<div class="small row">⚠️ Signalée : ${esc(MOTIFS[sg.motif]||sg.motif)}${sg.commentaire?` (« ${esc(sg.commentaire)} »)`:''} <button class="btn ghost" data-act="signal-retirer" data-id="${sid}">Retirer</button></div>`
+        :state.sig===sid?form:`<div><button class="btn ghost" data-act="signal-ouvrir" data-id="${sid}">⚠️ Signaler</button></div>`}</li>`}).join('')}</ol>`;
+}
+function signaler(qid,i,fd){
+  const q=S.quiz.get(qid),x=q&&q.questions[i];if(!x)return;const r=(q.reponses||[])[i]||{};
+  put('signalements',idSignal(qid,i),{quizId:qid,i,motif:MOTIFS[fd.motif]?fd.motif:'autre',commentaire:String(fd.commentaire||'').trim().slice(0,500),
+    date:TODAY(),createdAt:Date.now(),quiz:{titre:q.titre||'',matiere:q.matiere||'',niveau:q.niveau||'',date:q.date||''},
+    question:x,reponse:r.v??null,ok:!!r.ok,bonne:bonneRep(x)??null});
+  state.sig=null;toast('Question signalée, merci.');
+}
 // Un réglage par ligne : le nom à gauche, les commandes à droite (dessous sur un écran étroit).
 const choixEnfant=(attrs,v)=>`<select ${attrs}>${v?'':'<option value="" selected disabled>Choisir…</option>'}${[['fille','Une fille'],['garcon','Un garçon']].map(([k,t])=>`<option value="${k}" ${k===v?'selected':''}>${t}</option>`).join('')}</select>`;
 const reglage=(nom,corps,pour='')=>`<div class="reglage">${pour?`<label class="rg-nom" for="${pour}">${nom}</label>`:`<span class="rg-nom">${nom}</span>`}<div class="rg-corps">${corps}</div></div>`;
@@ -3312,6 +3346,7 @@ function vParents(){
   return `<section class="card sec-title" style="padding-block:10px"><div class="row"><h3>Espace parents</h3>${onglet('suivi','📈 Suivi')}${onglet('reglages','⚙️ Réglages')}${onglet('reglages2','🤖 Réglages IA')}${onglet('couts','💶 Coût')}${onglet('maj','🔄 Mise à jour')}</div><button class="btn ghost" data-act="parent-off">Fermer</button></section>
   ${page==='suivi'?`<section class="card stack"><h3>À valider</h3>${ach.length?ach.map(a=>`<div class="reward"><span>${esc(titreDemande(a))} <span class="cost">${a.palier?'offert':a.cout}</span></span><span class="row"><button class="btn primary" data-act="valider" data-id="${a.id}">Accorder</button><button class="btn" data-act="refuser" data-id="${a.id}">Refuser</button></span></div>`).join(''):'<p class="small muted">Aucune demande en attente.</p>'}
     ${etoilesDetail()}</section>
+  ${vQuizRecents()}
   ${vSemaine(`<div class="row"><button class="btn primary" data-act="tab" data-v="programme">🗺️ Programme CM1 : où en est ${esc(prenom())}</button></div>`)}
   `:page==='couts'?vCouts()
   :page==='maj'?vMaj()
@@ -3573,6 +3608,10 @@ document.addEventListener('click',async e=>{
     case 'valider':{const a=S.achats.get(id);if(a)put('achats',id,{...a,statut:'validé'});break}
     case 'refuser':{const a=S.achats.get(id);if(a)put('achats',id,{...a,statut:'refusé'});break}
     case 'del-rec':del('recompenses',id);break;
+    case 'quiz-voir':state.quizOuvert=state.quizOuvert===id?null:id;state.sig=null;render();break;
+    case 'signal-ouvrir':state.sig=id;render();break;
+    case 'signal-annuler':state.sig=null;render();break;
+    case 'signal-retirer':del('signalements',id);toast('Signalement retiré.');break;
     case 'acc-fin':await put('config','main',{...cfg(),accueil:'fait'});state.acc=null;finParent();confettis();go('jour');break;
     case 'acc-ia-plus-tard':state.iaf=null;state.acc={etape:4};render();break;
     case 'ia-mode':{const f=state.iaf;f.mode=v;f.msg='';f.modeles=null;render();break}
@@ -3620,6 +3659,7 @@ document.addEventListener('submit',async e=>{
   const fd=Object.fromEntries(new FormData(f).entries());const kind=f.dataset.form;
   if(document.activeElement)document.activeElement.blur();
   if(kind==='courte'){repondre(fd.v||'');return}
+  if(kind==='signal'){signaler(f.dataset.id,Number(f.dataset.i),fd);return}
   if(kind==='defi'){repDefi(fd.v||'');return}
   if(kind==='save-res'){enregistrerRes(fd);return}
   if(kind==='sujet'){const a=state.add;a.sujet=fd.sujet;a.busy=true;a.debut=Date.now();a.err='';a.images=[];render();try{const r=await coursDepuisSujet(fd.sujet);if(!r||typeof r!=='object')throw {code:'invalid_json'};a.res=normRes({lisible:true,genre:'lecon',description:r.resume,lecon:r})}catch(err){console.warn('sujet',err);a.err=errMsg(err);a.errSrc='sujet'}a.busy=false;render();return}

@@ -71,7 +71,7 @@ export function autorise({ col, id, data, existant, parent, pinDefini, recompens
   if (!pinDefini) return null;
   if (col === "config" && id === "pin") return "parent";
   if (parent) return null;
-  if (col === "recompenses" || col === "programme") return "parent";
+  if (col === "recompenses" || col === "programme" || col === "signalements") return "parent";
   if (col === "config" && id === "main") return seulApparenceChange(data, existant) ? null : "parent";
   if (col === "achats") {
     if (suppression) return "parent";

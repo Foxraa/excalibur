@@ -55,6 +55,11 @@ test("récompenses, config/main et programme demandent le parent", () => {
   assert.equal(a({ col: "programme", id: "x", data: {} }), "parent");
   assert.equal(a({ col: "recompenses", id: "r1", data: { titre: "x", cout: 1 }, parent: true }), null);
 });
+test("les signalements de questions sont réservés au parent", () => {
+  assert.equal(a({ col: "signalements", id: "q1-0", data: { motif: "mal-posee" } }), "parent");
+  assert.equal(a({ col: "signalements", id: "q1-0", suppression: true }), "parent");
+  assert.equal(a({ col: "signalements", id: "q1-0", data: { motif: "mal-posee" }, parent: true }), null);
+});
 test("config/pin est refusé même avec le jeton", () => {
   assert.equal(a({ col: "config", id: "pin", data: {}, parent: true }), "parent");
 });
