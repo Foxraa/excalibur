@@ -377,6 +377,9 @@ details summary{cursor:pointer;font-weight:700;color:var(--accent);min-height:40
 .dots i{width:18px;height:18px;border-radius:50%;background:var(--line);transition:background .2s,transform .2s}
 .dots i.ok{background:var(--ok)} .dots i.ko{background:var(--bad)} .dots i.cur{outline:4px solid var(--accent);outline-offset:2px;transform:scale(1.15)}
 .qtext{font-size:1.45rem;font-weight:700;line-height:1.4;font-family:var(--f-display)}
+.tableau-md{border-collapse:collapse;margin:10px 0;font-family:var(--f-body,inherit);font-size:1.1rem;font-weight:600}
+.tableau-md th,.tableau-md td{border:2px solid currentColor;padding:6px 14px;text-align:center}
+.tableau-md th{opacity:.85}
 .qphoto{margin:0}.qphoto img{display:block;max-width:100%;max-height:320px;margin:0 auto;border-radius:12px}
 .qphoto figcaption{font-size:.75rem;margin-top:4px;opacity:.7;text-align:center}.qphoto figcaption a{color:inherit}
 .qphoto.petite img{max-height:180px;width:auto;max-width:100%}
@@ -939,7 +942,20 @@ const pick=a=>a[Math.floor(Math.random()*a.length)];
 /* ============ Outils ============ */
 const app=document.getElementById('app');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const rich=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/&lt;u&gt;(.+?)&lt;\/u&gt;/g,'<u>$1</u>').replace(/\n/g,'<br>');
+/* « | | Garçons | Filles | » : les tableaux que l'IA écrit en maths deviennent de vrais tableaux. */
+function tableauxMd(h){
+  const lignes=h.split('\n'),out=[];let bloc=[];
+  const cellules=l=>l.trim().replace(/^\||\|$/g,'').split('|').map(c=>c.trim());
+  const vider=()=>{
+    if(bloc.length<2){out.push(...bloc);bloc=[];return}
+    const rangs=bloc.filter(l=>!/^\s*\|?[\s:|-]+\|?\s*$/.test(l)).map(cellules);
+    out.push(`<table class="tableau-md">${rangs.map((r,i)=>`<tr>${r.map(c=>i===0?`<th>${c}</th>`:`<td>${c}</td>`).join('')}</tr>`).join('')}</table>`);bloc=[];
+  };
+  for(const l of lignes){if(/^\s*\|.*\|\s*$/.test(l))bloc.push(l);else{vider();out.push(l)}}
+  vider();
+  return out.join('\n').replace(/\n?(<table[\s\S]*?<\/table>)\n?/g,'$1');
+}
+const rich=s=>tableauxMd(esc(s)).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/&lt;u&gt;(.+?)&lt;\/u&gt;/g,'<u>$1</u>').replace(/\n/g,'<br>');
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const isoDay=(d=new Date())=>{const z=new Date(d.getTime()-d.getTimezoneOffset()*60000);return z.toISOString().slice(0,10)};
 const TODAY=()=>isoDay();
@@ -1041,8 +1057,14 @@ function lireJSON(t){
   if(i>=0&&j>i){try{return JSON.parse(t.slice(i,j+1))}catch(e){}}
   throw {code:'invalid_json',text:t};
 }
+/* Mistral répond « trop de demandes » quand les relectures partent ensemble : on attend un peu et on recommence. */
 async function askJSON(prompt,opts={},onProgress){
-  const {text,truncated}=await sample(prompt,{...opts,onText:onProgress?({text})=>onProgress(text.length):undefined});
+  let res;
+  for(let essai=0;;essai++){
+    try{res=await sample(prompt,{...opts,onText:onProgress?({text})=>onProgress(text.length):undefined});break}
+    catch(e){if(e?.code!=='rate_limited'||essai>=4)throw e;await new Promise(r=>setTimeout(r,1500*2**essai+Math.random()*500))}
+  }
+  const {text,truncated}=res;
   if(truncated)throw {code:'invalid_json',text};
   return lireJSON(text);
 }
@@ -1399,7 +1421,9 @@ function oralApresRendu(){
   if(!b){if(parleOK&&!memeConsigne)speechSynthesis.cancel();return}
   if(b.hasAttribute('data-oral-auto')){q.lus={...q.lus,[q.i]:true};lireOral(q.questions[q.i])}
 }
-async function genererQuestions(q,diffs){
+/* Les phrases données en exemple dans la consigne : Mistral les recopie telles quelles si on le laisse faire. */
+const EXEMPLES_CONSIGNE=["Le chien à faim et il cherche sa gamelle dans le jardin.","Pendant les vacances, ma cousine ___ appris ___ nager dans le lac.","Le chien ___ (cacher) sa balle sous le canapé.","Nous allons à la plage.","Mon papa a un chien.","Une araignée a huit pattes."].map(question=>({question}));
+async function genererQuestions(q,diffs,souple=false){
   const oralOK=voixQuiz(q.matiere),photos=photosPour(q.matiere);
   const nv=NIVEAU_QUIZ[q.niveau],{erreurs,contenu,faibles,comps,plusieurs}=q.ctx;
   const faites=q.questions.map((x,i)=>({x,r:q.rep[i]}));
@@ -1418,11 +1442,11 @@ Règles :
 - Mets-toi à la place d'un enfant de 9 ans qui découvre la question : il doit comprendre tout de suite quoi faire, la réponse ne doit pas être sous ses yeux, et la consigne doit correspondre exactement aux boutons ou à la case qu'il voit. Si ce n'est pas le cas, réécris la question.
 ${oralOK?`- Presque tout se lit à l'écran. Une question est lue à voix haute seulement quand c'est vraiment utile : ${q.matiere==='anglais'?"pour faire reconnaître un mot ou une petite phrase en anglais":"pour faire écrire un mot, un verbe conjugué ou une petite phrase sans les montrer"}. Pour cela : type "courte", le texte à lire dans "oral" (15 mots au plus), une consigne dans "question" (${q.matiere==='anglais'?"« Écoute et écris le mot en français. »":"« Écoute et écris le verbe. »"}) qui ne montre jamais ce texte, et ce qu'il faut écrire dans "reponses". ${q.matiere==='anglais'?'':"À l'oreille, « ils mangent » et « il mange » se confondent : fais lire une phrase où l'on entend le nombre (« Les enfants mangent une pomme. ») ou précise-le dans la consigne. "}Sans champ "oral", jamais de dictée ni « écoute ». Pour le reste, propose une phrase à trou ou un mot mal écrit à corriger ; ne demande jamais comment s'écrit un mot qui est déjà affiché dans la question.`:`- Tout est écrit à l'écran : ${prenom()} lit et n'entend rien. Pas de dictée, jamais « écoute », « tu entends » ou « je vais te lire ». Pour l'orthographe, propose une phrase à trou ou un mot mal écrit à corriger ; ne demande jamais comment s'écrit un mot qui est déjà affiché dans la question.`}
 - Le type dépend de ce qu'on demande, et les boutons affichés en dépendent. Varie les types d'une question à l'autre :
-  * "vf" (boutons Vrai et Faux) : une phrase affirmative à juger, sans « Vrai ou faux : », sans point d'interrogation, sans choix entre deux mots. Bien : « Dans "Nous allons à la plage", le mot "à" est une préposition. » Interdit : « Le mot "à" est-il un verbe ou une préposition ? »
-  * "qcm" (boutons à choisir) : dès qu'il faut choisir entre des mots ou des nombres, même deux seulement. Les choix vont seulement dans "choix", 4 si possible, tous différents : ne les recopie pas dans le texte de la question. Bien : question « Le chat ___ faim. », choix ["a","à","as","ont"]. Dans une phrase à trou, le mot à trouver est remplacé par ___ et n'est écrit nulle part dans la question. Interdit : « Dans "Mon papa a un chien", quel mot est le bon ? », car le mot est déjà là. Les mauvais choix sont de vraies confusions sur la même notion : pour a ou à, jamais « mes » ni « et ».
+  * "vf" (boutons Vrai et Faux) : une phrase affirmative à juger, sans « Vrai ou faux : », sans point d'interrogation, sans choix entre deux mots. ${q.matiere==='francais'?`Bien : « Dans "Nous allons à la plage", le mot "à" est une préposition. » Interdit : « Le mot "à" est-il un verbe ou une préposition ? »`:`Bien : « Une araignée a huit pattes. » Interdit : « Une araignée a-t-elle six ou huit pattes ? »`}
+  * "qcm" (boutons à choisir) : dès qu'il faut choisir entre des mots ou des nombres, même deux seulement. Les choix vont seulement dans "choix", 4 si possible, tous différents : ne les recopie pas dans le texte de la question. ${q.matiere==='francais'?`Bien : question « Le chat ___ faim. », choix ["a","à","as","ont"]. Dans une phrase à trou, le mot à trouver est remplacé par ___ et n'est écrit nulle part dans la question. Interdit : « Dans "Mon papa a un chien", quel mot est le bon ? », car le mot est déjà là. Les mauvais choix sont de vraies confusions sur la même notion : pour a ou à, jamais « mes » ni « et ».`:`Les mauvais choix sont de vraies confusions sur la même notion.`} Un seul choix est juste : relis chaque mauvais choix pour vérifier qu'il est vraiment faux.
   * "courte" (case à remplir) : une seule réponse à taper, un mot, un nombre ou une petite phrase. Jamais de liste de mots à choisir dans la question, jamais « donne deux mots » ou « trois exemples », jamais « explique ton choix ».
 - difficulte 1 = application directe de la règle, 2 = un peu de réflexion, 3 = question « pointue » qui vérifie la vraie compréhension : piège classique, application à un cas nouveau, raisonnement ou justification.
-- En mathématiques, mets des calculs et de petits problèmes. En français, fais manipuler la langue (transformer, classer, accorder), avec des phrases de CM1 de 8 à 15 mots, jamais de petite phrase évidente. Pour un homophone : difficulte 1, une phrase à un trou ; difficulte 2, une phrase à deux trous, par exemple « Pendant les vacances, ma cousine ___ appris ___ nager dans le lac. », avec des choix comme « a / à » et « à / a » (les choix ne mélangent que les mots qui se confondent, jamais un autre mot comme « leur », et un seul choix est juste) ; difficulte 3, une phrase avec une faute à trouver, en type "courte", par exemple « Quel mot est mal écrit dans : Le chien à faim et il cherche sa gamelle dans le jardin ? », avec "faute":"à" (le mot fautif tel qu'il est écrit dans la phrase) et "reponses":["a"] (sa correction). La faute doit vraiment être dans la phrase. Dans les autres matières, ne pose jamais de question sur l'orthographe. Ne donne jamais la nature du mot en aide, comme « (verbe être) ».
+- ${q.matiere==='maths'?'Mets des calculs et de petits problèmes. Pour les heures : minuit s’écrit 0 h et midi 12 h ; ne parle du matin ou du soir que si l’heure le permet (jamais quand la petite aiguille est sur le 12).':q.matiere==='anglais'?"Fais reconnaître, traduire et utiliser l'anglais de la leçon ; les consignes sont en français.":q.matiere!=='francais'?`Pose des questions sur les connaissances de la leçon : faits, mots de la matière, raisonnements. Jamais de question de grammaire, de conjugaison ou d'orthographe, ni de phrase à trou sur un homophone.${q.matiere==='emc'?" Face à une moquerie, une violence ou un danger, prévenir un adulte est toujours une bonne réponse : ne le mets jamais parmi les mauvais choix.":''}`:`Fais manipuler la langue (transformer, classer, accorder), avec des phrases de CM1 de 8 à 15 mots, jamais de petite phrase évidente. Pour un homophone : difficulte 1, une phrase à un trou ; difficulte 2, une phrase à deux trous, par exemple « Pendant les vacances, ma cousine ___ appris ___ nager dans le lac. », avec des choix comme « a / à » et « à / a » (les choix ne mélangent que les mots qui se confondent, jamais un autre mot comme « leur », et un seul choix est juste ; relis la phrase avec la bonne réponse dans le trou : ce doit être une phrase française correcte, et le trou remplace l'homophone, jamais un verbe comme « rangent ») ; difficulte 3, une phrase avec une faute à trouver, en type "courte", par exemple « Quel mot est mal écrit dans : Le chien à faim et il cherche sa gamelle dans le jardin ? », avec "faute":"à" (le mot fautif tel qu'il est écrit dans la phrase) et "reponses":["a"] (sa correction). Pour un verbe à écrire dans un trou, donne toujours son infinitif entre parenthèses après le trou (« Le chien ___ (cacher) sa balle sous le canapé. ») : sans lui, plusieurs verbes iraient. La faute doit vraiment être dans la phrase, et il n'y en a qu'une : tous les autres mots sont bien écrits. Ces exemples montrent la forme : invente toujours tes propres phrases. Ne donne jamais la nature du mot en aide, comme « (verbe être) ».`}
 - Reste dans le programme de CM1 et dans le contenu de la leçon.${photos.length?`
 - Tu peux montrer une photo de paysage, pour une question sur trois environ, quand la leçon parle de paysages, de lieux ou de transports : mets son id dans "image" et commence la question par « Sur la photo, ». ${prenom()} voit la photo, mais toi tu n'as que sa description : pose seulement une question dont la réponse est écrite dans cette description (un plan, un élément naturel ou humain, le type de paysage), et n'invente aucun détail. Ne recopie pas la description dans la question. Photos disponibles :
 ${photos.map(p=>`  * ${p.id} : ${p.description}`).join('\n')}`:''}
@@ -1448,11 +1472,17 @@ ${historique}
 `:''}${ratees.length?`${prenom()} vient de se tromper sur : ${ratees.map(t=>'« '+t+' »').join(' et ')}. Reviens sur la même notion autrement, avec un exemple nouveau et plus simple, pour qu'il la comprenne vraiment.
 `:''}${(q.refus||[]).length?`Ces questions ont été refusées, ne refais pas la même erreur :
 ${q.refus.map(e=>'  * « '+e.question+' » : '+e.refus).join('\n')}
+`:''}${serieFautes(q.questions)>=2?`Les ${serieFautes(q.questions)} dernières questions demandaient de trouver un mot mal écrit : cette fois, propose un autre exercice de la leçon (transformer, accorder, conjuguer, classer, phrase à trou), même pour une question pointue.
 `:''}Crée maintenant ${diffs.length===1?'la question suivante':`les ${diffs.length} questions suivantes`} (n° ${q.questions.length+1}${diffs.length>1?' à '+(q.questions.length+diffs.length):''}), de difficulte : ${diffs.join(', ')}.
 Réponds uniquement avec un objet JSON {"questions":[...]} contenant exactement ${diffs.length} question(s).`;
   const r=await askJSON(prompt,{modelTier:'default',cache:false});
   const deja=new Set(q.questions.map(x=>norm(x.oral||x.question)));
   const controles=(r&&Array.isArray(r.questions)?r.questions:[]).filter(q=>q&&q.question&&['qcm','vf','courte'].includes(q.type)&&!deja.has(norm(q.oral||q.question))).map(x=>({x,...controlerQuestion(x,{matiere:q.matiere,voix:oralOK,photos:photos.map(p=>p.id)})}));
+  // Une question qui en répète une autre, ou un 4e « trouve la faute » d'affilée, est refusée.
+  // Aux derniers essais (souple), on l'accepte : mieux vaut une question semblable que pas de question.
+  if(!souple){const vues=[...q.questions,...EXEMPLES_CONSIGNE];controles.forEach(c=>{if(!c.question)return;
+    const r=tropProche(c.question,vues)||(c.question.faute&&serieFautes(q.questions)>=2?"déjà deux questions « trouve le mot mal écrit » de suite : proposer un autre exercice de la leçon":null);
+    if(r){c.refus=r;c.question=null}else vues.push(c.question)})}
   controles.filter(c=>c.refus).forEach(c=>{console.warn('Question refusée',c.x.question,'→',c.refus);q.refus=[...(q.refus||[]),{question:String(c.x.question),refus:c.refus}].slice(-3)});
   const qs=controles.filter(c=>c.question&&!(c.question.oral&&deja.has(norm(c.question.oral)))).map(c=>c.question);
   qs.forEach(q=>{
@@ -1467,21 +1497,58 @@ Réponds uniquement avec un objet JSON {"questions":[...]} contenant exactement 
     q.competence=comps.length===1?comps[0]:comps.includes(q.competence)?q.competence:undefined;
   });
   const verifiees=qs.filter(q=>q.type!=='qcm'||(q.choix.length>=2&&q.bonne>=0)).map(verifierCalcul).filter(Boolean).slice(0,diffs.length);
-  if(q.matiere!=='maths')return verifiees;
-  const justes=[];
-  for(const x of verifiees)if(await reponseConfirmee(q,x))justes.push(x);
-  return justes;
+  // Les relectures d'une question se suivent ; les questions, elles, sont relues en même temps.
+  const gardees=await Promise.all(verifiees.map(async x=>{
+    const ok=q.matiere==='maths'?await reponseConfirmee(q,x):x.faute?await fauteConfirmee(q,x):q.matiere==='francais'&&aRelireTrou(x)?await trouConfirme(q,x):true;
+    return ok&&(x.oral||x.faute||await jugeeJuste(q,x))?x:null;
+  }));
+  return gardees.filter(Boolean);
+}
+/* Relecture critique : réponse exacte, un seul choix juste, variantes acceptées toutes justes, question compréhensible seule.
+   Si l'IA ne répond pas, la question est gardée. */
+async function jugeeJuste(q,x){
+  let r;try{r=await askJSON(promptJuge(x,M(q.matiere).nom),{modelTier:'juge',cache:false})}catch(e){return true}
+  const a=accordJuge(x,r);
+  if(!a)return true;
+  if(a.ok){if(a.reponses)x.reponses=a.reponses;return true}
+  console.warn('Question écartée à la relecture',x.question,'→',a.refus);
+  q.refus=[...(q.refus||[]),{question:String(x.question),refus:a.refus}].slice(-3);
+  return false;
+}
+/* Phrase à trou en français : le modèle complète la phrase sans savoir quel choix était prévu.
+   S'il en choisit un autre, ou aucun, la question est écartée. S'il ne répond pas, elle est gardée. */
+async function trouConfirme(q,x){
+  let r;try{r=await askJSON(promptTrou(x),{modelTier:'quick',cache:false})}catch(e){return true}
+  if(accordTrou(x,r)!==false)return true;
+  console.warn('Trou non confirmé',x.question,'→',r);
+  q.refus=[...(q.refus||[]),{question:String(x.question),refus:`en complétant la phrase, on trouve « ${String(r?.mot??'').trim()||'?'} », pas la bonne réponse indiquée : le trou doit être à la place du mot qui se confond avec les autres choix`}].slice(-3);
+  return false;
+}
+/* « Quel mot est mal écrit ? » : le modèle écrit souvent une phrase sans faute, ou avec deux fautes. Mistral Large
+   relit la phrase sans savoir quel mot était visé (le petit modèle laissait passer « nous somme allé ») ;
+   s'il ne trouve pas exactement la même faute, la question est écartée. S'il ne répond pas, elle est gardée. */
+async function fauteConfirmee(q,x){
+  let r;try{r=await askJSON(promptFaute(x),{modelTier:'juge',cache:false})}catch(e){return true}
+  if(accordFaute(x,r)!==false)return true;
+  console.warn('Faute non confirmée',x.question,'→',r);
+  q.refus=[...(q.refus||[]),{question:String(x.question),refus:r&&Array.isArray(r.fautes)&&r.fautes.filter(Boolean).length>1?`la phrase a plusieurs fautes (${r.fautes.filter(Boolean).map(f=>'« '+f+' »').join(', ')}) : une seule faute, tous les autres mots bien écrits`:r&&String(r.faute??'').trim()?`la faute indiquée n'est pas la bonne : en relisant, on trouve « ${r.faute} »`:"la phrase ne contient aucune faute : écrire la phrase avec la faute dedans"}].slice(-3);
+  return false;
 }
 /* L'IA résout l'exercice sans voir la réponse proposée. En cas de désaccord, on ne sait pas qui a raison :
    la question est écartée, plutôt que de compter faux une bonne réponse. Si l'IA ne répond pas, elle est gardée. */
 async function reponseConfirmee(q,x){
   let r;try{r=await askJSON(promptResolution(x),{modelTier:'quick',cache:false})}catch(e){return true}
-  if(accordResolution(x,r)!==false)return true;
+  if(accordResolution(x,r)!==false){
+    // Une autre réponse acceptée peut être fausse (« 345 » pour le chiffre des centaines) : elle est retirée.
+    if(accordResolution(x,r)===true&&x.type==='courte')x.reponses=reponsesConfirmees(x,r);
+    return true;
+  }
   console.warn('Réponse non confirmée',x.question,'→',r);
   q.refus=[...(q.refus||[]),{question:String(x.question),refus:`la réponse indiquée comme bonne est fausse : en résolvant l'exercice, on trouve ${r.choix||r.resultat}`}].slice(-3);
   return false;
 }
-/* Complète le quiz jusqu'à avoir `jusqua` questions (une seule génération à la fois, 3 essais : une question peut être refusée). */
+/* Complète le quiz jusqu'à avoir `jusqua` questions (une seule génération à la fois, plusieurs essais : une question peut être refusée). */
+const ESSAIS_QUESTION=8;
 async function prepareQuestions(q,jusqua){
   if(q.gen||q.questions.length>=Math.min(jusqua,q.n))return;
   const nb=Math.min(jusqua,q.n)-q.questions.length;
@@ -1489,7 +1556,8 @@ async function prepareQuestions(q,jusqua){
   q.gen=true;q.genErr=null;
   try{
     let qs=[];
-    for(let essai=0;essai<3&&!qs.length;essai++){try{qs=await genererQuestions(q,diffs)}catch(e){if(essai===2)throw e}}
+    // Après 3 refus, une question un cran plus facile vaut mieux que pas de question du tout.
+    for(let essai=0;essai<ESSAIS_QUESTION&&!qs.length;essai++){try{qs=await genererQuestions(q,essai<3?diffs:diffs.map(d=>Math.max(1,d-1)),essai>=3)}catch(e){if(essai===ESSAIS_QUESTION-1)throw e}}
     if(!qs.length)throw {code:'invalid_json'};
     q.questions.push(...qs.slice(0,q.n-q.questions.length));
   }catch(e){q.genErr=errMsg(e)}
@@ -1529,9 +1597,9 @@ Question posée à ${prenom()} : « ${texteQuestion(q)} »
 Réponses attendues : ${q.reponses.join(' / ')}
 Réponse ${deP()} : « ${rep} »
 La réponse ${deP()} est-elle juste sur le fond ? Compte-la juste si elle contient ce qui est attendu : avec ou sans le pronom ou le déterminant (« as » ou « tu as », « chat » ou « le chat »), en un mot ou en phrase. ${francais?"Sois bienveillant sur l'orthographe si le sens est bon, mais exigeant sur la notion.":"Ce n'est pas une question de français : ne tiens AUCUN compte de l'orthographe, de la grammaire, de la conjugaison, des accents ni de la ponctuation. Un mot mal écrit mais reconnaissable compte comme juste ; seul le sens compte, et ne parle pas de l'orthographe dans le commentaire."}
-Si c'est faux, le commentaire dit ce qui est juste dans sa réponse, puis où est l'erreur et pourquoi.
+Si sa réponse est juste sur le fond, "correct" vaut true. Si elle est fausse, le commentaire dit d'abord ce qui est bien vu, sans dire que la réponse est juste, puis où est l'erreur et pourquoi. Pour les heures : minuit s'écrit 0 h (minuit et demi : 0 h 30) et midi 12 h ; une réponse qui donne la bonne heure sous une autre écriture est juste.
 Réponds uniquement en JSON : {"correct":true,"commentaire":"1 ou 2 phrases pour ${prenom()}"}`,{modelTier:'quick'});
-  return {ok:!!(r&&(r.correct===true||r.correct==='true')),commentaire:r&&r.commentaire?String(r.commentaire):''};
+  return jugementCoherent(r);
 }
 
 /* ============ Calculs : étoiles, séries, badges, révisions ============ */

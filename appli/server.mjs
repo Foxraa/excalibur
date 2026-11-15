@@ -59,6 +59,8 @@ let CLE_MISTRAL = process.env.MISTRAL_API_KEY || "";
 // Mistral Small : voit les photos, bon en français, le moins cher des modèles Mistral sérieux (fin 2026).
 const MISTRAL_MODEL = process.env.MISTRAL_MODEL || "mistral-small-latest";
 const MISTRAL_MODEL_QUICK = process.env.MISTRAL_MODEL_QUICK || MISTRAL_MODEL;
+// Relecture critique des questions de quiz : un modèle plus fort que celui qui les écrit repère mieux ses erreurs.
+const MISTRAL_MODEL_JUGE = process.env.MISTRAL_MODEL_JUGE || "mistral-large-latest";
 const iaPrete = ia => ia === "ollama" || (ia === "mistral" ? !!CLE_MISTRAL : !!client);
 // Lecture des photos : par l'IA du cartable (OCR=ia), ou d'abord par Mistral OCR (OCR=mistral, avec MISTRAL_API_KEY),
 // qui en recopie le texte ; l'IA reçoit alors ce texte au lieu des images.
@@ -180,6 +182,8 @@ const TIERS = {
   // "light" = travail long mais peu réfléchi (recopier l'agenda, rédiger un cours à partir d'un sujet) : Sonnet, effort bas.
   light: { model: MODEL, effort: "low", max_tokens: 32000 },
   default: { model: MODEL, effort: "medium", max_tokens: 32000 },
+  // "juge" = relecture critique d'une question de quiz : le modèle principal (Mistral Large avec Mistral).
+  juge: { model: MODEL, effort: "medium", max_tokens: 4000 },
 };
 // Le repli automatique en cas de refus n'existe pas pour Haiku.
 const avecRepli = m => !/haiku/.test(m);
@@ -277,7 +281,7 @@ const codeMistral = e => ({ ocr_bad_key: "bad_key", ocr_network: "network", ocr_
 /* ---------- Mistral (IA du cartable) ---------- */
 // API « chat completions », réponse en flux SSE : une ligne « data: {...} » par morceau, puis « data: [DONE] ».
 async function sampleMistral({ prompt, images, max_tokens, tier }, send, signal) {
-  const model = tier === "quick" ? MISTRAL_MODEL_QUICK : MISTRAL_MODEL;
+  const model = tier === "quick" ? MISTRAL_MODEL_QUICK : tier === "juge" ? MISTRAL_MODEL_JUGE : MISTRAL_MODEL;
   const content = [
     ...images.map(im => ({ type: "image_url", image_url: `data:${im.media_type || "image/jpeg"};base64,${im.data}` })),
     { type: "text", text: prompt },
