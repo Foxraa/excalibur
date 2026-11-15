@@ -9,17 +9,17 @@ L'enfant photographie son cahier ou son agenda : Excalibur en tire une fiche de 
 Il faut un PC Windows 10 ou 11 (64 bits) avec au moins 10 Go libres.
 
 1. Sur cette page GitHub, cliquer sur **Code → Download ZIP**, puis décompresser le fichier où vous voulez. Gardez les dossiers `appli` et `programme_cm1` côte à côte.
-2. Double-cliquer sur **`appli\Demarrer le cartable.bat`**.
+2. Double-cliquer sur **`appli\Demarrer le cartable.bat`**, une seule fois, pour l'installation.
 
-Au premier lancement, le lanceur installe tout seul Node.js s'il manque (Windows demande d'accepter l'installation) et demande où tourne l'IA. Si c'est sur ce PC, il installe aussi Ollama et télécharge le modèle (`gemma4:e4b`, plusieurs Go) : comptez plusieurs minutes. Le choix se change ensuite dans l'espace parents. Si l'installation automatique échoue, la fenêtre indique où télécharger ce qui manque. Le navigateur s'ouvre ensuite sur http://localhost:3000. Un cartable neuf s'ouvre sur un accueil en quatre étapes. Le parent choisit d'abord le code parent, puis donne le prénom de l'enfant et la zone de vacances, et choisit les récompenses. Le dernier écran explique les étoiles à l'enfant. L'habillage se choisit ensuite dans l'espace parents.
+Au premier lancement, le lanceur installe tout seul Node.js s'il manque (Windows demande d'accepter l'installation) et demande où tourne l'IA. Si c'est sur ce PC, il installe aussi Ollama et télécharge le modèle (`gemma4:e4b`, plusieurs Go) : comptez plusieurs minutes. Le choix se change ensuite dans l'espace parents. Si l'installation automatique échoue, la fenêtre indique où télécharger ce qui manque. Le navigateur s'ouvre ensuite sur http://localhost:3000, et une icône **Excalibur** (une épée) apparaît sur le bureau et dans le menu Démarrer. Un cartable neuf s'ouvre sur un accueil en quatre étapes. Le parent choisit d'abord le code parent, puis donne le prénom de l'enfant et la zone de vacances, et choisit les récompenses. Le dernier écran explique les étoiles à l'enfant. L'habillage se choisit ensuite dans l'espace parents.
 
-Pour arrêter Excalibur, fermer la fenêtre noire. Pour repartir d'un cartable vide, double-cliquer sur **`appli\Reinitialiser le cartable.bat`** : l'ancien cartable est mis de côté, pas effacé.
+Ensuite, on ouvre le cartable avec l'icône **Excalibur**, comme une appli. Le navigateur affiche tout de suite « Le cartable s'ouvre… », puis le cartable, sans fenêtre noire. Pour l'arrêter : espace parents, page Réglages, bouton **Arrêter le cartable** (ou fermer la fenêtre noire s'il a été lancé par le .bat). Pour repartir d'un cartable vide, double-cliquer sur **`appli\Reinitialiser le cartable.bat`** : l'ancien cartable est mis de côté, pas effacé.
 
 Aucun réglage n'est obligatoire. Pour les options (tablette, chiffrement de la base…), copier `appli\.env.example` en `appli\.env` et suivre les commentaires.
 
 ## Mettre à jour
 
-Fermer le cartable (la fenêtre noire), puis double-cliquer sur **`appli\Mettre a jour le cartable.bat`**. Il télécharge la dernière version publiée sur GitHub et remplace le code. Le cartable de l'enfant (`appli\data`), les réglages et les clés API (`appli\.env`) et les photos ne sont pas touchés. Par précaution, la base est d'abord recopiée dans `appli\data\cartable.avant-mise-a-jour.duckdb`. Si `programme_cm1\10_Progression_annuelle.md` a changé, l'ancienne version est gardée à côté, avec `.avant-mise-a-jour` dans son nom. Relancer ensuite **Demarrer le cartable.bat** : s'il faut de nouveaux modules, il les installe tout seul.
+Le plus simple : espace parents, page Réglages, bouton **Mise à jour**. Sinon, arrêter le cartable, puis double-cliquer sur **`appli\Mettre a jour le cartable.bat`**. Il télécharge la dernière version publiée sur GitHub et remplace le code. Le cartable de l'enfant (`appli\data`), les réglages et les clés API (`appli\.env`) et les photos ne sont pas touchés. Par précaution, la base est d'abord recopiée dans `appli\data\cartable.avant-mise-a-jour.duckdb`. Si `programme_cm1\10_Progression_annuelle.md` a changé, l'ancienne version est gardée à côté, avec `.avant-mise-a-jour` dans son nom. Rouvrir ensuite le cartable avec l'icône **Excalibur** : s'il faut de nouveaux modules, il les installe tout seul.
 
 Si le cartable est déjà à jour, le fichier le dit et ne change rien. Sans internet, rien n'est modifié.
 

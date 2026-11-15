@@ -10,8 +10,13 @@ Un cartable vide s'ouvre sur un accueil en cinq étapes : le code parent, puis l
 
 ## Lancer le cartable
 
-Double-cliquer sur **Demarrer le cartable.bat**. Il démarre Ollama si l'IA tourne sur ce PC, puis le navigateur s'ouvre sur http://localhost:3000.
-Pour arrêter, fermer la fenêtre noire.
+Double-cliquer sur l'icône **Excalibur** (une épée), sur le bureau ou dans le menu Démarrer. Le navigateur affiche tout de suite « Le cartable s'ouvre… » pendant que le cartable démarre en arrière-plan, sans fenêtre noire (Ollama compris si l'IA tourne sur ce PC), puis bascule sur http://localhost:3000. Si le cartable tourne déjà, l'icône ouvre juste la page.
+
+L'icône est créée par **Demarrer le cartable.bat** au premier lancement, et remise à jour à chaque lancement (si le dossier a bougé, relancer le .bat une fois). Tant que l'installation n'est pas finie (Node.js, choix de l'IA, modules), l'icône ouvre le .bat dans sa fenêtre habituelle, pour répondre aux questions. Le .bat reste utilisable : il montre ce qui se passe dans la fenêtre noire, utile si le cartable ne s'ouvre pas. Après 90 secondes d'attente, la page « Le cartable s'ouvre… » le conseille.
+
+Pour arrêter ou redémarrer : espace parents, page **Réglages**, carte « Le cartable sur ce PC ». **Redémarrer** relit `.env` et redémarre Ollama si besoin ; la page se recharge toute seule. Lancé par le .bat, on peut aussi fermer la fenêtre noire.
+
+Fichiers : `lanceur.ps1` (ce que fait l'icône, et `-Raccourci` pour recréer les icônes), `demarrage.html` (la page d'attente, recopiée dans le dossier temporaire avec le bon port), `public/images/excalibur.ico`.
 
 Sur un petit PC, Ollama est lent : une question de quiz prend 30 à 40 secondes, la lecture d'une photo plusieurs minutes. Sans IA, tout fonctionne sauf la lecture des photos, les quiz et les explications.
 
@@ -20,7 +25,7 @@ Sur un petit PC, Ollama est lent : une question de quiz prend 30 à 40 secondes,
 Les choix se font dans l'**espace parents**, page **Réglages IA**, carte « Intelligence artificielle », avec les clés API juste en dessous. L'IA se choisit aussi à l'accueil d'un cartable neuf. Le bouton **Tester** essaie le réglage sans le garder ; **Enregistrer** l'applique tout de suite, sans relancer.
 
 - **IA du cartable** :
-  - **Ollama** : sur ce PC, gratuit, rien ne sort de la maison. Si Ollama n'était pas encore installé, fermer la fenêtre noire et relancer le cartable : la page propose alors de l'installer.
+  - **Ollama** : sur ce PC, gratuit, rien ne sort de la maison. Si Ollama n'était pas encore installé, redémarrer le cartable (bouton **Redémarrer** des Réglages) : la page propose alors de l'installer.
   - **Claude** : payant selon les jetons utilisés. Plus rapide et plus fiable, surtout pour lire les photos. Les photos, les leçons et le prénom sont alors envoyés à Anthropic.
   - **Mistral** : le modèle Mistral Small (`mistral-small-latest`, autre modèle possible avec `MISTRAL_MODEL=` dans `.env`). Payant selon les jetons, nettement moins cher que Claude (environ 0,15 $ par million de jetons lus et 0,60 $ par million écrits fin 2026, à vérifier sur mistral.ai). Il voit les photos. Chaque appel est noté dans `data/consommation.log`. Les photos, les leçons et le prénom sont alors envoyés à Mistral AI. Pas encore essayé sur de vrais devoirs : à comparer avec Ollama et Claude.
 - **Lecture des photos** (leçons, exercices, agenda) :

@@ -34,6 +34,8 @@ goto choix_fait
 echo La cle API se colle dans le cartable, a l'etape "L'IA du cartable".
 :choix_fait
 
+rem Code 43 (bouton Redemarrer de l'espace parents) : on revient ici, .env a pu changer
+:redemarrer
 rem Lit les reglages dans .env (memes valeurs par defaut que server.mjs)
 set "MODELE=gemma4:e4b"
 set "PORT=3000"
@@ -73,25 +75,38 @@ for /l %%i in (1,1,30) do (
   timeout /t 1 /nobreak >nul
   "%OLLAMA%" list >nul 2>&1 && goto ollama_ok
 )
+rem Lance par l'icone (cache) : le cartable s'ouvre quand meme, sans IA, plutot que d'attendre une touche invisible
+if defined EXCALIBUR_CACHE goto lancer
 echo Ollama ne repond pas. Ouvre l'application Ollama puis relance ce fichier.
 pause
 exit /b 1
 :ollama_ok
 
-rem Telecharge le modele la premiere fois (plusieurs Go)
-"%OLLAMA%" list | findstr /b /c:"%MODELE% " >nul || "%OLLAMA%" pull %MODELE%
+rem Telecharge le modele la premiere fois (plusieurs Go). Cache : dans une fenetre a part, pour voir l'avancement
+"%OLLAMA%" list | findstr /b /c:"%MODELE% " >nul && goto lancer
+if defined EXCALIBUR_CACHE (start "Telechargement du modele %MODELE%" "%OLLAMA%" pull %MODELE%) else "%OLLAMA%" pull %MODELE%
 
 :lancer
 if not exist node_modules (
   echo Installation des modules, une seule fois...
   call npm install
 )
+rem Icone "Excalibur" sur le bureau : ouvre le cartable sans fenetre noire (recree si le dossier a bouge)
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0lanceur.ps1" -Raccourci >nul 2>&1
+
 rem Ouvre le navigateur seulement quand le serveur repond (60 s max), sauf apres une mise a jour lancee
 rem depuis l'espace parents : la page deja ouverte se recharge seule
 if not defined SANS_NAVIGATEUR start "" /b powershell -NoProfile -Command "for($i=0;$i -lt 240;$i++){try{(New-Object Net.Sockets.TcpClient).Connect('127.0.0.1',%PORT%);Start-Process http://localhost:%PORT%;break}catch{Start-Sleep -Milliseconds 250}}"
 node server.mjs
 rem Code 42 : le serveur s'est ferme pour se mettre a jour, mise-a-jour.ps1 relance le cartable ensuite
 if "%errorlevel%"=="42" exit
+rem Code 43 : redemarrage demande depuis l'espace parents, la page ouverte se recharge seule
+if "%errorlevel%"=="43" (
+  set "SANS_NAVIGATEUR=1"
+  goto redemarrer
+)
+rem Cache (icone) : arrete depuis l'espace parents, personne ne voit la fenetre
+if defined EXCALIBUR_CACHE exit
 pause
 exit /b 0
 
