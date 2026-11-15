@@ -95,6 +95,12 @@ Fermer le cartable, brancher une clé en **exFAT ou NTFS** (le modèle fait 5,5 
 
 Tout est dans `data/cartable.duckdb`. Le serveur y recopie chaque modification au bout de 3 secondes, ainsi qu'au démarrage et à la fermeture. Si un fichier `cartable.duckdb.wal` traîne à côté, c'est seulement que la dernière modification a moins de 3 secondes : il sera vidé au prochain lancement. Pour une copie à la main, fermer le cartable, puis copier `data/cartable.duckdb`. Le dossier est dans OneDrive, donc il est déjà sauvegardé.
 
+## Mettre à jour
+
+Fermer le cartable, puis double-cliquer sur **Mettre a jour le cartable.bat**. Il télécharge la dernière version de la branche `main` sur GitHub et remplace le code, sans toucher à `data`, à `.env` ni aux photos. La base est d'abord recopiée dans `data/cartable.avant-mise-a-jour.duckdb`, et une progression annuelle retouchée à la main est gardée dans `programme_cm1/10_Progression_annuelle.avant-mise-a-jour.md`. Si la liste des modules a changé, `node_modules` est supprimé, et le lanceur les réinstalle au démarrage suivant. La version installée est notée dans `.version`. Un fichier supprimé d'une version à l'autre reste sur le disque, sans gêner.
+
+Dans une copie suivie par git (le PC où l'on développe), le fichier refuse et renvoie vers `git pull`. Les nouveautés n'arrivent chez les autres qu'une fois fusionnées dans `main` et poussées sur GitHub.
+
 ## Repartir de zéro
 
 Fermer le cartable, puis double-cliquer sur **Reinitialiser le cartable.bat** et taper `OUI`. Rien n'est effacé : le dossier `data` est renommé en `data-avant-reinitialisation-<date>`, et le cartable démarre vide au lancement suivant, sur l'accueil (code parent, prénom, récompenses, étoiles). Pour revenir en arrière, supprimer le nouveau dossier `data` et redonner son nom `data` à l'ancien.

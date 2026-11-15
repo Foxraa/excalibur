@@ -8,3 +8,4 @@ node_modules/
 .superpowers/
 appli/test-results/
 appli/playwright-report/
+programme_cm1/*.avant-mise-a-jour.md
