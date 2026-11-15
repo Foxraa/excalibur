@@ -640,7 +640,9 @@ async function etatGit() {
   const [sha, date, titre] = (await git("log", "-1", "--format=%H%n%cI%n%s", "FETCH_HEAD")).split(/\r?\n/);
   return {
     derniere: { sha, date, titre: (titre || "").slice(0, 200) },
-    aJour: await gitOui("merge-base", "--is-ancestor", "FETCH_HEAD", "HEAD"),
+    // À jour si main ne contient aucun changement de fichier absent d'ici : un simple commit de fusion
+    // (la branche fusionnée dans main, sans rien de nouveau) ne compte pas comme une nouvelle version.
+    aJour: await gitOui("merge-base", "--is-ancestor", "FETCH_HEAD", "HEAD") || await gitOui("diff", "--quiet", "HEAD...FETCH_HEAD"),
     avance: await gitOui("merge-base", "--is-ancestor", "HEAD", "FETCH_HEAD"),
     sale: (await git("status", "--porcelain", "--untracked-files=no")) !== "",
     branche: await git("rev-parse", "--abbrev-ref", "HEAD"),
@@ -724,6 +726,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (p === "/api/ia" && req.method === "POST") return await reglerIA(req, res);
     if (p === "/api/ocr" && req.method === "POST") return await reglerOCR(req, res);
+    if (p === "/api/ollama" && ["GET", "POST"].includes(req.method)) return await routeOllama(req, res);
     if (p === "/api/cle" && req.method === "POST") return await reglerCle(req, res);
     // Coût des requêtes IA par jour (espace parents).
     if (p === "/api/couts" && req.method === "GET") {
@@ -792,6 +795,82 @@ server.listen(PORT, HOST, () => {
     console.log(CLE_MISTRAL ? `Mistral est prêt (${MISTRAL_MODEL}).` : "Pas de clé Mistral : ajoute-la dans l'espace parents pour activer l'aide de Mistral.");
   if (IA === "ollama" || IA_QUICK === "ollama") verifierOllama();
 });
+
+/* ---------- Installation d'Ollama depuis la page ---------- */
+// Sur un PC neuf, le lanceur n'installe plus Ollama : la page le propose (oui / non), puis suit l'avancement ici.
+// etape : null, "installation" (winget), "demarrage", "modele" (téléchargement, avec pourcent), "pret" ou "erreur".
+const OLLAMA_EXE = path.join(process.env.LOCALAPPDATA || "", "Programs", "Ollama", "ollama.exe");
+const installOllama = { etape: null, pourcent: null, code: null, refuse: false };
+const existe = f => fs.access(f).then(() => true, () => false);
+const deCePC = req => ["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(req.socket.remoteAddress);
+
+async function proposerOllama() {
+  if (process.platform !== "win32" || installOllama.refuse || installOllama.etape) return false;
+  if (!(IA === "ollama" || IA_QUICK === "ollama") || !ollamaLocal()) return false;
+  if (await existe(OLLAMA_EXE)) return false;
+  // Un Ollama installé ailleurs (clé USB, autre dossier) qui répond suffit.
+  try { await modelesOllama(OLLAMA_URL, 1500); return false; } catch { return true; }
+}
+
+async function installerOllama() {
+  const etape = (e, pourcent = null) => Object.assign(installOllama, { etape: e, pourcent, code: null });
+  try {
+    if (!await existe(OLLAMA_EXE)) {
+      etape("installation");
+      console.log("Installation d'Ollama (demandée depuis la page)...");
+      await promisify(execFile)("winget", ["install", "--id", "Ollama.Ollama", "-e", "--silent",
+        "--accept-source-agreements", "--accept-package-agreements"], { timeout: 30 * 60e3, windowsHide: true })
+        .catch(e => { if (e.code === "ENOENT") throw Object.assign(e, { etapeCode: "winget" }); });
+      if (!await existe(OLLAMA_EXE)) throw Object.assign(new Error("ollama.exe absent"), { etapeCode: "installation" });
+    }
+    etape("demarrage");
+    let noms = null;
+    try { noms = await modelesOllama(OLLAMA_URL, 2000); } catch {
+      spawn(path.join(path.dirname(OLLAMA_EXE), "ollama app.exe"), [], { detached: true, stdio: "ignore" }).on("error", () => {}).unref();
+      for (let i = 0; i < 60 && !noms; i++) {
+        await new Promise(r => setTimeout(r, 1000));
+        noms = await modelesOllama(OLLAMA_URL, 2000).catch(() => null);
+      }
+      if (!noms) throw Object.assign(new Error("Ollama ne répond pas"), { etapeCode: "demarrage" });
+    }
+    if (!modeleInstalle(noms, OLLAMA_MODEL)) {
+      etape("modele", 0);
+      console.log(`Téléchargement du modèle ${OLLAMA_MODEL} (plusieurs Go)...`);
+      const rep = await ollama("/api/pull", { model: OLLAMA_MODEL, stream: true });
+      let reste = "", ok = false;
+      for await (const morceau of rep) {
+        reste += morceau;
+        let i;
+        while ((i = reste.indexOf("\n")) >= 0) {
+          const ligne = reste.slice(0, i).trim(); reste = reste.slice(i + 1);
+          if (!ligne) continue;
+          const ev = JSON.parse(ligne);
+          if (ev.error) throw Object.assign(new Error(ev.error), { etapeCode: "modele" });
+          if (ev.total && ev.completed != null) installOllama.pourcent = Math.floor(100 * ev.completed / ev.total);
+          if (ev.status === "success") ok = true;
+        }
+      }
+      if (!ok) throw Object.assign(new Error("téléchargement interrompu"), { etapeCode: "modele" });
+    }
+    etape("pret");
+    console.log("Ollama est installé.");
+    verifierOllama();
+  } catch (e) {
+    console.error("Installation d'Ollama :", e.message);
+    Object.assign(installOllama, { etape: "erreur", code: e.etapeCode || "modele" });
+  }
+}
+
+async function routeOllama(req, res) {
+  if (req.method === "GET") return json(res, 200, { proposer: await proposerOllama(), ...installOllama, modele: OLLAMA_MODEL });
+  // Installer un logiciel : seulement depuis ce PC, pas depuis un autre appareil de la maison.
+  if (!deCePC(req)) return json(res, 403, { code: "pc" });
+  const { reponse } = await readBody(req, 1000);
+  if (reponse === "non") { installOllama.refuse = true; return json(res, 200, { ok: true }); }
+  if (reponse !== "oui") return json(res, 400, { code: "bad_request" });
+  if (!["installation", "demarrage", "modele"].includes(installOllama.etape)) installerOllama();
+  json(res, 200, { ok: true });
+}
 
 async function verifierOllama() {
   const qui = IA === IA_QUICK ? "tout" : IA === "ollama" ? "les grosses demandes" : "les petites réponses";

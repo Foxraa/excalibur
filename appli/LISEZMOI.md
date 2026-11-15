@@ -4,7 +4,7 @@ L'appli tourne sur ce PC. L'IA est au choix : Ollama sur ce PC, ou Claude ou Mis
 
 ## Première installation (une seule fois)
 
-Au premier lancement, **Demarrer le cartable.bat** installe Node.js s'il manque (avec winget ; Windows demande d'accepter l'installation), puis demande quelle IA utiliser : Ollama sur ce PC, Claude ou Mistral. Avec Ollama, il installe aussi Ollama et télécharge le modèle (`gemma4:e4b`, plusieurs Go). Avec Claude ou Mistral, il n'installe rien de plus.
+Au premier lancement, **Demarrer le cartable.bat** installe Node.js s'il manque (avec winget ; Windows demande d'accepter l'installation), puis demande quelle IA utiliser : Ollama sur ce PC, Claude ou Mistral. Avec Ollama, s'il n'est pas encore installé, le cartable s'ouvre et une fenêtre par-dessus la page demande s'il faut l'installer (oui / non) : avec « Oui », il installe Ollama et télécharge le modèle (`gemma4:e4b`, plusieurs Go) en montrant l'avancement ; avec « Non », le cartable marche sans IA et la question revient au lancement suivant. Avec Claude ou Mistral, il n'installe rien de plus.
 
 Un cartable vide s'ouvre sur un accueil en cinq étapes : le code parent, puis le prénom et la zone de vacances, l'IA, les récompenses, et enfin un écran qui explique les étoiles à l'enfant. Les onglets n'apparaissent qu'à la fin. Si la page est rechargée en cours de route, l'accueil reprend après le code parent.
 
@@ -20,7 +20,7 @@ Sur un petit PC, Ollama est lent : une question de quiz prend 30 à 40 secondes,
 Les choix se font dans l'**espace parents**, page **Réglages IA**, carte « Intelligence artificielle », avec les clés API juste en dessous. L'IA se choisit aussi à l'accueil d'un cartable neuf. Le bouton **Tester** essaie le réglage sans le garder ; **Enregistrer** l'applique tout de suite, sans relancer.
 
 - **IA du cartable** :
-  - **Ollama** : sur ce PC, gratuit, rien ne sort de la maison. Si Ollama n'était pas encore installé, fermer la fenêtre noire et relancer le cartable.
+  - **Ollama** : sur ce PC, gratuit, rien ne sort de la maison. Si Ollama n'était pas encore installé, fermer la fenêtre noire et relancer le cartable : la page propose alors de l'installer.
   - **Claude** : payant selon les jetons utilisés. Plus rapide et plus fiable, surtout pour lire les photos. Les photos, les leçons et le prénom sont alors envoyés à Anthropic.
   - **Mistral** : le modèle Mistral Small (`mistral-small-latest`, autre modèle possible avec `MISTRAL_MODEL=` dans `.env`). Payant selon les jetons, nettement moins cher que Claude (environ 0,15 $ par million de jetons lus et 0,60 $ par million écrits fin 2026, à vérifier sur mistral.ai). Il voit les photos. Chaque appel est noté dans `data/consommation.log`. Les photos, les leçons et le prénom sont alors envoyés à Mistral AI. Pas encore essayé sur de vrais devoirs : à comparer avec Ollama et Claude.
 - **Lecture des photos** (leçons, exercices, agenda) :

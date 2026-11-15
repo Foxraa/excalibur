@@ -1,7 +1,8 @@
 @echo off
 cd /d "%~dp0"
 
-rem Sur un PC neuf, installe Node.js avec winget, puis Ollama si l'IA tourne sur ce PC (une seule fois)
+rem Sur un PC neuf, installe Node.js avec winget, puis demarre Ollama si l'IA tourne sur ce PC
+rem (s'il n'est pas installe, c'est la page du cartable qui propose de l'installer)
 where node >nul 2>&1 && goto node_ok
 if exist "%ProgramFiles%\nodejs\node.exe" goto node_path
 echo Node.js n'est pas installe : installation, une seule fois. Accepte la demande de Windows.
@@ -60,11 +61,8 @@ echo %ADRESSE%| findstr /i "localhost 127.0.0.1" >nul || goto lancer
 :ollama_ici
 
 set "OLLAMA=%LOCALAPPDATA%\Programs\Ollama\ollama.exe"
-if exist "%OLLAMA%" goto ollama_installe
-echo Ollama n'est pas installe : installation, une seule fois.
-winget install --id Ollama.Ollama -e --silent --accept-source-agreements --accept-package-agreements
-if not exist "%OLLAMA%" goto sans_ollama
-:ollama_installe
+rem Pas d'Ollama : le cartable s'ouvre et demande dans la page s'il faut l'installer
+if not exist "%OLLAMA%" goto lancer
 
 rem Demarre Ollama s'il ne tourne pas deja
 "%OLLAMA%" list >nul 2>&1
@@ -102,7 +100,3 @@ echo Node.js n'a pas pu etre installe. Installe la version LTS depuis https://no
 pause
 exit /b 1
 
-:sans_ollama
-echo Ollama n'a pas pu etre installe. Installe-le depuis https://ollama.com/download puis relance ce fichier.
-pause
-exit /b 1
