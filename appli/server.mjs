@@ -5,7 +5,8 @@ import http from "node:http";
 import https from "node:https";
 import crypto from "node:crypto";
 import os from "node:os";
-import { spawn } from "node:child_process";
+import { spawn, execFile } from "node:child_process";
+import { promisify } from "node:util";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -629,8 +630,29 @@ function reseauMaison() {
 const RACINE = path.dirname(here);
 const DEPOT = "Foxraa/excalibur";
 const CODE_MAJ = 42; // « Demarrer le cartable.bat » ferme sa fenêtre sur ce code au lieu d'attendre une touche
+const estGit = () => fs.access(path.join(RACINE, ".git")).then(() => true, () => false);
+// Copie de travail git : on compare HEAD à main sur GitHub. La mise à jour n'avance que si elle se fait
+// en « fast-forward » (pas de commit local absent de main) et sans modification en cours dans les fichiers suivis.
+const git = (...a) => promisify(execFile)("git", ["-C", RACINE, ...a], { timeout: 30000, windowsHide: true }).then(r => r.stdout.trim());
+const gitOui = (...a) => git(...a).then(() => true, () => false);
+async function etatGit() {
+  try { await git("fetch", "-q", "origin", "main"); } catch { return { erreur: true }; }
+  const [sha, date, titre] = (await git("log", "-1", "--format=%H%n%cI%n%s", "FETCH_HEAD")).split(/\r?\n/);
+  return {
+    derniere: { sha, date, titre: (titre || "").slice(0, 200) },
+    aJour: await gitOui("merge-base", "--is-ancestor", "FETCH_HEAD", "HEAD"),
+    avance: await gitOui("merge-base", "--is-ancestor", "HEAD", "FETCH_HEAD"),
+    sale: (await git("status", "--porcelain", "--untracked-files=no")) !== "",
+    branche: await git("rev-parse", "--abbrev-ref", "HEAD"),
+  };
+}
 async function etatMiseAJour() {
-  const git = await fs.access(path.join(RACINE, ".git")).then(() => true, () => false);
+  const windows = process.platform === "win32";
+  if (await estGit()) {
+    const e = await etatGit();
+    if (e.erreur) return { git: true, windows, derniere: null, aJour: false };
+    return { git: true, windows, ...e };
+  }
   const actuelle = (await fs.readFile(path.join(here, ".version"), "utf8").catch(() => "")).trim() || null;
   let derniere = null;
   try {
@@ -642,12 +664,18 @@ async function etatMiseAJour() {
       derniere = { sha: c.sha, date: c.commit?.committer?.date || null, titre: String(c.commit?.message || "").split(/\r?\n/)[0].slice(0, 200) };
     }
   } catch {}
-  return { git, windows: process.platform === "win32", actuelle, derniere, aJour: !!derniere && derniere.sha === actuelle };
+  return { git: false, windows, actuelle, derniere, aJour: !!derniere && derniere.sha === actuelle };
 }
 async function lancerMiseAJour(req, res) {
   if (!sessions.valide(req.headers["x-parent"])) return json(res, 403, { code: "parent" });
   if (process.platform !== "win32") return json(res, 400, { code: "windows" });
-  if (await fs.access(path.join(RACINE, ".git")).then(() => true, () => false)) return json(res, 400, { code: "git" });
+  if (await estGit()) {
+    const e = await etatGit();
+    if (e.erreur) return json(res, 502, { code: "reseau" });
+    if (e.aJour) return json(res, 400, { code: "ajour" });
+    if (e.sale) return json(res, 400, { code: "sale" });
+    if (!e.avance) return json(res, 400, { code: "diverge" });
+  }
   const script = path.join(here, "mise-a-jour.ps1");
   if (!await fs.access(script).then(() => true, () => false)) return json(res, 500, { code: "script" });
   // detached : sous Windows, le script a sa propre fenêtre et survit à la fermeture du serveur.

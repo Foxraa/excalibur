@@ -23,10 +23,7 @@ function Fin([int]$code) {
   exit $code
 }
 
-if (Test-Path (Join-Path $Racine '.git')) {
-  Write-Host "Ce dossier est suivi par git : mets-le a jour avec 'git pull'."
-  Fin 1
-}
+$git = Test-Path (Join-Path $Racine '.git')
 
 # Le cartable doit etre ferme (sinon les modules de node_modules sont verrouilles)
 $port = 3000
@@ -46,6 +43,28 @@ if (Ouvert) {
   $Relancer = $false # il tourne encore : ne pas en lancer un second
   Write-Host 'Le cartable est ouvert : ferme sa fenetre noire, puis relance la mise a jour.'
   Fin 1
+}
+
+# Copie de travail git : on avance sur main de GitHub, seulement en fast-forward (rien de local n'est perdu)
+if ($git) {
+  $lock = Join-Path $appli 'package-lock.json'
+  $modules = Join-Path $appli 'node_modules'
+  $avant = if (Test-Path $lock) { (Get-FileHash $lock).Hash } else { '' }
+  Write-Host 'Recuperation de la nouvelle version avec git...'
+  git -C $Racine fetch -q origin $branche
+  if ($LASTEXITCODE -ne 0) { Write-Host "git n'a pas pu joindre GitHub. Verifie la connexion internet et recommence."; Fin 1 }
+  git -C $Racine merge --ff-only -q FETCH_HEAD
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host "git n'a pas pu avancer : des modifications locales ou des commits absents de main l'en empechent."
+    Write-Host 'Le cartable est intact. Fusionne a la main, puis recommence.'
+    Fin 1
+  }
+  $apres = if (Test-Path $lock) { (Get-FileHash $lock).Hash } else { '' }
+  if ((Test-Path $modules) -and $avant -ne $apres) { Remove-Item $modules -Recurse -Force }
+  Write-Host ''
+  Write-Host 'Mise a jour faite.'
+  if (-not $Relancer) { Write-Host 'Double-clique sur "Demarrer le cartable.bat" pour lancer la nouvelle version.' }
+  Fin 0
 }
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
