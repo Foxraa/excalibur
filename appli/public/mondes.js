@@ -6,11 +6,11 @@
 (function(global){
   const SEUILS_MONDES={
     excalibur:0,
-    manga:3000,
+    dresseur:3000,
     fee:4500,
     dino:6000,
     galaxie:7500,
-    dresseur:9000,
+    manga:9000,
     champignon:10500,
     sorcier:12000
   };
