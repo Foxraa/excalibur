@@ -1,7 +1,8 @@
 # Met Excalibur a jour depuis GitHub (branche main) sans toucher aux donnees :
 # appli\data, appli\.env et photos ne sont pas dans l'archive, ils restent tels quels.
-# Lance par "Mettre a jour le cartable.bat". Messages sans accents : PowerShell 5.1 lit ce fichier en ANSI.
-param([switch]$SansPause, [string]$Racine)
+# Lance par "Mettre a jour le cartable.bat", ou par le bouton de l'espace parents (-Relancer : attend
+# que le serveur se ferme, puis relance le cartable a la fin). Messages sans accents : PowerShell 5.1 lit ce fichier en ANSI.
+param([switch]$SansPause, [switch]$Relancer, [string]$Racine)
 
 $ErrorActionPreference = 'Stop'
 $depot = 'Foxraa/excalibur'
@@ -11,6 +12,13 @@ if (-not $Racine) { $Racine = Split-Path $appli -Parent }
 $appli = Join-Path $Racine 'appli'
 
 function Fin([int]$code) {
+  if ($Relancer) {
+    # Le lanceur n'ouvre pas de nouvel onglet : la page restee ouverte se recharge toute seule.
+    $env:SANS_NAVIGATEUR = '1'
+    Write-Host 'Le cartable redemarre...'
+    Start-Process (Join-Path $appli 'Demarrer le cartable.bat') -WorkingDirectory $appli
+    if ($code -eq 0) { Start-Sleep -Seconds 2; exit 0 }
+  }
   if (-not $SansPause) { Write-Host ''; Read-Host 'Appuie sur Entree pour fermer' | Out-Null }
   exit $code
 }
@@ -26,9 +34,16 @@ $env_fichier = Join-Path $appli '.env'
 if (Test-Path $env_fichier) {
   foreach ($ligne in Get-Content $env_fichier) { if ($ligne -match '^\s*PORT\s*=\s*(\d+)') { $port = [int]$Matches[1] } }
 }
-$ouvert = $false
-try { $c = New-Object Net.Sockets.TcpClient; $c.Connect('127.0.0.1', $port); $c.Close(); $ouvert = $true } catch {}
-if ($ouvert) {
+function Ouvert {
+  try { $c = New-Object Net.Sockets.TcpClient; $c.Connect('127.0.0.1', $port); $c.Close(); return $true } catch { return $false }
+}
+if ($Relancer) {
+  Write-Host 'Fermeture du cartable...'
+  for ($i = 0; $i -lt 60 -and (Ouvert); $i++) { Start-Sleep -Milliseconds 500 }
+  Start-Sleep -Seconds 2 # la fenetre noire finit de se fermer, la base est liberee
+}
+if (Ouvert) {
+  $Relancer = $false # il tourne encore : ne pas en lancer un second
   Write-Host 'Le cartable est ouvert : ferme sa fenetre noire, puis relance la mise a jour.'
   Fin 1
 }

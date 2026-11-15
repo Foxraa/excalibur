@@ -3263,7 +3263,51 @@ function vParents(){
     ${reglage('Prénom',`<form class="row" data-form="prenom"><input type="text" id="cfg-prenom" name="prenom" value="${esc(c.prenom||'')}" style="flex:1 1 180px;max-width:320px" required><button class="btn">Enregistrer</button></form>`,'cfg-prenom')}
     ${reglage('Zone de vacances',`<select id="zone-parent" style="max-width:200px">${['A','B','C'].map(z=>`<option value="${z}" ${z===zone?'selected':''}>Zone ${z}</option>`).join('')}</select>`,'zone-parent')}
   </section>
-  ${vReseau()}`}`;
+  ${vReseau()}
+  ${vMaj()}`}`;
+}
+/* Mise à jour depuis GitHub : le serveur compare la version installée (.version) à la dernière publiée,
+   puis lance mise-a-jour.ps1, se ferme et se rouvre. La page attend qu'il réponde à nouveau et se recharge. */
+async function chargerMaj(){
+  state.maj={charge:true};
+  try{const r=await fetch('/api/mise-a-jour',{headers:{'x-parent':state.jeton||''}});state.maj=r.ok?await r.json():{err:true}}
+  catch{state.maj={err:true}}
+  if(state.pp==='reglages')render();
+}
+async function lancerMaj(){
+  if(!confirm("Mettre le cartable à jour ? Il va se fermer quelques instants puis se rouvrir. Les données, les réglages et les clés sont gardés."))return;
+  let r;try{r=await fetch('/api/mise-a-jour',{method:'POST',headers:{'x-parent':state.jeton||''}}).then(x=>x.json())}catch{toast("Le serveur du cartable ne répond pas.");return}
+  if(!r.ok){toast({git:"Ce dossier est suivi par git : mettez-le à jour avec « git pull ».",windows:"La mise à jour automatique ne marche que sous Windows.",script:"Le fichier mise-a-jour.ps1 manque dans le dossier du cartable."}[r.code]||"La mise à jour n'a pas pu démarrer.");return}
+  state.maj={enCours:true};render();
+  // Le serveur se ferme, puis revient avec la nouvelle version (jusqu'à plusieurs minutes si les modules changent).
+  let ferme=false;const t0=Date.now();
+  const tour=async()=>{
+    let rep=false;try{rep=(await fetch('/api/status',{cache:'no-store'})).ok}catch{}
+    if(!rep)ferme=true;
+    if(rep&&ferme)return location.reload();
+    if(Date.now()-t0>15*60e3){state.maj={err:true,longue:true};return render()}
+    setTimeout(tour,2000);
+  };
+  setTimeout(tour,1500);
+}
+function vMaj(){
+  const m=state.maj;
+  if(!m){chargerMaj();return ''}
+  const tete='<h3>🔄 Mise à jour</h3>';
+  let corps;
+  if(m.enCours)corps=`<p>⏳ Mise à jour en cours. Une fenêtre bleue s'ouvre sur le PC, puis le cartable redémarre : cette page se rechargera toute seule.</p><p class="small muted">Si de nouveaux modules sont à installer, cela peut prendre quelques minutes.</p>`;
+  else if(m.charge)corps=`<p class="small muted">Recherche d'une nouvelle version…</p>`;
+  else if(m.err)corps=`<p class="small muted">${m.longue?"Le cartable ne s'est pas rouvert. Regardez la fenêtre bleue sur le PC, puis relancez « Démarrer le cartable ».":"Impossible de vérifier les mises à jour."}</p><div><button class="btn" data-act="maj-verif">Réessayer</button></div>`;
+  else{
+    const d=m.derniere,date=d&&d.date?new Date(d.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}):'';
+    const nouv=d?`<p class="small muted">Dernière version publiée${date?` le ${date}`:''} : ${esc(d.titre||'')}</p>`:'';
+    if(m.git)corps=`<p>Ce dossier est une copie de travail git : il se met à jour avec <code>git pull</code>, pas avec ce bouton.</p>${nouv}`;
+    else if(!m.windows)corps=`<p>La mise à jour automatique ne marche que sous Windows.</p>`;
+    else if(!d)corps=`<p>GitHub ne répond pas (pas d'internet ?). Vous pouvez quand même lancer la mise à jour.</p><div class="row"><button class="btn" data-act="maj-verif">Vérifier à nouveau</button><button class="btn" data-act="maj-lancer">Mettre à jour quand même</button></div>`;
+    else if(m.aJour)corps=`<p>✅ Le cartable est à jour.</p>${nouv}<div><button class="btn" data-act="maj-verif">Vérifier à nouveau</button></div>`;
+    else corps=`<p>${m.actuelle?'🆕 Une nouvelle version est disponible.':'La version installée est inconnue : la mise à jour installe la dernière version publiée.'}</p>${nouv}<div class="row"><button class="btn primary" data-act="maj-lancer">Mettre à jour maintenant</button></div>`;
+  }
+  return `<section class="card stack">${tete}${corps}<p class="small muted">La nouvelle version vient de GitHub. Les données ${esc(deP())}, les réglages, les clés API et les photos ne sont pas touchés ; la base est recopiée avant, au cas où.</p></section>`;
 }
 /* Coût des requêtes IA, calculé par le serveur à partir de data/consommation.log. Ollama est gratuit et n'y figure pas. */
 async function chargerCouts(){
@@ -3439,7 +3483,9 @@ document.addEventListener('click',async e=>{
     case 'cle-oublier':envoyerCle(v,{oublier:true});break;
     case 'suggestions':SUGGESTIONS.forEach(([t,c])=>put('recompenses',uid(),{titre:t,cout:c}));break;
     case 'parent-off':finParent();state.pp=null;render();break;
-    case 'parent-page':state.pp=v;if(v==='couts')chargerCouts();render();window.scrollTo({top:0});break;
+    case 'parent-page':state.pp=v;if(v==='couts')chargerCouts();if(v==='reglages'&&!state.maj?.enCours)state.maj=null;render();window.scrollTo({top:0});break;
+    case 'maj-verif':chargerMaj();render();break;
+    case 'maj-lancer':lancerMaj();break;
     case 'skin':put('config','main',{...cfg(),skin:el.dataset.v});toast(`Monde ${SKINS[el.dataset.v].nom.split(' ·')[0]} choisi.`);break;
     case 'theme':put('config','main',{...cfg(),theme:v});toast({clair:'Couleurs claires choisies.',sombre:'Couleurs sombres choisies.',auto:"Les couleurs suivent l'ordinateur."}[v]);break;
     case 'prog-mat':go('programme',v);break;
