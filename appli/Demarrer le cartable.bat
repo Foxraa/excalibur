@@ -88,9 +88,12 @@ if not exist node_modules (
   echo Installation des modules, une seule fois...
   call npm install
 )
-rem Ouvre le navigateur seulement quand le serveur repond (60 s max)
-start "" /b powershell -NoProfile -Command "for($i=0;$i -lt 240;$i++){try{(New-Object Net.Sockets.TcpClient).Connect('127.0.0.1',%PORT%);Start-Process http://localhost:%PORT%;break}catch{Start-Sleep -Milliseconds 250}}"
+rem Ouvre le navigateur seulement quand le serveur repond (60 s max), sauf apres une mise a jour lancee
+rem depuis l'espace parents : la page deja ouverte se recharge seule
+if not defined SANS_NAVIGATEUR start "" /b powershell -NoProfile -Command "for($i=0;$i -lt 240;$i++){try{(New-Object Net.Sockets.TcpClient).Connect('127.0.0.1',%PORT%);Start-Process http://localhost:%PORT%;break}catch{Start-Sleep -Milliseconds 250}}"
 node server.mjs
+rem Code 42 : le serveur s'est ferme pour se mettre a jour, mise-a-jour.ps1 relance le cartable ensuite
+if "%errorlevel%"=="42" exit
 pause
 exit /b 0
 

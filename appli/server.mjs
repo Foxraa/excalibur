@@ -5,6 +5,7 @@ import http from "node:http";
 import https from "node:https";
 import crypto from "node:crypto";
 import os from "node:os";
+import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -621,6 +622,42 @@ function reseauMaison() {
   return { ouvert, port: PORT, nom: os.hostname(), adresses };
 }
 
+/* ---------- Mise à jour depuis GitHub ---------- */
+// Le bouton de l'espace parents lance mise-a-jour.ps1 dans sa propre fenêtre, puis ferme le serveur :
+// le script attend qu'il soit fermé (la base et node_modules sont alors libres), installe la nouvelle version
+// et relance le cartable. Les données, .env et les photos ne sont jamais touchés.
+const RACINE = path.dirname(here);
+const DEPOT = "Foxraa/excalibur";
+const CODE_MAJ = 42; // « Demarrer le cartable.bat » ferme sa fenêtre sur ce code au lieu d'attendre une touche
+async function etatMiseAJour() {
+  const git = await fs.access(path.join(RACINE, ".git")).then(() => true, () => false);
+  const actuelle = (await fs.readFile(path.join(here, ".version"), "utf8").catch(() => "")).trim() || null;
+  let derniere = null;
+  try {
+    const r = await fetch(`https://api.github.com/repos/${DEPOT}/commits/main`, {
+      headers: { "user-agent": "excalibur-mise-a-jour", accept: "application/vnd.github+json" }, signal: AbortSignal.timeout(10000),
+    });
+    if (r.ok) {
+      const c = await r.json();
+      derniere = { sha: c.sha, date: c.commit?.committer?.date || null, titre: String(c.commit?.message || "").split(/\r?\n/)[0].slice(0, 200) };
+    }
+  } catch {}
+  return { git, windows: process.platform === "win32", actuelle, derniere, aJour: !!derniere && derniere.sha === actuelle };
+}
+async function lancerMiseAJour(req, res) {
+  if (!sessions.valide(req.headers["x-parent"])) return json(res, 403, { code: "parent" });
+  if (process.platform !== "win32") return json(res, 400, { code: "windows" });
+  if (await fs.access(path.join(RACINE, ".git")).then(() => true, () => false)) return json(res, 400, { code: "git" });
+  const script = path.join(here, "mise-a-jour.ps1");
+  if (!await fs.access(script).then(() => true, () => false)) return json(res, 500, { code: "script" });
+  // detached : sous Windows, le script a sa propre fenêtre et survit à la fermeture du serveur.
+  spawn("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", script, "-Relancer"],
+    { cwd: here, detached: true, stdio: "ignore", windowsHide: false }).unref();
+  json(res, 200, { ok: true });
+  console.log("\nMise à jour lancée : le cartable se ferme et se rouvrira tout seul.");
+  setTimeout(() => fermer(CODE_MAJ), 500);
+}
+
 const nomModele = (ia, quick = false) => ia === "ollama" ? OLLAMA_MODEL : ia === "mistral" ? (quick ? MISTRAL_MODEL_QUICK : MISTRAL_MODEL) : quick ? MODEL_QUICK : MODEL;
 
 /* ---------- Routes ---------- */
@@ -665,6 +702,11 @@ const server = http.createServer(async (req, res) => {
       if (!sessions.valide(req.headers["x-parent"])) return json(res, 403, { code: "parent" });
       return json(res, 200, { jours: coutsParJour(await fs.readFile(CONSO_FILE, "utf8").catch(() => "")) });
     }
+    if (p === "/api/mise-a-jour" && req.method === "GET") {
+      if (!sessions.valide(req.headers["x-parent"])) return json(res, 403, { code: "parent" });
+      return json(res, 200, await etatMiseAJour());
+    }
+    if (p === "/api/mise-a-jour" && req.method === "POST") return await lancerMiseAJour(req, res);
     if (p === "/api/cours") return json(res, 200, await coursEtProgression());
     const m = p.match(/^\/api\/db\/([a-z]+)\/([^/]+)$/);
     if (m) {
@@ -711,8 +753,8 @@ const server = http.createServer(async (req, res) => {
 });
 
 // Fermeture (Ctrl+C, ou la fenêtre noire fermée : SIGHUP sous Windows) : on vide le journal dans le fichier.
-const fermer = async () => { clearTimeout(attente); await consolider(); process.exit(0); };
-for (const s of ["SIGINT", "SIGHUP", "SIGBREAK", "SIGTERM"]) process.on(s, fermer);
+const fermer = async (code = 0) => { clearTimeout(attente); await consolider(); process.exit(code); };
+for (const s of ["SIGINT", "SIGHUP", "SIGBREAK", "SIGTERM"]) process.on(s, () => fermer());
 
 server.listen(PORT, HOST, () => {
   console.log(`\nExcalibur est ouvert : http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT}`);
