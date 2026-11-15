@@ -3277,7 +3277,7 @@ async function chargerMaj(){
 async function lancerMaj(){
   if(!confirm("Mettre le cartable à jour ? Il va se fermer quelques instants puis se rouvrir. Les données, les réglages et les clés sont gardés."))return;
   let r;try{r=await fetch('/api/mise-a-jour',{method:'POST',headers:{'x-parent':state.jeton||''}}).then(x=>x.json())}catch{toast("Le serveur du cartable ne répond pas.");return}
-  if(!r.ok){toast({git:"Ce dossier est suivi par git : mettez-le à jour avec « git pull ».",windows:"La mise à jour automatique ne marche que sous Windows.",script:"Le fichier mise-a-jour.ps1 manque dans le dossier du cartable."}[r.code]||"La mise à jour n'a pas pu démarrer.");return}
+  if(!r.ok){chargerMaj();toast({ajour:"Le cartable est déjà à jour.",sale:"Des fichiers du cartable ont été modifiés sur ce PC : la mise à jour attend.",diverge:"La branche contient des commits absents de main : fusionnez à la main.",reseau:"GitHub ne répond pas.",windows:"La mise à jour automatique ne marche que sous Windows.",script:"Le fichier mise-a-jour.ps1 manque dans le dossier du cartable."}[r.code]||"La mise à jour n'a pas pu démarrer.");return}
   state.maj={enCours:true};render();
   // Le serveur se ferme, puis revient avec la nouvelle version (jusqu'à plusieurs minutes si les modules changent).
   let ferme=false;const t0=Date.now();
@@ -3301,13 +3301,19 @@ function vMaj(){
   else{
     const d=m.derniere,date=d&&d.date?new Date(d.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}):'';
     const nouv=d?`<p class="small muted">Dernière version publiée${date?` le ${date}`:''} : ${esc(d.titre||'')}</p>`:'';
-    if(m.git)corps=`<p>Ce dossier est une copie de travail git : il se met à jour avec <code>git pull</code>, pas avec ce bouton.</p>${nouv}`;
-    else if(!m.windows)corps=`<p>La mise à jour automatique ne marche que sous Windows.</p>`;
-    else if(!d)corps=`<p>GitHub ne répond pas (pas d'internet ?). Vous pouvez quand même lancer la mise à jour.</p><div class="row"><button class="btn" data-act="maj-verif">Vérifier à nouveau</button><button class="btn" data-act="maj-lancer">Mettre à jour quand même</button></div>`;
-    else if(m.aJour)corps=`<p>✅ Le cartable est à jour.</p>${nouv}<div><button class="btn" data-act="maj-verif">Vérifier à nouveau</button></div>`;
-    else corps=`<p>${m.actuelle?'🆕 Une nouvelle version est disponible.':'La version installée est inconnue : la mise à jour installe la dernière version publiée.'}</p>${nouv}<div class="row"><button class="btn primary" data-act="maj-lancer">Mettre à jour maintenant</button></div>`;
+    // « Vérifier mise à jour » toujours là ; « Mise à jour » seulement quand une mise à jour peut se faire.
+    const verif=`<button class="btn" data-act="maj-verif">Vérifier mise à jour</button>`;
+    const boutons=(lancer,txt='Mise à jour')=>`<div class="row">${verif}${lancer?`<button class="btn primary" data-act="maj-lancer">${txt}</button>`:''}</div>`;
+    if(!m.windows)corps=`<p>La mise à jour automatique ne marche que sous Windows.</p>${nouv}${boutons(false)}`;
+    else if(!d)corps=m.git
+      ?`<p>GitHub ne répond pas (pas d'internet ?), ou git n'est pas installé sur ce PC.</p>${boutons(false)}`
+      :`<p>GitHub ne répond pas (pas d'internet ?). Vous pouvez quand même lancer la mise à jour.</p>${boutons(true,'Mise à jour quand même')}`;
+    else if(m.aJour)corps=`<p>✅ Le cartable est à jour.</p>${nouv}${boutons(false)}`;
+    else if(m.git&&m.sale)corps=`<p>🆕 Une nouvelle version est disponible, mais des fichiers du cartable ont été modifiés sur ce PC : enregistrez-les (commit) ou annulez-les avant de mettre à jour.</p>${nouv}${boutons(false)}`;
+    else if(m.git&&!m.avance)corps=`<p>🆕 Une nouvelle version est disponible, mais la branche <code>${esc(m.branche||'')}</code> contient des commits absents de main : fusionnez à la main.</p>${nouv}${boutons(false)}`;
+    else corps=`<p>${m.git||m.actuelle?'🆕 Une nouvelle version est disponible.':'La version installée est inconnue : la mise à jour installe la dernière version publiée.'}</p>${nouv}${boutons(true)}`;
   }
-  return `<section class="card stack">${tete}${corps}<p class="small muted">La nouvelle version vient de GitHub. Les données ${esc(deP())}, les réglages, les clés API et les photos ne sont pas touchés ; la base est recopiée avant, au cas où.</p></section>`;
+  return `<section class="card stack">${tete}${corps}<p class="small muted">La nouvelle version vient de GitHub. Les données ${esc(deP())}, les réglages, les clés API et les photos ne sont pas touchés${m.git?'':' ; la base est recopiée avant, au cas où'}.</p></section>`;
 }
 /* Coût des requêtes IA, calculé par le serveur à partir de data/consommation.log. Ollama est gratuit et n'y figure pas. */
 async function chargerCouts(){
