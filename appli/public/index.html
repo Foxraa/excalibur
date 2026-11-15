@@ -1970,6 +1970,8 @@ function suiteDefi(){
 /* ============ Leçons du programme et progression de l'année ============ */
 /* Le serveur lit le dossier programme_cm1 : les leçons (Markdown) et 10_Progression_annuelle.md. */
 let COURS=null;
+/* Tant que cette page est ouverte, le cartable tourne : fermer la fenêtre l'arrête (voir presence.mjs). */
+try{new EventSource('/api/presence')}catch(e){}
 fetch('/api/cours',{cache:'no-store'}).then(r=>{if(!r.ok)throw r.status;return r.json()}).then(c=>{COURS=c;requestRender()}).catch(()=>{COURS={lecons:{},periodes:[],semaines:[],err:true};requestRender()});
 const cours=id=>COURS&&COURS.lecons[String(id).replace(/^ref:/,'')];
 /* Lundi de chaque semaine de classe (la semaine N du fichier = la N-ième semaine avec au moins un jour de classe). */

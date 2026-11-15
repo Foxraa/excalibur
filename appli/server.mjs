@@ -16,6 +16,7 @@ import { marked } from "marked";
 import { creerSessions, autorise, fileUneParUne, delaiEchec } from "./parent.mjs";
 import { avecSchemas, schema } from "./schemas.mjs";
 import { coutsParJour } from "./couts.mjs";
+import { creerPresence } from "./presence.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 try { process.loadEnvFile(path.join(here, ".env")); } catch {}
@@ -691,11 +692,26 @@ async function lancerMiseAJour(req, res) {
 
 const nomModele = (ia, quick = false) => ia === "ollama" ? OLLAMA_MODEL : ia === "mistral" ? (quick ? MISTRAL_MODEL_QUICK : MISTRAL_MODEL) : quick ? MODEL_QUICK : MODEL;
 
+/* ---------- Fenêtre fermée = cartable arrêté ---------- */
+// Lancé par lanceur.ps1 (ARRET_SANS_FENETRE=1), le serveur s'arrête quand plus aucune page n'est ouverte.
+// Lancé à la main (npm start, tests), il ne s'arrête jamais tout seul.
+const presence = process.env.ARRET_SANS_FENETRE ? creerPresence({
+  quandVide: () => { console.log("\nPlus aucune fenêtre ouverte : le cartable s'arrête."); fermer(0); },
+}) : null;
+function suivrePage(req, res) {
+  res.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-store" });
+  res.write(": ok\n\n");
+  presence?.entre();
+  const ping = setInterval(() => res.write(": ping\n\n"), 25e3);
+  req.on("close", () => { clearInterval(ping); presence?.sort(); });
+}
+
 /* ---------- Routes ---------- */
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://x");
   const p = decodeURIComponent(url.pathname);
   try {
+    if (p === "/api/presence") return suivrePage(req, res);
     if (p === "/api/status") return json(res, 200, {
       reseau: reseauMaison(),
       ai: iaPrete(IA) && iaPrete(IA_QUICK), ia: IA, iaQuick: IA_QUICK, maxImages: MAX_IMAGES,

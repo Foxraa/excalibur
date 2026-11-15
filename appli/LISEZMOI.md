@@ -14,7 +14,7 @@ Double-cliquer sur l'icône **Excalibur** (une épée), sur le bureau ou dans le
 
 L'icône est créée par **Installer Excalibur.bat**, puis remise à jour à chaque lancement (si le dossier a bougé, relancer `Installer Excalibur.bat` une fois). Tant que l'installation n'est pas finie (Node.js, choix de l'IA, modules), l'icône ouvre l'installation dans une fenêtre, pour répondre aux questions. `Installer Excalibur.bat` sert aussi au dépannage : le cartable tourne alors dans sa fenêtre, qui montre ce qui se passe, et la fermer l'arrête. Après 90 secondes d'attente, la page « Le cartable s'ouvre… » le conseille.
 
-Pour arrêter ou redémarrer : espace parents, page **Réglages**, carte « Le cartable sur ce PC ». **Redémarrer** relit `.env` et redémarre Ollama si besoin ; la page se recharge toute seule. Lancé par `Installer Excalibur.bat`, on peut aussi fermer sa fenêtre.
+Pour arrêter ou redémarrer : espace parents, page **Réglages**, carte « Le cartable sur ce PC ». **Redémarrer** relit `.env` et redémarre Ollama si besoin ; la page se recharge toute seule. Lancé par `Installer Excalibur.bat`, on peut aussi fermer sa fenêtre. Le plus simple reste de fermer la fenêtre du cartable : le serveur s'arrête tout seul 15 secondes après (le temps de recharger une page ne compte pas). Lancé à la main (`npm start`), il ne s'arrête pas tout seul.
 
 Fichiers : `lanceur.ps1` (le seul lanceur : l'icône, `-Installer`, `-Serveur` qui fait tourner le serveur et le relance sur le code 43, `-Ouvrir`), `Installer Excalibur.bat` (une ligne, car Windows n'exécute pas un `.ps1` au double-clic), `demarrage.html` (la page d'attente, recopiée dans le dossier temporaire avec le bon port), `public/images/excalibur.ico`.
 

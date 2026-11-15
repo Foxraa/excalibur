@@ -7,7 +7,7 @@
 #     le serveur repond, et demarre le serveur en arriere-plan, sans fenetre noire.
 # -Installer ("Installer Excalibur.bat") : installe ce qui manque, cree les icones, puis fait tourner le cartable
 #   dans cette fenetre, qui montre ce qui se passe (utile en cas de probleme). La fermer arrete le cartable.
-# -Serveur : fait tourner le serveur (en arriere-plan quand il vient de l'icone).
+# -Serveur : fait tourner le serveur (en arriere-plan quand il vient de l'icone) ; il s'arrete quand la fenetre du cartable est fermee.
 # -Ouvrir <adresse> : ouvre l'adresse dans la fenetre du cartable.
 param([switch]$Installer, [switch]$Serveur, [string]$Ouvrir)
 $appli = $PSScriptRoot
@@ -80,6 +80,8 @@ function Attendre { if (-not $env:EXCALIBUR_CACHE) { Write-Host ''; Read-Host 'A
 # ---------- Serveur : Ollama si besoin, puis node server.mjs, relance sur le code 43 ----------
 if ($Serveur) {
   $ouvrirFenetre = -not $env:SANS_NAVIGATEUR
+  # Fermer la fenetre du cartable arrete le serveur (15 s apres, le temps d'un rechargement de page)
+  $env:ARRET_SANS_FENETRE = '1'
   while ($true) {
     $r = Reglages
     $port = [int]$r.PORT
