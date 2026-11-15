@@ -781,7 +781,7 @@ details.defis-jour>p{margin:0 0 8px}
   <div class="wrap">
     <div class="brand" id="brand">
       <svg width="52" height="52" viewBox="0 0 40 40" aria-hidden="true"><path d="M17.5 14.5h5v15h-5z" fill="#e9ecef" stroke="#868e96" stroke-width="1"/><path d="M20 15v14" stroke="#adb5bd" stroke-width="1"/><rect x="18.5" y="5" width="3" height="6.5" rx="1" fill="#8d5524"/><circle cx="20" cy="3.5" r="2.5" fill="#ffd43b" stroke="#f08c00" stroke-width="1"/><rect x="11" y="11" width="18" height="3.5" rx="1.75" fill="#ffd43b" stroke="#f08c00" stroke-width="1"/><path d="M4 37q0-11 9-12 4-3 9-1 8-1 11 4 4 3 3 9z" fill="var(--accent)"/><path d="M10 31q3-2 6-1M25 30q3-1 5 1" stroke="#fff" stroke-width="1.5" fill="none" opacity=".5" stroke-linecap="round"/><path d="M6 8l1 2 2 1-2 1-1 2-1-2-2-1 2-1zM33 5l.8 1.6 1.6.8-1.6.8-.8 1.6-.8-1.6-1.6-.8 1.6-.8z" fill="#ffd43b"/></svg>
-      <h1><span class="nom">Excalibur</span><small id="devise">L'épée du savoir, chevalier de CM1</small></h1>
+      <h1><span class="nom">Excalibur</span><small id="devise">L'aventure des devoirs</small></h1>
     </div>
     <div class="wallet" id="wallet"></div>
   </div>
@@ -828,131 +828,131 @@ const ROUTINE=[
    Excalibur (chevaliers) est celui par défaut ; les autres ajoutent leur style dans la feuille de style (html[data-skin="…"]). */
 const SKINS={
   excalibur:{nom:'Excalibur · chevaliers',ico:'⚔️',arme:{nom:'Épée',pluriel:'épées',ton:'ton épée',feminin:true},
-    devise:()=>`L'épée du savoir ${deP()}, chevalier de CM1`,
-    niveaux:`Page|Apprenti d'écurie|Porteur de bouclier|Porteur de lance|Écuyer|Écuyer du château|Écuyer d'honneur|Garde du pont-levis|Garde du donjon|Sentinelle des remparts|Archer du roi|Cavalier|Cavalier du royaume|Chevalier|Chevalier de bronze|Chevalier d'acier|Chevalier d'argent|Chevalier d'or|Chevalier du Lion|Chevalier de l'Aigle|Chevalier du Dragon|Chevalier errant|Protecteur des villages|Vainqueur de tournoi|Champion du tournoi|Champion du roi|Élève de Merlin|Compagnon de Merlin|Porteur de bannière|Capitaine de la garde|Commandant du donjon|Baron|Vicomte|Comte|Marquis|Duc|Conseiller du roi|Main droite du roi|Chevalier de la Table ronde|Héros de la Table ronde|Chercheur du Graal|Gardien du Graal|Ami de la Dame du Lac|Protecteur de Camelot|Seigneur de Camelot|Maître des dragons|Gardien d'Excalibur|Porteur d'Excalibur|Héros de Camelot|Légende de Camelot`.split('|'),
+    devise:()=>`L'aventure des devoirs ${deP()}`,
+    niveaux:`Page|Apprenti[/e] d'écurie|Port[eur/euse] de bouclier|Port[eur/euse] de lance|Écuy[er/ère]|Écuy[er/ère] du château|Écuy[er/ère] d'honneur|Garde du pont-levis|Garde du donjon|Sentinelle des remparts|Arch[er/ère] du roi|Cavali[er/ère]|Cavali[er/ère] du royaume|Chevali[er/ère]|Chevali[er/ère] de bronze|Chevali[er/ère] d'acier|Chevali[er/ère] d'argent|Chevali[er/ère] d'or|Chevali[er/ère] du Lion|Chevali[er/ère] de l'Aigle|Chevali[er/ère] du Dragon|Chevali[er errant/ère errante]|Protect[eur/rice] des villages|Vainqueur[/e] de tournoi|Champion[/ne] du tournoi|Champion[/ne] du roi|Élève de Merlin|[Compagnon/Compagne] de Merlin|Port[eur/euse] de bannière|Capitaine de la garde|Commandant[/e] du donjon|Baron[/ne]|Vicomte[/sse]|Comte[/sse]|Marqui[s/se]|Duc[/hesse]|Conseill[er/ère] du roi|Main droite du roi|Chevali[er/ère] de la Table ronde|[Héros/Héroïne] de la Table ronde|Cherch[eur/euse] du Graal|Gardien[/ne] du Graal|Ami[/e] de la Dame du Lac|Protect[eur/rice] de Camelot|[Seigneur/Dame] de Camelot|[Maître/Maîtresse] des dragons|Gardien[/ne] d'Excalibur|Port[eur/euse] d'Excalibur|[Héros/Héroïne] de Camelot|Légende de Camelot`.split('|'),
   bravo:{
-    top:["Sans faute ! Tu as tout compris.","Victoire totale, chevalier ! Rien ne t'a résisté.","Champion ! Même Merlin est impressionné."],
+    top:["Sans faute ! Tu as tout compris.","Victoire totale, [chevalier/chevalière] ! Rien ne t'a résisté.","Champion ! Même Merlin est impressionné."],
     bien:["Très bien ! Encore un petit effort et c'est parfait.","Belle bataille ! Tu maîtrises presque tout.","Beau travail ! Revois juste tes erreurs pour affûter ton épée."],
-    moyen:["C'est un bon début. Relis les explications et refais le quiz demain.","Tu progresses. Les erreurs, c'est comme ça qu'un écuyer devient chevalier.","Pas mal ! Revois la fiche, tu feras mieux à la prochaine quête."],
-    bas:["Ce n'est pas grave, cette leçon est un vrai dragon. On la revoit ensemble ?","Courage, chevalier ! Relis la fiche tranquillement, puis réessaie en mode facile.","Chaque essai te rend plus fort. Recommence demain, tu verras la différence."],
+    moyen:["C'est un bon début. Relis les explications et refais le quiz demain.","Tu progresses. Les erreurs, c'est comme ça [qu'un écuyer devient chevalier/qu'une écuyère devient chevalière].","Pas mal ! Revois la fiche, tu feras mieux à la prochaine quête."],
+    bas:["Ce n'est pas grave, cette leçon est un vrai dragon. On la revoit ensemble ?","Courage, [chevalier/chevalière] ! Relis la fiche tranquillement, puis réessaie en mode facile.","Chaque essai te rend plus fort[/e]. Recommence demain, tu verras la différence."],
 },
-    touche:['Touché, chevalier !',"Coup d'épée parfait !"],
-    matin:"Une belle journée commence, chevalier. Quelle quête aujourd'hui ?",aprem:"Pas encore d'étoile aujourd'hui. Un quiz de 5 minutes pour sortir l'épée ?",
-    serie:n=>`${n} jours de suite, bravo ! Un vrai chevalier de la Table ronde.`,fier:'Bravo, Camelot est fier de toi !',
-    code:'code du chevalier',tresor:'Le trésor du château',accueil:'Bienvenue au château !',heros:'Le chevalier',
-    role:'comme un jeune chevalier (quête, épée, dragon à vaincre)',badges:{}},
+    touche:['Touché, [chevalier/chevalière] !',"Coup d'épée parfait !"],
+    matin:"Une belle journée commence, [chevalier/chevalière]. Quelle quête aujourd'hui ?",aprem:"Pas encore d'étoile aujourd'hui. Un quiz de 5 minutes pour sortir l'épée ?",
+    serie:n=>`${n} jours de suite, bravo ! [Un vrai chevalier/Une vraie chevalière] de la Table ronde.`,fier:'Bravo, Camelot est fier de toi !',
+    code:'[code du chevalier/code de la chevalière]',tresor:'Le trésor du château',accueil:'Bienvenue au château !',heros:'[Le chevalier/La chevalière]',
+    role:'[comme un jeune chevalier/comme une jeune chevalière] (quête, épée, dragon à vaincre)',badges:{}},
   gotham:{nom:'Batman & Joker · Gotham',ico:'🦇',arme:{nom:'Batarang',pluriel:'batarangs',ton:'ton batarang',feminin:false},theme:'dans une grande ville la nuit, avec un justicier masqué et un clown farceur à déjouer',
     devise:()=>`La ruse du savoir ${deP()}`,
-    niveaux:`Petite chauve-souris|Chauve-souris du clocher|Gardien du grenier|Apprenti détective|Détective débutant|Chercheur d'indices|Lecteur d'empreintes|Ami du commissaire|Veilleur des toits|Coureur des toits|Sauteur de gouttières|Lanceur de batarang|Lanceur précis|Porteur de cape|Cape de la nuit|Apprenti justicier|Justicier débutant|Justicier du quartier|Justicier de la nuit|Pilote de moto|Pilote du bolide noir|Mécanicien de la grotte|Gardien de la grotte|Inventeur de gadgets|Maître des gadgets|Décodeur d'énigmes|Déjoueur de farces|Chasseur de clowns|Vainqueur du clown farceur|Protecteur du métro|Protecteur du port|Protecteur des ponts|Sentinelle de la tour|Héros des toits|Héros de la ville|Héros de bronze|Héros d'argent|Héros d'or|Chevalier de la nuit|Chevalier noir|Ombre de la ville|Gardien du signal|Gardien de la ville|Maître détective|Plus grand détective|Protecteur de Gotham|Héros de Gotham|Légende des toits|Légende de la nuit|Légende de Gotham`.split('|'),
+    niveaux:`Petite chauve-souris|Chauve-souris du clocher|Gardien[/ne] du grenier|Apprenti[/e] détective|Détective débutant[/e]|Cherch[eur/euse] d'indices|Lect[eur/rice] d'empreintes|Ami[/e] du commissaire|Veill[eur/euse] des toits|Cour[eur/euse] des toits|Saut[eur/euse] de gouttières|Lanc[eur/euse] de batarang|Lanc[eur précis/euse précise]|Port[eur/euse] de cape|Cape de la nuit|Apprenti[ justicier/e justicière]|Justici[er débutant/ère débutante]|Justici[er/ère] du quartier|Justici[er/ère] de la nuit|Pilote de moto|Pilote du bolide noir|Mécanicien[/ne] de la grotte|Gardien[/ne] de la grotte|Invent[eur/rice] de gadgets|[Maître/Maîtresse] des gadgets|Décod[eur/euse] d'énigmes|Déjou[eur/euse] de farces|Chass[eur/euse] de clowns|Vainqueur[/e] du clown farceur|Protect[eur/rice] du métro|Protect[eur/rice] du port|Protect[eur/rice] des ponts|Sentinelle de la tour|[Héros/Héroïne] des toits|[Héros/Héroïne] de la ville|[Héros/Héroïne] de bronze|[Héros/Héroïne] d'argent|[Héros/Héroïne] d'or|Chevali[er/ère] de la nuit|Chevali[er noir/ère noire]|Ombre de la ville|Gardien[/ne] du signal|Gardien[/ne] de la ville|[Maître/Maîtresse] détective|[Plus grand/Plus grande] détective|Protect[eur/rice] de Gotham|[Héros/Héroïne] de Gotham|Légende des toits|Légende de la nuit|Légende de Gotham`.split('|'),
     bravo:{
       top:["Sans faute ! Tu as tout compris.","Mission réussie ! Le clown farceur n'a rien pu faire.","Incroyable ! Toute la ville allume le signal pour toi."],
       bien:["Très bien ! Encore un petit effort et c'est parfait.","Belle enquête ! Tu as trouvé presque tous les indices.","Beau travail ! Revois juste tes erreurs pour affûter ton batarang."],
       moyen:["C'est un bon début. Relis les explications et refais le quiz demain.","Tu progresses. Même les meilleurs détectives ratent des indices.","Pas mal ! Revois la fiche, le clown farceur ne t'aura pas la prochaine fois."],
-      bas:["Ce n'est pas grave, cette leçon est une farce bien cachée. On la revoit ensemble ?","Courage, justicier ! Relis la fiche tranquillement, puis réessaie en mode facile.","Chaque essai te rend plus fort. Recommence demain, tu verras la différence."]},
+      bas:["Ce n'est pas grave, cette leçon est une farce bien cachée. On la revoit ensemble ?","Courage, justici[er/ère] ! Relis la fiche tranquillement, puis réessaie en mode facile.","Chaque essai te rend plus fort[/e]. Recommence demain, tu verras la différence."]},
     touche:['Indice trouvé !','Batarang en plein dans le mille !'],
-    matin:"La nuit est finie, justicier. Quelle mission aujourd'hui ?",aprem:"Pas encore d'étoile aujourd'hui. Un quiz de 5 minutes pour déjouer une farce ?",
+    matin:"La nuit est finie, justici[er/ère]. Quelle mission aujourd'hui ?",aprem:"Pas encore d'étoile aujourd'hui. Un quiz de 5 minutes pour déjouer une farce ?",
     serie:n=>`${n} nuits de garde de suite, bravo ! La ville peut dormir tranquille.`,fier:'Bravo, toute la ville est fière de toi !',
-    code:'code du justicier',tresor:'Le trésor de la grotte',accueil:'Bienvenue dans la grotte secrète !',heros:'Le justicier',
-    role:'comme un jeune justicier masqué qui protège sa ville la nuit (cape, gadgets, indices à trouver, énigmes et farces d\'un clown farceur à déjouer), sans violence et sans reprendre les personnages ni les noms d\'une bande dessinée ou d\'un film',
-    badges:{b1:'Premier indice',b2:'Première mission',b3:'Lancer parfait',b4:'Coup précis',b5:'Trois nuits de garde',b6:'Semaine de justicier',b7:'Justicier fidèle',b8:'Tour de la ville',b9:'Bibliothèque du manoir',b10:'Code du justicier',b11:'Le retour du justicier',b12:'Insigne d\'or'}},
+    code:'[code du justicier/code de la justicière]',tresor:'Le trésor de la grotte',accueil:'Bienvenue dans la grotte secrète !',heros:'[Le justicier/La justicière]',
+    role:'[comme un jeune justicier masqué/comme une jeune justicière masquée] qui protège sa ville la nuit (cape, gadgets, indices à trouver, énigmes et farces d\'un clown farceur à déjouer), sans violence et sans reprendre les personnages ni les noms d\'une bande dessinée ou d\'un film',
+    badges:{b1:'Premier indice',b2:'Première mission',b3:'Lancer parfait',b4:'Coup précis',b5:'Trois nuits de garde',b6:'Semaine de justici[er/ère]',b7:'Justici[er/ère] fidèle',b8:'Tour de la ville',b9:'Bibliothèque du manoir',b10:'[Code du justicier/Code de la justicière]',b11:'[Le retour du justicier/Le retour de la justicière]',b12:'Insigne d\'or'}},
   manga:{nom:'Manga · héros',ico:'💥',arme:{nom:'Katana',pluriel:'katanas',ton:'ton katana',feminin:false},theme:'en manga',
-    devise:()=>`Le pouvoir du savoir ${deP()}, héros de CM1`,
-    niveaux:`Débutant|Balayeur du dojo|Apprenti|Ceinture blanche|Ceinture jaune|Ceinture orange|Ceinture verte|Ceinture bleue|Ceinture marron|Ceinture noire|Disciple|Disciple appliqué|Disciple du sabre|Apprenti ninja|Ninja de l'ombre|Ninja du vent|Héros|Héros de bronze|Héros d'argent|Héros d'or|Héros de platine|Héros du quartier|Héros de la ville|Rival redoutable|Samouraï|Samouraï errant|Samouraï du clan|Champion du tournoi|Capitaine d'équipe|Senpai|Grand senpai|Maître du sabre|Maître du shuriken|Maître des éléments|Esprit du feu|Esprit de la foudre|Protecteur du village|Chef de clan|Sensei|Grand sensei|Gardien du torii|Héros national|Héros du monde|Héros de la galaxie|Maître ultime|Gardien du dojo|Shogun|Grand shogun|Légende vivante|Légende du dojo`.split('|'),
+    devise:()=>`Le pouvoir du savoir ${deP()}`,
+    niveaux:`Débutant[/e]|Balay[eur/euse] du dojo|Apprenti[/e]|Ceinture blanche|Ceinture jaune|Ceinture orange|Ceinture verte|Ceinture bleue|Ceinture marron|Ceinture noire|Disciple|Disciple appliqué[/e]|Disciple du sabre|Apprenti[/e] ninja|Ninja de l'ombre|Ninja du vent|[Héros/Héroïne]|[Héros/Héroïne] de bronze|[Héros/Héroïne] d'argent|[Héros/Héroïne] d'or|[Héros/Héroïne] de platine|[Héros/Héroïne] du quartier|[Héros/Héroïne] de la ville|Rival[/e] redoutable|Samouraï|Samouraï errant[/e]|Samouraï du clan|Champion[/ne] du tournoi|Capitaine d'équipe|Senpai|Grand[/e] senpai|[Maître/Maîtresse] du sabre|[Maître/Maîtresse] du shuriken|[Maître/Maîtresse] des éléments|Esprit du feu|Esprit de la foudre|Protect[eur/rice] du village|Chef de clan|Sensei|Grand[/e] sensei|Gardien[/ne] du torii|[Héros national/Héroïne nationale]|[Héros/Héroïne] du monde|[Héros/Héroïne] de la galaxie|[Maître/Maîtresse] ultime|Gardien[/ne] du dojo|Shogun|Grand[/e] shogun|Légende vivante|Légende du dojo`.split('|'),
     bravo:{
       top:["Sans faute ! Tu as tout compris.","Attaque parfaite ! Rien ne t'a résisté.","Incroyable ! Ton sensei est bluffé."],
       bien:["Très bien ! Encore un petit effort et c'est parfait.","Beau combat ! Tu maîtrises presque tout.","Beau travail ! Revois juste tes erreurs pour monter en puissance."],
-      moyen:["C'est un bon début. Relis les explications et refais le quiz demain.","Tu progresses. Chaque héros s'entraîne avant de gagner.","Pas mal ! Revois la fiche, le prochain épisode sera le tien."],
-      bas:["Ce n'est pas grave, cette leçon est un vrai boss de fin. On la revoit ensemble ?","Courage, héros ! Relis la fiche tranquillement, puis réessaie en mode facile.","Chaque essai te rend plus fort. Recommence demain, tu verras la différence."]},
+      moyen:["C'est un bon début. Relis les explications et refais le quiz demain.","Tu progresses. Chaque [héros/héroïne] s'entraîne avant de gagner.","Pas mal ! Revois la fiche, le prochain épisode sera le tien."],
+      bas:["Ce n'est pas grave, cette leçon est un vrai boss de fin. On la revoit ensemble ?","Courage, [héros/héroïne] ! Relis la fiche tranquillement, puis réessaie en mode facile.","Chaque essai te rend plus fort[/e]. Recommence demain, tu verras la différence."]},
     touche:['Super attaque !','Coup critique !'],
-    matin:"Un nouvel épisode commence, héros. Quelle mission aujourd'hui ?",aprem:"Pas encore d'étoile aujourd'hui. Un quiz de 5 minutes pour charger ton pouvoir ?",
+    matin:"Un nouvel épisode commence, [héros/héroïne]. Quelle mission aujourd'hui ?",aprem:"Pas encore d'étoile aujourd'hui. Un quiz de 5 minutes pour charger ton pouvoir ?",
     serie:n=>`${n} jours de suite, bravo ! Ton entraînement paie.`,fier:'Bravo, tout le dojo est fier de toi !',
-    code:'code du héros',tresor:'Le trésor du dojo',accueil:'Bienvenue au dojo !',heros:'Le héros',
-    role:'comme le héros d\'un manga (mission, entraînement, pouvoir, boss à battre)',
-    badges:{b1:'Premier chapitre',b2:'Premier combat',b3:'Coup parfait',b4:'Attaque précise',b5:'Entraînement de 3 jours',b6:'Semaine de héros',b7:'Disciple fidèle',b8:'Grand voyageur',b9:'Bibliothèque du sensei',b10:'Code du héros',b11:'Le retour du héros',b12:'Médaille d\'or'}},
+    code:'[code du héros/code de l\'héroïne]',tresor:'Le trésor du dojo',accueil:'Bienvenue au dojo !',heros:'[Le héros/L\'héroïne]',
+    role:'[comme le héros/comme l\'héroïne] d\'un manga (mission, entraînement, pouvoir, boss à battre)',
+    badges:{b1:'Premier chapitre',b2:'Premier combat',b3:'Coup parfait',b4:'Attaque précise',b5:'Entraînement de 3 jours',b6:'Semaine [de héros/d\'héroïne]',b7:'Disciple fidèle',b8:'Grand voyageur',b9:'Bibliothèque du sensei',b10:'[Code du héros/Code de l\'héroïne]',b11:'[Le retour du héros/Le retour de l\'héroïne]',b12:'Médaille d\'or'}},
   fee:{nom:'Fée · magie',ico:'🧚',arme:{nom:'Baguette',pluriel:'baguettes',ton:'ta baguette',feminin:true},theme:'en monde des fées',
-    devise:()=>`La magie du savoir ${deP()}, fée de CM1`,
-    niveaux:`Petite graine|Jeune pousse|Bourgeon|Pétale|Fleur des champs|Goutte de rosée|Papillon|Luciole|Luciole dorée|Lutin|Lutin farceur|Lutin jardinier|Gnome des racines|Ami des écureuils|Ami des licornes|Elfe des bois|Elfe des rivières|Esprit de la forêt|Esprit du vent|Esprit de la pluie|Élève de magie|Baguette de noisetier|Baguette de cristal|Fée de la rosée|Fée des fleurs|Fée des papillons|Fée d'argent|Fée de la pluie|Fée des saisons|Fée d'or|Fée de l'arc-en-ciel|Fée de la lune|Fée du soleil|Fée des étoiles|Fée des comètes|Reine des abeilles|Reine des fleurs|Reine des licornes|Reine de la forêt|Étoile filante|Aurore boréale|Gardienne de la source|Gardienne de la lune|Grande enchanteresse|Reine des fées|Impératrice des fées|Esprit des étoiles|Magie éternelle|Légende de la forêt|Légende enchantée`.split('|'),
+    devise:()=>`La magie du savoir ${deP()}`,
+    niveaux:`Petite graine|Jeune pousse|Bourgeon|Pétale|Fleur des champs|Goutte de rosée|Papillon|Luciole|Luciole dorée|Lutin[/e]|Lutin[ farceur/e farceuse]|Lutin[ jardinier/e jardinière]|Gnome des racines|Ami[/e] des écureuils|Ami[/e] des licornes|Elfe des bois|Elfe des rivières|Esprit de la forêt|Esprit du vent|Esprit de la pluie|Élève de magie|Baguette de noisetier|Baguette de cristal|Fée de la rosée|Fée des fleurs|Fée des papillons|Fée d'argent|Fée de la pluie|Fée des saisons|Fée d'or|Fée de l'arc-en-ciel|Fée de la lune|Fée du soleil|Fée des étoiles|Fée des comètes|Reine des abeilles|Reine des fleurs|Reine des licornes|Reine de la forêt|Étoile filante|Aurore boréale|Gardienne de la source|Gardienne de la lune|Grande enchanteresse|Reine des fées|Impératrice des fées|Esprit des étoiles|Magie éternelle|Légende de la forêt|Légende enchantée`.split('|'),
     bravo:{
       top:["Sans faute ! Tu as tout compris.","Magie parfaite ! Rien ne t'a résisté.","Merveilleux ! Toute la forêt applaudit."],
       bien:["Très bien ! Encore un petit effort et c'est parfait.","Joli sortilège ! Tu maîtrises presque tout.","Beau travail ! Revois juste tes erreurs pour faire briller ta baguette."],
       moyen:["C'est un bon début. Relis les explications et refais le quiz demain.","Tu progresses. Chaque fée s'entraîne avant de réussir ses formules.","Pas mal ! Revois la fiche, ta prochaine formule sera la bonne."],
-      bas:["Ce n'est pas grave, cette leçon est un sortilège coriace. On la revoit ensemble ?","Courage, petite fée ! Relis la fiche tranquillement, puis réessaie en mode facile.","Chaque essai rend ta magie plus forte. Recommence demain, tu verras la différence."]},
+      bas:["Ce n'est pas grave, cette leçon est un sortilège coriace. On la revoit ensemble ?","Courage, [petit magicien/petite fée] ! Relis la fiche tranquillement, puis réessaie en mode facile.","Chaque essai rend ta magie plus forte. Recommence demain, tu verras la différence."]},
     touche:['Magique !','Coup de baguette parfait !'],
     matin:"Une journée magique commence. Quel sortilège aujourd'hui ?",aprem:"Pas encore d'étoile aujourd'hui. Un quiz de 5 minutes pour réveiller ta baguette ?",
     serie:n=>`${n} jours de suite, bravo ! Ta magie grandit.`,fier:'Bravo, toute la forêt enchantée est fière de toi !',
-    code:'code de la fée',tresor:'Le trésor de la forêt enchantée',accueil:'Bienvenue dans la forêt enchantée !',heros:'La fée',
-    role:'comme une petite fée ou un apprenti magicien (baguette, formule magique, sortilège à réussir)',
-    badges:{b1:'Premier grimoire',b2:'Premier sortilège',b3:'Baguette parfaite',b4:'Formule précise',b5:'Trois jours de magie',b6:'Semaine enchantée',b7:'Lutin fidèle',b8:'Voyage enchanté',b9:'Bibliothèque des fées',b10:'Code de la fée',b11:'Ailes du courage',b12:'Poussière d\'or'}},
+    code:'code de la fée',tresor:'Le trésor de la forêt enchantée',accueil:'Bienvenue dans la forêt enchantée !',heros:'[Le petit magicien/La fée]',
+    role:'[comme un apprenti magicien/comme une petite fée] (baguette, formule magique, sortilège à réussir)',
+    badges:{b1:'Premier grimoire',b2:'Premier sortilège',b3:'Baguette parfaite',b4:'Formule précise',b5:'Trois jours de magie',b6:'Semaine enchantée',b7:'Lutin[ fidèle/e fidèle]',b8:'Voyage enchanté',b9:'Bibliothèque des fées',b10:'Code de la fée',b11:'Ailes du courage',b12:'Poussière d\'or'}},
   dino:{nom:'Préhisto · dinosaures',ico:'🦖',arme:{nom:'Massue',pluriel:'massues',ton:'ta massue',feminin:true},theme:'à l\'âge de pierre, avec des dinosaures',
-    devise:()=>`Le feu du savoir ${deP()}, petit sapiens de CM1`,
-    niveaux:`Œuf de dino|Œuf qui craque|Bébé dino|Petit tricératops|Ramasseur de cailloux|Cueilleur|Cueilleur de baies|Pêcheur de la rivière|Pisteur|Chasseur|Chasseur de mammouth|Tailleur de silex|Tailleur de lances|Peintre des cavernes|Conteur des cavernes|Ami des tricératops|Ami des diplodocus|Allumeur de feu|Gardien du feu|Gardien de la grotte|Gardien des œufs|Éclaireur de la vallée|Explorateur du volcan|Chercheur de fossiles|Cavalier de stégosaure|Cavalier de diplodocus|Cavalier de ptérodactyle|Guerrier à massue|Guerrier du volcan|Sage de la tribu|Chamane|Grand chamane|Chef de la tribu|Chef des tribus|Dompteur de vélociraptor|Dompteur de tricératops|Dompteur de ptérodactyle|Dompteur d'ankylosaure|Dompteur de spinosaure|Dompteur de T. rex|Ami du T. rex|Roi de la vallée|Roi du volcan|Maître des glaciers|Maître des dinos|Seigneur du Jurassique|Seigneur du Crétacé|Titan de la préhistoire|Héros de la préhistoire|Légende de la préhistoire`.split('|'),
+    devise:()=>`Le feu du savoir ${deP()}`,
+    niveaux:`Œuf de dino|Œuf qui craque|Bébé dino|Petit tricératops|Ramass[eur/euse] de cailloux|Cueill[eur/euse]|Cueill[eur/euse] de baies|Pêch[eur/euse] de la rivière|Pist[eur/euse]|Chass[eur/euse]|Chass[eur/euse] de mammouth|Taill[eur/euse] de silex|Taill[eur/euse] de lances|Peintre des cavernes|Cont[eur/euse] des cavernes|Ami[/e] des tricératops|Ami[/e] des diplodocus|Allum[eur/euse] de feu|Gardien[/ne] du feu|Gardien[/ne] de la grotte|Gardien[/ne] des œufs|Éclair[eur/euse] de la vallée|Explorat[eur/rice] du volcan|Cherch[eur/euse] de fossiles|Cavali[er/ère] de stégosaure|Cavali[er/ère] de diplodocus|Cavali[er/ère] de ptérodactyle|Guerri[er/ère] à massue|Guerri[er/ère] du volcan|Sage de la tribu|Chamane|Grand[/e] chamane|Chef de la tribu|Chef des tribus|Dompt[eur/euse] de vélociraptor|Dompt[eur/euse] de tricératops|Dompt[eur/euse] de ptérodactyle|Dompt[eur/euse] d'ankylosaure|Dompt[eur/euse] de spinosaure|Dompt[eur/euse] de T. rex|Ami[/e] du T. rex|[Roi/Reine] de la vallée|[Roi/Reine] du volcan|[Maître/Maîtresse] des glaciers|[Maître/Maîtresse] des dinos|[Seigneur/Dame] du Jurassique|[Seigneur/Dame] du Crétacé|Titan de la préhistoire|[Héros/Héroïne] de la préhistoire|Légende de la préhistoire`.split('|'),
     bravo:{
       top:["Sans faute ! Tu as tout compris.","Victoire de la tribu ! Rien ne t'a résisté.","Énorme ! Même le T. rex est impressionné."],
       bien:["Très bien ! Encore un petit effort et c'est parfait.","Belle chasse ! Tu maîtrises presque tout.","Beau travail ! Revois juste tes erreurs pour aiguiser ton silex."],
       moyen:["C'est un bon début. Relis les explications et refais le quiz demain.","Tu progresses. C'est en frottant les silex qu'on finit par faire du feu.","Pas mal ! Revois la fiche, la prochaine chasse sera la bonne."],
-      bas:["Ce n'est pas grave, cette leçon est un vrai mammouth. On la revoit ensemble ?","Courage, petit sapiens ! Relis la fiche tranquillement, puis réessaie en mode facile.","Chaque essai te rend plus fort. Recommence demain, tu verras la différence."]},
+      bas:["Ce n'est pas grave, cette leçon est un vrai mammouth. On la revoit ensemble ?","Courage, [petit/petite] sapiens ! Relis la fiche tranquillement, puis réessaie en mode facile.","Chaque essai te rend plus fort[/e]. Recommence demain, tu verras la différence."]},
     touche:['Ouga ouga, bravo !','Coup de massue parfait !'],
     matin:"Le soleil se lève sur la tribu. Quelle chasse aujourd'hui ?",aprem:"Pas encore d'étoile aujourd'hui. Un quiz de 5 minutes pour allumer le feu ?",
     serie:n=>`${n} jours de suite, bravo ! Toute la tribu danse autour du feu.`,fier:'Bravo, toute la tribu est fière de toi !',
-    code:'code de la tribu',tresor:'Le trésor de la caverne',accueil:'Bienvenue dans la caverne !',heros:'Le petit sapiens',
-    role:'comme un petit explorateur de la préhistoire (tribu, caverne, feu à allumer, dinosaures), en rappelant si besoin que les humains et les dinosaures n\'ont jamais vécu à la même époque',
-    badges:{b1:'Première peinture',b2:'Première chasse',b3:'Silex parfait',b4:'Lance précise',b5:'Trois jours de chasse',b6:'Semaine du mammouth',b7:'Cueilleur fidèle',b8:'Grand nomade',b9:'Grotte aux peintures',b10:'Code de la tribu',b11:'Le retour du T. rex',b12:'Pépite d\'ambre'}},
+    code:'code de la tribu',tresor:'Le trésor de la caverne',accueil:'Bienvenue dans la caverne !',heros:'[Le petit/La petite] sapiens',
+    role:'[comme un petit explorateur/comme une petite exploratrice] de la préhistoire (tribu, caverne, feu à allumer, dinosaures), en rappelant si besoin que les humains et les dinosaures n\'ont jamais vécu à la même époque',
+    badges:{b1:'Première peinture',b2:'Première chasse',b3:'Silex parfait',b4:'Lance précise',b5:'Trois jours de chasse',b6:'Semaine du mammouth',b7:'Cueill[eur/euse] fidèle',b8:'Grand[/e] nomade',b9:'Grotte aux peintures',b10:'Code de la tribu',b11:'Le retour du T. rex',b12:'Pépite d\'ambre'}},
   galaxie:{nom:'Galaxie · sabres laser',ico:'🚀',arme:{nom:'Sabre laser',pluriel:'sabres laser',ton:'ton sabre laser',feminin:false},theme:'dans une galaxie lointaine, avec des chevaliers aux sabres laser',
-    devise:()=>`La lumière du savoir ${deP()}, chevalier des étoiles de CM1`,
-    niveaux:`Poussière d'étoile|Petit astéroïde|Mousse de la navette|Apprenti pilote|Cadet de l'espace|Cadet appliqué|Mécanicien de bord|Copilote|Pilote de navette|Pilote de chasseur|Navigateur des étoiles|Éclaireur de la galaxie|Gardien du hangar|Sentinelle de la station|Apprenti chevalier|Porteur de sabre bleu|Porteur de sabre vert|Chevalier de bronze|Chevalier d'argent|Chevalier d'or|Chevalier des étoiles|Chevalier de la nébuleuse|Explorateur de planètes|Ami des robots|Ami des extraterrestres|Protecteur des lunes|Capitaine de vaisseau|Capitaine d'escadrille|Commandant de croiseur|Amiral de la flotte|Défenseur des planètes|Gardien de la station|Pilote d'élite|As de l'hyperespace|Maître du sabre|Maître de l'hyperespace|Sage des étoiles|Gardien des comètes|Membre du grand conseil|Grand maître|Héros de la nébuleuse|Héros des étoiles|Gardien des planètes|Protecteur de la galaxie|Seigneur des comètes|Maître de la lumière|Gardien de la lumière|Légende de l'hyperespace|Héros de la galaxie|Légende de la galaxie`.split('|'),
+    devise:()=>`La lumière du savoir ${deP()}`,
+    niveaux:`Poussière d'étoile|Petit astéroïde|Mousse de la navette|Apprenti[/e] pilote|Cadet[/te] de l'espace|Cadet[ appliqué/te appliquée]|Mécanicien[/ne] de bord|Copilote|Pilote de navette|Pilote de chasseur|Navigat[eur/rice] des étoiles|Éclair[eur/euse] de la galaxie|Gardien[/ne] du hangar|Sentinelle de la station|Apprenti[ chevalier/e chevalière]|Port[eur/euse] de sabre bleu|Port[eur/euse] de sabre vert|Chevali[er/ère] de bronze|Chevali[er/ère] d'argent|Chevali[er/ère] d'or|Chevali[er/ère] des étoiles|Chevali[er/ère] de la nébuleuse|Explorat[eur/rice] de planètes|Ami[/e] des robots|Ami[/e] des extraterrestres|Protect[eur/rice] des lunes|Capitaine de vaisseau|Capitaine d'escadrille|Commandant[/e] de croiseur|Amiral[/e] de la flotte|Défens[eur/euse] des planètes|Gardien[/ne] de la station|Pilote d'élite|As de l'hyperespace|[Maître/Maîtresse] du sabre|[Maître/Maîtresse] de l'hyperespace|Sage des étoiles|Gardien[/ne] des comètes|Membre du grand conseil|[Grand maître/Grande maîtresse]|[Héros/Héroïne] de la nébuleuse|[Héros/Héroïne] des étoiles|Gardien[/ne] des planètes|Protect[eur/rice] de la galaxie|[Seigneur/Dame] des comètes|[Maître/Maîtresse] de la lumière|Gardien[/ne] de la lumière|Légende de l'hyperespace|[Héros/Héroïne] de la galaxie|Légende de la galaxie`.split('|'),
     bravo:{
-      top:["Sans faute ! Tu as tout compris.","Mission accomplie, chevalier ! Rien ne t'a résisté.","Incroyable ! Tout le grand conseil est impressionné."],
+      top:["Sans faute ! Tu as tout compris.","Mission accomplie, [chevalier/chevalière] ! Rien ne t'a résisté.","Incroyable ! Tout le grand conseil est impressionné."],
       bien:["Très bien ! Encore un petit effort et c'est parfait.","Beau duel ! Tu maîtrises presque tout.","Beau travail ! Revois juste tes erreurs pour faire briller ton sabre."],
       moyen:["C'est un bon début. Relis les explications et refais le quiz demain.","Tu progresses. Même les grands maîtres ont été apprentis.","Pas mal ! Revois la fiche, la prochaine mission sera la bonne."],
-      bas:["Ce n'est pas grave, cette leçon est un vrai champ d'astéroïdes. On la revoit ensemble ?","Courage, jeune apprenti ! Relis la fiche tranquillement, puis réessaie en mode facile.","Chaque essai te rend plus fort. Recommence demain, tu verras la différence."]},
-    touche:['Touché, chevalier !','Coup de sabre parfait !'],
+      bas:["Ce n'est pas grave, cette leçon est un vrai champ d'astéroïdes. On la revoit ensemble ?","Courage, jeune apprenti[/e] ! Relis la fiche tranquillement, puis réessaie en mode facile.","Chaque essai te rend plus fort[/e]. Recommence demain, tu verras la différence."]},
+    touche:['Touché, [chevalier/chevalière] !','Coup de sabre parfait !'],
     matin:"Une nouvelle journée se lève sur la galaxie. Quelle mission aujourd'hui ?",aprem:"Pas encore d'étoile aujourd'hui. Un quiz de 5 minutes pour allumer ton sabre ?",
     serie:n=>`${n} jours de suite, bravo ! Le savoir est puissant en toi.`,fier:'Bravo, toute la galaxie est fière de toi !',
-    code:'code du chevalier des étoiles',tresor:'Le trésor de la station',accueil:'Bienvenue à bord !',heros:'Le chevalier des étoiles',
-    role:'comme un jeune apprenti chevalier des étoiles (mission dans l\'espace, sabre laser, vaisseau, planètes à explorer), sans reprendre les personnages ni les noms d\'un film',
-    badges:{b1:'Premier décollage',b2:'Premier duel',b3:'Tir parfait',b4:'Visée précise',b5:'Trois jours en orbite',b6:'Semaine dans les étoiles',b7:'Cadet fidèle',b8:'Voyage interstellaire',b9:'Archives de la station',b10:'Code du chevalier des étoiles',b11:'Le retour du chevalier',b12:'Étoile d\'or'}},
+    code:'[code du chevalier/code de la chevalière] des étoiles',tresor:'Le trésor de la station',accueil:'Bienvenue à bord !',heros:'[Le chevalier/La chevalière] des étoiles',
+    role:'[comme un jeune apprenti chevalier/comme une jeune apprentie chevalière] des étoiles (mission dans l\'espace, sabre laser, vaisseau, planètes à explorer), sans reprendre les personnages ni les noms d\'un film',
+    badges:{b1:'Premier décollage',b2:'Premier duel',b3:'Tir parfait',b4:'Visée précise',b5:'Trois jours en orbite',b6:'Semaine dans les étoiles',b7:'Cadet[/te] fidèle',b8:'Voyage interstellaire',b9:'Archives de la station',b10:'[Code du chevalier/Code de la chevalière] des étoiles',b11:'[Le retour du chevalier/Le retour de la chevalière]',b12:'Étoile d\'or'}},
   dresseur:{nom:'Pokémon · dresseur',ico:'🔴',arme:{nom:'Capsule',pluriel:'capsules',ton:'ta capsule',feminin:true},theme:'dans un monde de créatures imaginaires à attraper et à faire évoluer',
-    devise:()=>`La capsule du savoir ${deP()}, dresseur de CM1`,
-    niveaux:`Œuf mystère|Œuf qui bouge|Petite créature|Apprenti dresseur|Dresseur débutant|Ramasseur de baies|Lanceur de capsules|Lanceur précis|Ami des créatures|Explorateur des hautes herbes|Explorateur de la forêt|Explorateur des grottes|Pêcheur de la rivière|Dresseur de bronze|Dresseur d'argent|Dresseur d'or|Collectionneur de badges|Premier badge gagné|Trois badges gagnés|Cinq badges gagnés|Gardien du sentier|Éleveur de créatures|Soigneur de créatures|Chercheur de créatures rares|Ami des créatures de feu|Ami des créatures d'eau|Ami des créatures des plantes|Ami des créatures de l'éclair|Voyageur des régions|Champion d'arène|Champion de la ville|Rival redoutable|Dresseur expert|Dresseur d'élite|Capitaine de l'équipe|Assistant du professeur|Professeur des créatures|Maître des capsules|Maître des évolutions|Maître des hautes herbes|Gardien des légendes|Ami des créatures légendaires|Finaliste du grand tournoi|Champion du grand tournoi|Champion de la région|Maître des créatures|Grand maître dresseur|Héros des régions|Légende des dresseurs|Légende des créatures`.split('|'),
+    devise:()=>`La capsule du savoir ${deP()}`,
+    niveaux:`Œuf mystère|Œuf qui bouge|Petite créature|Apprenti[ dresseur/e dresseuse]|Dresseu[r débutant/se débutante]|Ramass[eur/euse] de baies|Lanc[eur/euse] de capsules|Lanc[eur précis/euse précise]|Ami[/e] des créatures|Explorat[eur/rice] des hautes herbes|Explorat[eur/rice] de la forêt|Explorat[eur/rice] des grottes|Pêch[eur/euse] de la rivière|Dresseu[r/se] de bronze|Dresseu[r/se] d'argent|Dresseu[r/se] d'or|Collectionn[eur/euse] de badges|Premier badge gagné|Trois badges gagnés|Cinq badges gagnés|Gardien[/ne] du sentier|Élev[eur/euse] de créatures|Soign[eur/euse] de créatures|Cherch[eur/euse] de créatures rares|Ami[/e] des créatures de feu|Ami[/e] des créatures d'eau|Ami[/e] des créatures des plantes|Ami[/e] des créatures de l'éclair|Voyag[eur/euse] des régions|Champion[/ne] d'arène|Champion[/ne] de la ville|Rival[/e] redoutable|Dresseu[r expert/se experte]|Dresseu[r/se] d'élite|Capitaine de l'équipe|Assistant[/e] du professeur|Professeur[/e] des créatures|[Maître/Maîtresse] des capsules|[Maître/Maîtresse] des évolutions|[Maître/Maîtresse] des hautes herbes|Gardien[/ne] des légendes|Ami[/e] des créatures légendaires|Finaliste du grand tournoi|Champion[/ne] du grand tournoi|Champion[/ne] de la région|[Maître/Maîtresse] des créatures|[Grand maître dresseur/Grande maîtresse dresseuse]|[Héros/Héroïne] des régions|Légende des dresseurs|Légende des créatures`.split('|'),
     bravo:{
       top:["Sans faute ! Tu as tout compris.","Capture parfaite ! Rien ne t'a résisté.","Incroyable ! Même le professeur est impressionné."],
       bien:["Très bien ! Encore un petit effort et c'est parfait.","Beau combat ! Tu maîtrises presque tout.","Beau travail ! Revois juste tes erreurs pour faire évoluer ton équipe."],
       moyen:["C'est un bon début. Relis les explications et refais le quiz demain.","Tu progresses. Chaque créature s'entraîne avant d'évoluer.","Pas mal ! Revois la fiche, la prochaine capture sera la bonne."],
-      bas:["Ce n'est pas grave, cette leçon est une créature coriace. On la revoit ensemble ?","Courage, dresseur ! Relis la fiche tranquillement, puis réessaie en mode facile.","Chaque essai rend ton équipe plus forte. Recommence demain, tu verras la différence."]},
+      bas:["Ce n'est pas grave, cette leçon est une créature coriace. On la revoit ensemble ?","Courage, dresseu[r/se] ! Relis la fiche tranquillement, puis réessaie en mode facile.","Chaque essai rend ton équipe plus forte. Recommence demain, tu verras la différence."]},
     touche:['Attrapé !','Lancer parfait !'],
-    matin:"Une nouvelle aventure commence, dresseur. Quelle créature aujourd'hui ?",aprem:"Pas encore d'étoile aujourd'hui. Un quiz de 5 minutes pour lancer ta capsule ?",
+    matin:"Une nouvelle aventure commence, dresseu[r/se]. Quelle créature aujourd'hui ?",aprem:"Pas encore d'étoile aujourd'hui. Un quiz de 5 minutes pour lancer ta capsule ?",
     serie:n=>`${n} jours de suite, bravo ! Ton équipe devient plus forte.`,fier:'Bravo, toutes tes créatures sont fières de toi !',
-    code:'code du dresseur',tresor:'Le trésor du centre des créatures',accueil:'Bienvenue, jeune dresseur !',heros:'Le dresseur',
-    role:'comme un jeune dresseur de créatures imaginaires (capsule à lancer, créature à attraper, évolution, badge d\'arène), sans reprendre les noms ni les créatures d\'un jeu vidéo',
-    badges:{b1:'Premier œuf',b2:'Première capture',b3:'Lancer parfait',b4:'Lancer précis',b5:'Trois jours d\'aventure',b6:'Semaine de dresseur',b7:'Dresseur fidèle',b8:'Grand voyage',b9:'Bibliothèque du professeur',b10:'Code du dresseur',b11:'Le retour du dresseur',b12:'Badge d\'or'}},
+    code:'[code du dresseur/code de la dresseuse]',tresor:'Le trésor du centre des créatures',accueil:'Bienvenue, jeune dresseu[r/se] !',heros:'[Le dresseur/La dresseuse]',
+    role:'[comme un jeune dresseur/comme une jeune dresseuse] de créatures imaginaires (capsule à lancer, créature à attraper, évolution, badge d\'arène), sans reprendre les noms ni les créatures d\'un jeu vidéo',
+    badges:{b1:'Premier œuf',b2:'Première capture',b3:'Lancer parfait',b4:'Lancer précis',b5:'Trois jours d\'aventure',b6:'Semaine de dresseu[r/se]',b7:'Dresseu[r/se] fidèle',b8:'Grand voyage',b9:'Bibliothèque du professeur',b10:'[Code du dresseur/Code de la dresseuse]',b11:'[Le retour du dresseur/Le retour de la dresseuse]',b12:'Badge d\'or'}},
   champignon:{nom:'Mario & Luigi · royaume champignon',ico:'🍄',arme:{nom:'Champignon',pluriel:'champignons',ton:'ton champignon',feminin:false},theme:'dans un royaume de champignons, avec deux frères plombiers qui sautent de tuyau en tuyau',
-    devise:()=>`Le super pouvoir du savoir ${deP()}, plombier de CM1`,
-    niveaux:`Petite pièce|Pièce d'or|Bloc de brique|Bloc mystère|Petit champignon|Apprenti plombier|Plombier débutant|Sauteur de tuyaux|Sauteur de blocs|Ramasseur de pièces|Collectionneur de pièces|Explorateur des tuyaux|Nageur sous-marin|Grimpeur de lianes|Coureur des plaines|Coureur du désert|Glisseur des neiges|Explorateur des grottes|Sauteur de nuages|Plombier de bronze|Plombier d'argent|Plombier d'or|Ami des champignons|Ami des tortues|Gardien des fleurs de feu|Lanceur de boules de feu|Porteur de cape|Planeur des nuages|Saut parfait|Triple saut|Vainqueur du premier château|Vainqueur de trois châteaux|Vainqueur de cinq châteaux|Héros du monde 1|Héros du monde 4|Héros du monde 8|Gardien de l'étoile|Ami des étoiles|Super plombier|Super frère|Capitaine du royaume|Chevalier champignon|Protecteur du royaume|Sauveur du château|Maître des tuyaux|Maître des blocs mystère|Champion de la course|Héros du royaume|Légende des plombiers|Légende du royaume champignon`.split('|'),
+    devise:()=>`Le super pouvoir du savoir ${deP()}`,
+    niveaux:`Petite pièce|Pièce d'or|Bloc de brique|Bloc mystère|Petit champignon|Apprenti[ plombier/e plombière]|Plombi[er débutant/ère débutante]|Saut[eur/euse] de tuyaux|Saut[eur/euse] de blocs|Ramass[eur/euse] de pièces|Collectionn[eur/euse] de pièces|Explorat[eur/rice] des tuyaux|Nag[eur sous-marin/euse sous-marine]|Grimp[eur/euse] de lianes|Cour[eur/euse] des plaines|Cour[eur/euse] du désert|Gliss[eur/euse] des neiges|Explorat[eur/rice] des grottes|Saut[eur/euse] de nuages|Plombi[er/ère] de bronze|Plombi[er/ère] d'argent|Plombi[er/ère] d'or|Ami[/e] des champignons|Ami[/e] des tortues|Gardien[/ne] des fleurs de feu|Lanc[eur/euse] de boules de feu|Port[eur/euse] de cape|Plan[eur/euse] des nuages|Saut parfait|Triple saut|Vainqueur[/e] du premier château|Vainqueur[/e] de trois châteaux|Vainqueur[/e] de cinq châteaux|[Héros/Héroïne] du monde 1|[Héros/Héroïne] du monde 4|[Héros/Héroïne] du monde 8|Gardien[/ne] de l'étoile|Ami[/e] des étoiles|Super plombi[er/ère]|Super [frère/sœur]|Capitaine du royaume|Chevali[er/ère] champignon|Protect[eur/rice] du royaume|Sauv[eur/euse] du château|[Maître/Maîtresse] des tuyaux|[Maître/Maîtresse] des blocs mystère|Champion[/ne] de la course|[Héros/Héroïne] du royaume|Légende des plombiers|Légende du royaume champignon`.split('|'),
     bravo:{
       top:["Sans faute ! Tu as tout compris.","Niveau terminé ! Rien ne t'a résisté.","Incroyable ! Tout le royaume applaudit."],
       bien:["Très bien ! Encore un petit effort et c'est parfait.","Beau saut ! Tu maîtrises presque tout.","Beau travail ! Revois juste tes erreurs pour attraper toutes les pièces."],
       moyen:["C'est un bon début. Relis les explications et refais le quiz demain.","Tu progresses. Chaque niveau se gagne en réessayant.","Pas mal ! Revois la fiche, le prochain niveau sera le bon."],
-      bas:["Ce n'est pas grave, cette leçon est un vrai château du boss. On la revoit ensemble ?","Courage, plombier ! Relis la fiche tranquillement, puis réessaie en mode facile.","Chaque essai te donne une vie de plus. Recommence demain, tu verras la différence."]},
+      bas:["Ce n'est pas grave, cette leçon est un vrai château du boss. On la revoit ensemble ?","Courage, plombi[er/ère] ! Relis la fiche tranquillement, puis réessaie en mode facile.","Chaque essai te donne une vie de plus. Recommence demain, tu verras la différence."]},
     touche:['Wahou, bien sauté !','Pièce gagnée !'],
     matin:"Une nouvelle journée se lève sur le royaume. Quel niveau aujourd'hui ?",aprem:"Pas encore d'étoile aujourd'hui. Un quiz de 5 minutes pour attraper un champignon ?",
     serie:n=>`${n} jours de suite, bravo ! Tu sautes de victoire en victoire.`,fier:'Bravo, tout le royaume champignon est fier de toi !',
-    code:'code du plombier',tresor:'Le trésor du château',accueil:'Bienvenue au royaume champignon !',heros:'Le plombier',
-    role:'comme un petit plombier courageux dans un royaume de champignons (tuyaux, blocs mystère, pièces à ramasser, château à atteindre), sans reprendre les personnages ni les noms d\'un jeu vidéo',
-    badges:{b1:'Premier niveau',b2:'Premier saut',b3:'Saut parfait',b4:'Atterrissage précis',b5:'Trois jours de course',b6:'Semaine au royaume',b7:'Frère fidèle',b8:'Tour des mondes',b9:'Bibliothèque du château',b10:'Code du plombier',b11:'Vie en plus',b12:'Pièce d\'or géante'}},
+    code:'[code du plombier/code de la plombière]',tresor:'Le trésor du château',accueil:'Bienvenue au royaume champignon !',heros:'[Le plombier/La plombière]',
+    role:'[comme un petit plombier courageux/comme une petite plombière courageuse] dans un royaume de champignons (tuyaux, blocs mystère, pièces à ramasser, château à atteindre), sans reprendre les personnages ni les noms d\'un jeu vidéo',
+    badges:{b1:'Premier niveau',b2:'Premier saut',b3:'Saut parfait',b4:'Atterrissage précis',b5:'Trois jours de course',b6:'Semaine au royaume',b7:'[Frère/Sœur] fidèle',b8:'Tour des mondes',b9:'Bibliothèque du château',b10:'[Code du plombier/Code de la plombière]',b11:'Vie en plus',b12:'Pièce d\'or géante'}},
   sorcier:{nom:'Harry Potter · sorciers',ico:'🪄',arme:{nom:'Écharpe',pluriel:'écharpes',ton:'ton écharpe',feminin:true},theme:'dans une école de magie installée dans un vieux château',
-    devise:()=>`Le sortilège du savoir ${deP()}, apprenti sorcier de CM1`,
-    niveaux:`Petit curieux|Lecteur de grimoires|Élève de première année|Élève appliqué|Porteur de baguette|Apprenti sorcier|Apprenti des potions|Faiseur d'étincelles|Ami des chouettes|Ami des chats noirs|Lanceur de sorts|Sort de lumière|Sort de lévitation|Élève de deuxième année|Élève de troisième année|Pilote de balai|Joueur de l'équipe de balai|Capitaine de l'équipe de balai|Préparateur de potions|Maître des potions|Botaniste des plantes magiques|Gardien de la bibliothèque|Lecteur des vieux grimoires|Astronome de la tour|Ami des hippogriffes|Ami des dragons|Ami des centaures|Élève de cinquième année|Délégué de classe|Délégué en chef|Champion du tournoi de magie|Explorateur de la forêt sombre|Duelliste|Duelliste redoutable|Sorcier diplômé|Enchanteur|Grand enchanteur|Professeur de sortilèges|Professeur de potions|Directeur adjoint|Gardien des clés du château|Membre du conseil des sages|Mage|Grand mage|Archimage|Gardien du château|Directeur de l'école|Héros du monde magique|Légende des sorciers|Légende de l'école de magie`.split('|'),
+    devise:()=>`Le sortilège du savoir ${deP()}`,
+    niveaux:`Petit[ curieux/e curieuse]|Lect[eur/rice] de grimoires|Élève de première année|Élève appliqué[/e]|Port[eur/euse] de baguette|Apprenti[ sorcier/e sorcière]|Apprenti[/e] des potions|Fais[eur/euse] d'étincelles|Ami[/e] des chouettes|Ami[/e] des chats noirs|Lanc[eur/euse] de sorts|Sort de lumière|Sort de lévitation|Élève de deuxième année|Élève de troisième année|Pilote de balai|Jou[eur/euse] de l'équipe de balai|Capitaine de l'équipe de balai|Préparat[eur/rice] de potions|[Maître/Maîtresse] des potions|Botaniste des plantes magiques|Gardien[/ne] de la bibliothèque|Lect[eur/rice] des vieux grimoires|Astronome de la tour|Ami[/e] des hippogriffes|Ami[/e] des dragons|Ami[/e] des centaures|Élève de cinquième année|Délégué[/e] de classe|Délégué[/e] en chef|Champion[/ne] du tournoi de magie|Explorat[eur/rice] de la forêt sombre|Duelliste|Duelliste redoutable|Sorci[er diplômé/ère diplômée]|Enchant[eur/eresse]|Grand[ enchanteur/e enchanteresse]|Professeur[/e] de sortilèges|Professeur[/e] de potions|Direct[eur adjoint/rice adjointe]|Gardien[/ne] des clés du château|Membre du conseil des sages|Mage|Grand[/e] mage|Archimage|Gardien[/ne] du château|Direct[eur/rice] de l'école|[Héros/Héroïne] du monde magique|Légende des sorciers|Légende de l'école de magie`.split('|'),
     bravo:{
       top:["Sans faute ! Tu as tout compris.","Sortilège parfait ! Rien ne t'a résisté.","Incroyable ! Même le directeur de l'école est impressionné."],
       bien:["Très bien ! Encore un petit effort et c'est parfait.","Joli sort ! Tu maîtrises presque tout.","Beau travail ! Revois juste tes erreurs pour perfectionner ta formule."],
       moyen:["C'est un bon début. Relis les explications et refais le quiz demain.","Tu progresses. Chaque sorcier a raté ses premières potions.","Pas mal ! Revois la fiche, ta prochaine formule sera la bonne."],
-      bas:["Ce n'est pas grave, cette leçon est une potion compliquée. On la revoit ensemble ?","Courage, apprenti sorcier ! Relis la fiche tranquillement, puis réessaie en mode facile.","Chaque essai rend ta magie plus forte. Recommence demain, tu verras la différence."]},
+      bas:["Ce n'est pas grave, cette leçon est une potion compliquée. On la revoit ensemble ?","Courage, apprenti[ sorcier/e sorcière] ! Relis la fiche tranquillement, puis réessaie en mode facile.","Chaque essai rend ta magie plus forte. Recommence demain, tu verras la différence."]},
     touche:['Sort réussi !','Coup de baguette parfait !'],
     matin:"Une nouvelle journée commence à l'école de magie. Quel cours aujourd'hui ?",aprem:"Pas encore d'étoile aujourd'hui. Un quiz de 5 minutes pour lancer un sort ?",
     serie:n=>`${n} jours de suite, bravo ! Ta magie grandit chaque jour.`,fier:'Bravo, toute l\'école de magie est fière de toi !',
-    code:'code du sorcier',tresor:'Le trésor du château',accueil:'Bienvenue à l\'école de magie !',heros:'L\'apprenti sorcier',
-    role:'comme un apprenti sorcier dans une école de magie (baguette, potion, grimoire, sortilège à réussir), sans reprendre les personnages, les lieux ni les noms d\'un livre ou d\'un film',
-    badges:{b1:'Premier grimoire',b2:'Premier sortilège',b3:'Formule parfaite',b4:'Baguette précise',b5:'Trois jours de magie',b6:'Semaine au château',b7:'Élève fidèle',b8:'Grand voyage en balai',b9:'Bibliothèque du château',b10:'Code du sorcier',b11:'Le retour de l\'apprenti',b12:'Coupe d\'or'}},
+    code:'[code du sorcier/code de la sorcière]',tresor:'Le trésor du château',accueil:'Bienvenue à l\'école de magie !',heros:'L\'apprenti[ sorcier/e sorcière]',
+    role:'[comme un apprenti sorcier/comme une apprentie sorcière] dans une école de magie (baguette, potion, grimoire, sortilège à réussir), sans reprendre les personnages, les lieux ni les noms d\'un livre ou d\'un film',
+    badges:{b1:'Premier grimoire',b2:'Premier sortilège',b3:'Formule parfaite',b4:'Baguette précise',b5:'Trois jours de magie',b6:'Semaine au château',b7:'Élève fidèle',b8:'Grand voyage en balai',b9:'Bibliothèque du château',b10:'[Code du sorcier/Code de la sorcière]',b11:'Le retour de l\'apprenti[/e]',b12:'Coupe d\'or'}},
 };
 const skinId=()=>SKINS[cfg().skin]?cfg().skin:'excalibur';
 /* Clair ou sombre, pour tous les habillages : « auto » suit le réglage de l'ordinateur. */
@@ -963,8 +963,18 @@ function appliquerTheme(){
   if(t){if(r.dataset.theme!==t)r.dataset.theme=t}else delete r.dataset.theme;
   try{localStorage.setItem('excalibur-theme',t||'')}catch(e){}
 }
-const SK=()=>SKINS[skinId()];
-const nomBadge=x=>SK().badges[x.id]||x.nom;
+/* Les textes des mondes s'accordent avec l'enfant : « [chevalier/chevalière] » donne la forme de gauche pour un garçon, celle de droite pour une fille.
+   La version accordée de chaque monde est gardée de côté ; les fonctions (devise, série) sont accordées à chaque appel. */
+const skAccorde=new Map();
+function accordeTout(o){
+  if(typeof o==='string')return accorder(o);
+  if(typeof o==='function')return (...a)=>accorder(o(...a));
+  if(Array.isArray(o))return o.map(accordeTout);
+  if(o&&typeof o==='object')return Object.fromEntries(Object.entries(o).map(([k,v])=>[k,accordeTout(v)]));
+  return o;
+}
+const SK=()=>{const k=skinId()+(fille()?':f':':g');if(!skAccorde.has(k))skAccorde.set(k,accordeTout(SKINS[skinId()]));return skAccorde.get(k)};
+const nomBadge=x=>SK().badges[x.id]||accorder(x.nom);
 const TIPS=[
   {t:"Apprendre une leçon en 3 tours",d:"1. Je lis la leçon en entier. 2. Je cache et je redis ce que j'ai retenu. 3. Je relis ce que j'avais oublié. Le lendemain, je recommence le tour 2."},
   {t:"Découper un gros travail",d:"Un exposé ou un contrôle, ça se coupe en petits morceaux : un morceau par jour. Note chaque morceau dans tes devoirs."},
@@ -972,7 +982,7 @@ const TIPS=[
   {t:"Réviser un contrôle",d:"J-3 : je relis la leçon. J-2 : je fais un quiz. J-1 : je revois seulement mes erreurs. Ajoute un contrôle dans Devoirs, je prépare ces étapes pour toi."},
   {t:"Commencer par le plus dur",d:"Fais d'abord le devoir qui te fait le plus peur, quand ton cerveau est encore frais. Le reste ira tout seul."},
   {t:"Le minuteur des 15 minutes",d:"Travaille 15 minutes sans t'arrêter, puis fais une pause de 5 minutes. Deux tours suffisent souvent."},
-  {t:"Expliquer pour comprendre",d:"Explique la leçon à quelqu'un de ta famille comme si tu étais le maître. Si tu bloques, c'est le passage à revoir."},
+  {t:"Expliquer pour comprendre",d:"Explique la leçon à quelqu'un de ta famille comme si tu étais [le maître/la maîtresse]. Si tu bloques, c'est le passage à revoir."},
   {t:"La soirée de pause",pause:true,d:"Le mardi et le vendredi soir, on souffle : joue, lis ce qui te plaît, dors bien. Un cerveau reposé retient mieux."},
 ];
 const pick=a=>a[Math.floor(Math.random()*a.length)];
@@ -1075,6 +1085,10 @@ const cfg=()=>S.config.get('main')||{};
 const prenom=()=>(cfg().prenom||'').trim()||"l'élève";
 const voyelle=p=>/^[aeiouyhàâäéèêëîïôöûüœ]/i.test(p);
 const deP=()=>(voyelle(prenom())?"d'":'de ')+prenom();
+/* Fille ou garçon, réglé par le parent (garçon tant que rien n'est choisi). G('prêt','prête') choisit le mot ; accorder() lit la notation [garçon/fille]. */
+const fille=()=>cfg().enfant==='fille';
+const G=(m,f)=>fille()?f:m;
+const accorder=s=>String(s).replace(/\[([^\[\]\/]*)\/([^\[\]]*)\]/g,(_,m,f)=>fille()?f:m);
 const queP=()=>(voyelle(prenom())?"qu'":'que ')+prenom();
 
 /* ============ Claude ============ */
@@ -1109,7 +1123,7 @@ async function askJSON(prompt,opts={},onProgress){
 function progressAdd(n){const el=app.querySelector('[data-progress]');if(el)el.textContent=`J'écris ta fiche… (${n} caractères)`}
 function errMsg(e){return({no_ollama:"Ollama ne répond pas. Vérifie qu'il est lancé, ou demande à un parent de regarder le réglage de l'IA.",no_model:"Le modèle d'Ollama n'est pas installé (voir la fenêtre du cartable).",no_key:"Il manque la clé API de l'IA : elle se règle dans l'espace parents.",bad_key:"La clé API est refusée. Vérifiez-la dans l'espace parents.",ocr_bad_key:"Mistral refuse la clé qui sert à lire les photos. Demande à un parent de la vérifier dans l'espace parents.",ocr_network:"Je n'arrive pas à joindre Mistral pour lire les photos. Vérifie la connexion internet.",ocr_error:"Mistral n'a pas réussi à lire les photos. Réessaie dans un instant.",network:"Je n'arrive pas à joindre l'IA. Vérifie la connexion et que le cartable est bien lancé.",bad_request:"L'IA n'a pas compris la demande. Réessaie.",api_error:"L'IA a eu un petit souci. Réessaie dans un instant.",save_failed:"Je n'ai pas pu enregistrer.",rate_limited:"L'IA est très occupée. Réessaie dans quelques minutes.",image_rejected:"Cette photo n'a pas pu être lue. Prends-en une autre, bien éclairée et nette.",images_unavailable:"L'envoi de photos n'est pas possible ici. Ouvre la page dans l'application Claude.",invalid_json:"La réponse est arrivée en désordre. Appuie sur Réessayer.",refused:"L'IA n'a pas pu traiter cette demande. Essaie avec une autre photo ou une autre question.",session_expired:"Reconnecte-toi à Claude puis réessaie.",prompt_too_large:"C'est trop long d'un coup. Envoie moins de photos.",empty_completion:"L'IA n'a rien répondu. Réessaie."}[e&&e.code])||`Petit souci de connexion. Réessaie dans un instant. (code : ${(e&&(e.code||e.message))||'inconnu'})`}
 const MAT_LIST=MATIERES.map(m=>`"${m.id}" (${m.nom})`).join(', ');
-const ROLE=()=>`Tu es un professeur des écoles expérimenté, spécialiste du programme officiel de CM1 (cycle 3, Éducation nationale, France), et le compagnon de travail bienveillant ${deP()}, 9 ans, élève de CM1. L'appli s'appelle Excalibur${SK().theme?', habillée '+SK().theme:''} : de temps en temps, tu peux encourager ${prenom()} ${SK().role}, sans que cela gêne l'explication. Tu écris en français, avec des phrases courtes, un vocabulaire simple mais exact, et des exemples tirés de la vie d'un enfant.
+const ROLE=()=>`Tu es un professeur des écoles expérimenté, spécialiste du programme officiel de CM1 (cycle 3, Éducation nationale, France), et le compagnon de travail bienveillant ${deP()}, ${G('un garçon','une fille')} de 9 ans en CM1. Accorde au ${G('masculin','féminin')} tout ce qui parle ${G('de lui',"d'elle")} (${G('« tu es prêt », « bravo, tu es fort »','« tu es prête », « bravo, tu es forte »')}). L'appli s'appelle Excalibur${SK().theme?', habillée '+SK().theme:''} : de temps en temps, tu peux encourager ${prenom()} ${SK().role}, sans que cela gêne l'explication. Tu écris en français, avec des phrases courtes, un vocabulaire simple mais exact, et des exemples tirés de la vie d'un enfant.
 
 Ta priorité est la PÉDAGOGIE : ${prenom()} doit vraiment comprendre, pas seulement retenir. Quand tu expliques :
 - Pars de ce qu'il connaît déjà (sa vie, ce qu'il a vu avant), puis avance par petites marches, une idée à la fois.
@@ -1118,9 +1132,9 @@ Ta priorité est la PÉDAGOGIE : ${prenom()} doit vraiment comprendre, pas seule
 - Pour une méthode, donne des étapes numérotées et un exemple résolu pas à pas, en disant à voix haute ce qu'on pense à chaque étape (« Je regarde… donc… »).
 - Utilise des images mentales, des comparaisons, des manipulations (« prends 3 billes… »), et un contre-exemple pour montrer ce qui n'est PAS la règle.
 - Explique chaque mot difficile la première fois que tu l'utilises.
-- Quand ${prenom()} se trompe, montre pourquoi l'erreur était tentante, puis comment ne plus la faire, sans jamais le juger.
+- Quand ${prenom()} se trompe, montre pourquoi l'erreur était tentante, puis comment ne plus la faire, sans jamais ${G('le','la')} juger.
 - Termine par une petite vérification : « Pour vérifier, je peux… » ou une question à se poser.
-- Tutoie ${prenom()} et encourage-le.`;
+- Tutoie ${prenom()} et encourage-${G('le','la')}.`;
 const COURS_SCHEMA=`{
  "lisible": true,
  "matiere": "un des identifiants: ${MAT_LIST}",
@@ -1492,7 +1506,7 @@ ${photos.map(p=>`  * ${p.id} : ${p.description}`).join('\n')}`:''}
 - "indice" : une seule phrase courte (15 mots au plus) qui met sur la piste sans donner la réponse.
 - Choix de QCM et réponses courtes : quelques mots seulement.
 - Pour "courte", donne dans "reponses" la réponse attendue et ses variantes acceptables, toutes justes et bien écrites.
-- Si la réponse d'un QCM ou d'une réponse courte s'obtient par un calcul, écris l'opération complète dans "calcul", avec seulement des nombres, + - × : et des parenthèses (par exemple "4,75 + 13 + 2,50"). Sinon, ne mets pas "calcul".${faibles.length?`\n- Dans son cahier, ${prenom()} se trompe souvent sur ces points : consacre-leur au moins la moitié des questions, avec des exemples nouveaux :\n${faibles.map(e=>'  * '+e).join('\n')}`:''}${erreurs.length?`\n- ${prenom()} s'est déjà trompé sur ces questions, reviens sur les mêmes notions autrement :\n${erreurs.map(e=>'  * '+e).join('\n')}`:''}${comps.length>1?`\n- Pour chaque question, mets dans "competence" l'identifiant de l'objectif du programme qu'elle vérifie, pris dans cette liste :\n${comps.map(id=>`  * ${id} : ${COMP(id).t}`).join('\n')}`:''}
+- Si la réponse d'un QCM ou d'une réponse courte s'obtient par un calcul, écris l'opération complète dans "calcul", avec seulement des nombres, + - × : et des parenthèses (par exemple "4,75 + 13 + 2,50"). Sinon, ne mets pas "calcul".${faibles.length?`\n- Dans son cahier, ${prenom()} se trompe souvent sur ces points : consacre-leur au moins la moitié des questions, avec des exemples nouveaux :\n${faibles.map(e=>'  * '+e).join('\n')}`:''}${erreurs.length?`\n- ${prenom()} s'est déjà ${G('trompé','trompée')} sur ces questions, reviens sur les mêmes notions autrement :\n${erreurs.map(e=>'  * '+e).join('\n')}`:''}${comps.length>1?`\n- Pour chaque question, mets dans "competence" l'identifiant de l'objectif du programme qu'elle vérifie, pris dans cette liste :\n${comps.map(id=>`  * ${id} : ${COMP(id).t}`).join('\n')}`:''}
 
 Contenu :
 ${contenu}
@@ -1507,7 +1521,7 @@ Forme JSON de chaque type de question :
 
 ${historique?`Questions déjà posées (ne les répète pas, change de notion ou d'angle) :
 ${historique}
-`:''}${ratees.length?`${prenom()} vient de se tromper sur : ${ratees.map(t=>'« '+t+' »').join(' et ')}. Reviens sur la même notion autrement, avec un exemple nouveau et plus simple, pour qu'il la comprenne vraiment.
+`:''}${ratees.length?`${prenom()} vient de se tromper sur : ${ratees.map(t=>'« '+t+' »').join(' et ')}. Reviens sur la même notion autrement, avec un exemple nouveau et plus simple, pour qu'${G('il','elle')} la comprenne vraiment.
 `:''}${(q.refus||[]).length?`Ces questions ont été refusées, ne refais pas la même erreur :
 ${q.refus.map(e=>'  * « '+e.question+' » : '+e.refus).join('\n')}
 `:''}${serieFautes(q.questions)>=2?`Les ${serieFautes(q.questions)} dernières questions demandaient de trouver un mot mal écrit : cette fois, propose un autre exercice de la leçon (transformer, accorder, conjuguer, classer, phrase à trou), même pour une question pointue.
@@ -1761,8 +1775,8 @@ const BADGES=[
   {id:'b4',nom:'Lame affûtée',desc:'Réussir 10 questions pointues',test:()=>all('quiz').reduce((s,q)=>s+(q.pointuesOk||0),0)>=10},
   {id:'b5',nom:'Garde de 3 jours',desc:'Travailler 3 jours de suite',test:()=>meilleureSerie()>=3},
   {id:'b6',nom:'Semaine héroïque',desc:'Travailler 7 jours de suite',test:()=>meilleureSerie()>=7},
-  {id:'b7',nom:'Écuyer fidèle',desc:'Faire 10 devoirs à temps',test:()=>all('devoirs').filter(d=>d.fait&&d.faitLe<=d.pour).length>=10},
-  {id:'b8',nom:'Explorateur du royaume',desc:'Des leçons dans 5 matières',test:()=>new Set(all('lecons').map(l=>l.matiere)).size>=5},
+  {id:'b7',nom:'Écuy[er/ère] fidèle',desc:'Faire 10 devoirs à temps',test:()=>all('devoirs').filter(d=>d.fait&&d.faitLe<=d.pour).length>=10},
+  {id:'b8',nom:'Explorat[eur/rice] du royaume',desc:'Des leçons dans 5 matières',test:()=>new Set(all('lecons').map(l=>l.matiere)).size>=5},
   {id:'b9',nom:'Bibliothèque de Merlin',desc:'20 leçons dans le cartable',test:()=>all('lecons').length>=20},
   {id:'b10',nom:'Code d\'honneur',desc:'5 routines complètes',test:()=>all('routine').filter(r=>routineDu(r.id).every(it=>r.items&&r.items[it.id])).length>=5},
   {id:'b11',nom:'Cœur de lion',desc:'Refaire un quiz raté et progresser',test:()=>{const by={};all('quiz').filter(q=>q.termine&&q.leconIds&&q.leconIds.length===1).sort((a,b)=>a.createdAt-b.createdAt).forEach(q=>{(by[q.leconIds[0]]=by[q.leconIds[0]]||[]).push(quizPct(q))});return Object.values(by).some(a=>a.length>1&&a[0]<.7&&Math.max(...a.slice(1))>a[0])}},
@@ -2246,7 +2260,7 @@ function vJour(){
     <div class="pastilles">${rt.map(it=>{const ok=r.items&&r.items[it.id];return `<label class="pastille ${ok?'done':''}" title="${esc(it.t)}"><input type="checkbox" class="chk" data-act="routine" data-v="${it.id}" aria-label="${esc(it.t)}" ${ok?'checked':''}><span>${esc(libelleCourt(it.id))}</span></label>`}).join('')}</div>
     <span class="compteur small muted">${nbR}/${rt.length} · +5 ⭐</span>
   </section>
-  <details class="tip tip-jour ${tip.pause?'pause':''}" id="astuce-jour" ${('astuce-jour' in PLIS?PLIS['astuce-jour']:!!tip.pause)?'open':''}><summary>${esc(tip.t)}</summary><p>${esc(tip.d)}</p></details>
+  <details class="tip tip-jour ${tip.pause?'pause':''}" id="astuce-jour" ${('astuce-jour' in PLIS?PLIS['astuce-jour']:!!tip.pause)?'open':''}><summary>${esc(tip.t)}</summary><p>${esc(accorder(tip.d))}</p></details>
   <details class="card defis-jour" id="defis-jour" ${defisOuverts({missionFaite:fini,choix:PLIS['defis-jour']})?'open':''}><summary>${fini?'Encore envie ? Un défi éclair':'⚡ Défis éclair'}</summary><p class="small muted">Une fois par jour chacun</p>${boutonsDefis()}</details>`;
 }
 
@@ -2314,7 +2328,7 @@ function vVacances(){
       <label class="item ${p.bonus&&p.bonus[sel.date]?'done':''}"><span class="num" aria-hidden="true">💡</span><span class="grow"><span class="t">Idée bonus : ${esc(idee)}</span><br><span class="small muted">Pas obligatoire · +5 étoiles</span></span><input type="checkbox" class="chk" data-act="vac-coche" data-v="bonus" data-id="${sel.date}" ${p.bonus&&p.bonus[sel.date]?'checked':''}></label></div></section>`:''}
   <section class="card"><div class="sec-title"><h3>Mon calendrier de vacances</h3><span class="small muted">Une mission par jour de semaine, le week-end au repos</span></div>
     <div class="vac-bar" role="img" aria-label="${faites} missions faites sur ${jours.length}"><i style="width:${100*faites/Math.max(1,jours.length)}%"></i></div>
-    <p class="small muted" style="margin:6px 0 12px">${faites?`${faites} mission${faites>1?'s':''} sur ${jours.length} : `:''}${faites===jours.length?'carnet complet, tu es prêt pour la rentrée !':faites?'continue comme ça !':'clique sur un jour pour voir sa mission.'}</p>
+    <p class="small muted" style="margin:6px 0 12px">${faites?`${faites} mission${faites>1?'s':''} sur ${jours.length} : `:''}${faites===jours.length?`carnet complet, tu es ${G('prêt','prête')} pour la rentrée !`:faites?'continue comme ça !':'clique sur un jour pour voir sa mission.'}</p>
     <div class="vac-cal">${['L','M','M','J','V','S','D'].map(x=>`<span class="jn" aria-hidden="true">${x}</span>`).join('')}${cells.join('')}</div></section>`
   :`<section class="card"><div class="empty">Plus de mission pour ces vacances : il ne reste que le week-end avant la reprise. Prépare juste ton cartable !</div></section>`}
   ${dvR.length?`<section class="card"><div class="sec-title"><h3>Devoirs pour la rentrée</h3><button class="btn ghost" data-act="tab" data-v="devoirs">Tous les devoirs</button></div><div class="stack">${dvR.map(itemDevoir).join('')}</div></section>`:''}
@@ -2435,13 +2449,13 @@ async function leconSpeciale(id){
     const r=await askJSON(`${ROLE()}
 
 ${prenom()} ne maîtrise pas encore cet objectif du programme de CM1 : « ${c.t} » (${M(c.m).nom}, ${c.d}).${dom.p?`\nPrécision du programme : ${dom.p}`:''}
-${liees.length?`\nCe qu'il a vu en classe :\n${liees.map(l=>resumeLecon(l,true)).join('\n')}`:''}${faibles.length?`\n\nSes difficultés repérées dans le cahier :\n${faibles.map(x=>'- '+x).join('\n')}`:''}${erreurs.length?`\n\nSes erreurs récentes :\n${erreurs.map(p=>`- « ${String(p.question||'').slice(0,200)} » : il a répondu « ${p.rep??''} », la bonne réponse était « ${p.bonne??''} »`).join('\n')}`:''}
+${liees.length?`\nCe qu'${G('il','elle')} a vu en classe :\n${liees.map(l=>resumeLecon(l,true)).join('\n')}`:''}${faibles.length?`\n\nSes difficultés repérées dans le cahier :\n${faibles.map(x=>'- '+x).join('\n')}`:''}${erreurs.length?`\n\nSes erreurs récentes :\n${erreurs.map(p=>`- « ${String(p.question||'').slice(0,200)} » : ${G('il','elle')} a répondu « ${p.rep??''} », la bonne réponse était « ${p.bonne??''} »`).join('\n')}`:''}
 
-Écris une leçon spéciale, rien que pour lui :
+Écris une leçon spéciale, rien que pour ${G('lui','elle')} :
 - Pars de ce qu'il sait déjà, puis explique AUTREMENT que le cahier : une image mentale, une manipulation, des étapes numérotées.
 - Traite une à une ses difficultés et ses erreurs, en lui montrant pourquoi son erreur est tentante et comment l'éviter, sans le gronder.
 - Donne des exemples résolus pas à pas.
-- Termine par "entrainement" : 5 petits exercices écrits, du plus facile au plus difficile, chacun avec sa solution expliquée. Il les fait seul sur son cahier : pas de dictée ni rien à écouter.
+- Termine par "entrainement" : 5 petits exercices écrits, du plus facile au plus difficile, chacun avec sa solution expliquée. ${G('Il les fait seul','Elle les fait seule')} sur son cahier : pas de dictée ni rien à écouter.
 - Reste au niveau CM1, phrases courtes.
 
 ${SCHEMAS_AIDE}
@@ -2453,7 +2467,7 @@ Réponds uniquement avec un objet JSON :
     const lid=uid();
     put('lecons',lid,{matiere:c.m,titre:'Leçon spéciale · '+(r.titre||c.t),date:TODAY(),createdAt:Date.now(),special:true,cible:id,competences:[id],
       notions:r.notions||[],resume:r.resume||'',cours:r.cours||{},entrainement:(Array.isArray(r.entrainement)?r.entrainement:[]).filter(x=>x&&x.consigne),
-      pointsFaibles:[...faibles,...erreurs.map(p=>`erreur : « ${String(p.question||'').slice(0,120)} » (il avait répondu ${p.rep??''})`)].slice(0,10),
+      pointsFaibles:[...faibles,...erreurs.map(p=>`erreur : « ${String(p.question||'').slice(0,120)} » (${G('il','elle')} avait répondu ${p.rep??''})`)].slice(0,10),
       corrections:[],transcription:'',thumbs:[],questions:[]});
     state.special=null;go('lecon',lid);toast('Ta leçon spéciale est prête. Lis-la, puis fais le quiz !');
   }catch(err){state.special={id,err:errMsg(err)};render()}
@@ -3018,7 +3032,7 @@ function vDevoirs(){
   <div class="cols"><section class="card stack"><h3>À faire</h3>${afaire.length?groups.filter(g=>g[1].length).map(([n,ds])=>`<p class="eyebrow">${n}</p>${ds.map(d=>itemDevoir(d)+(state.confirm===d.id?`<div class="row"><button class="btn danger" data-act="del-devoir" data-id="${d.id}">Supprimer ce devoir</button><button class="btn" data-act="cancel">Annuler</button></div>`:'')).join('')}`).join(''):`<div class="empty">Rien à faire. Profites-en pour relire une leçon !</div>`}
     ${afaire.length?`<p class="small muted">Pour supprimer un devoir noté par erreur : <button class="btn ghost small" data-act="mode-del">${state.delMode?'Terminer':'Choisir un devoir'}</button></p>${state.delMode?`<div class="stack">${afaire.map(d=>`<button class="btn danger small" data-act="ask-del" data-id="${d.id}">${esc(d.titre)}</button>`).join('')}</div>`:''}`:''}</section>
   <section class="card stack"><h3>Déjà faits</h3>${faits.length?faits.map(itemDevoir).join(''):`<div class="empty">Quand tu coches un devoir, il arrive ici. +5 étoiles à chaque fois.</div>`}</section></div>
-  <section class="card"><h3>Apprendre à s'organiser</h3><div class="grid">${TIPS.map(x=>`<div class="tip"><strong>${esc(x.t)}</strong><p class="small" style="margin-top:4px">${esc(x.d)}</p></div>`).join('')}</div></section>`;
+  <section class="card"><h3>Apprendre à s'organiser</h3><div class="grid">${TIPS.map(x=>`<div class="tip"><strong>${esc(x.t)}</strong><p class="small" style="margin-top:4px">${esc(accorder(x.d))}</p></div>`).join('')}</div></section>`;
 }
 
 /* ---- Notes ---- */
@@ -3130,7 +3144,7 @@ function vSemaine(pied=''){
       <div><b>${w.etoiles}</b><span>étoiles · ${ecart(w.etoiles,w.etoilesAvant)}</span></div>
       ${w.missions?`<div><b>${w.missions.faites}/${w.missions.total}</b><span>missions de vacances</span></div>`:`<div><b>${w.devoirs}</b><span>devoirs faits${w.devoirs?` · ${w.aTemps} à temps`:''}${w.retard?` · <strong style="color:var(--bad)">${w.retard} en retard</strong>`:''}</span></div>`}
     </div>
-    ${w.refaits.length||w.faciles?`<p class="small">${w.refaits.length?`🔁 <b>${w.refaits.length}</b> quiz refait${w.refaits.length>1?'s':''} alors qu'il l'avait déjà réussi${w.refaits.length>1?'s':''}${w.faciles?', ':'.'}`:''}${w.faciles?`<b>${w.faciles}</b> en mode Facile.`:''} <span class="muted">Ils rapportent moitié moins d'étoiles.</span></p>`:''}
+    ${w.refaits.length||w.faciles?`<p class="small">${w.refaits.length?`🔁 <b>${w.refaits.length}</b> quiz refait${w.refaits.length>1?'s':''} alors qu'${G('il','elle')} l'avait déjà réussi${w.refaits.length>1?'s':''}${w.faciles?', ':'.'}`:''}${w.faciles?`<b>${w.faciles}</b> en mode Facile.`:''} <span class="muted">Ils rapportent moitié moins d'étoiles.</span></p>`:''}
     ${w.parMat.length?`<div class="tablewrap"><table class="t"><tr><th>Matière</th><th>Quiz</th><th>Réussite</th></tr>${w.parMat.map(o=>`<tr><td>${mchip(o.m.id)}</td><td>${o.qs.length}</td><td>${w.moyDe(o.qs)} %</td></tr>`).join('')}</table></div>`:'<p class="small muted">Aucun quiz cette semaine.</p>'}
     ${w.progres.length?`<details id="sem-progres" ${ouvert('sem-progres')}><summary>📈 ${w.progres.length} point${w.progres.length>1?'s':''} du programme en progrès</summary><div class="stack" style="margin-top:8px">${w.progres.slice(0,8).map(ligneComp).join('')}</div></details>`:''}
     ${w.recul.length?`<details id="sem-recul" ${ouvert('sem-recul')}><summary>⚠️ ${w.recul.length} point${w.recul.length>1?'s':''} à surveiller</summary><div class="stack" style="margin-top:8px">${w.recul.slice(0,8).map(ligneComp).join('')}</div></details>`:''}
@@ -3282,6 +3296,7 @@ function etoilesDetail(){
   return `<details class="small"><summary>D'où viennent les étoiles (7 derniers jours)</summary>${g.length?g.map(x=>`<div class="reward"><span>${esc(x.date)} · ${esc(x.why)}</span><span class="cost">+${x.pts}</span></div>`).join(''):'<p class="small muted">Aucun gain ces 7 derniers jours.</p>'}</details>`;
 }
 // Un réglage par ligne : le nom à gauche, les commandes à droite (dessous sur un écran étroit).
+const choixEnfant=(attrs,v)=>`<select ${attrs}>${v?'':'<option value="" selected disabled>Choisir…</option>'}${[['fille','Une fille'],['garcon','Un garçon']].map(([k,t])=>`<option value="${k}" ${k===v?'selected':''}>${t}</option>`).join('')}</select>`;
 const reglage=(nom,corps,pour='')=>`<div class="reglage">${pour?`<label class="rg-nom" for="${pour}">${nom}</label>`:`<span class="rg-nom">${nom}</span>`}<div class="rg-corps">${corps}</div></div>`;
 function vParents(){
   const c=cfg();
@@ -3311,6 +3326,7 @@ function vParents(){
     <p class="small muted">Repère : un quiz de 10 questions rapporte 13 étoiles avec 8 bonnes réponses, 30 sans faute. Une bonne journée complète rapporte 30 à 50 étoiles.</p></section>
   <section class="card stack"><h3>🧒 L'enfant</h3>
     ${reglage('Prénom',`<form class="row" data-form="prenom"><input type="text" id="cfg-prenom" name="prenom" value="${esc(c.prenom||'')}" style="flex:1 1 180px;max-width:320px" required><button class="btn">Enregistrer</button></form>`,'cfg-prenom')}
+    ${reglage('Fille ou garçon',choixEnfant('id="enfant-parent" style="max-width:200px"',c.enfant),'enfant-parent')}
     ${reglage('Zone de vacances',`<select id="zone-parent" style="max-width:200px">${['A','B','C'].map(z=>`<option value="${z}" ${z===zone?'selected':''}>Zone ${z}</option>`).join('')}</select>`,'zone-parent')}
   </section>
   ${vReseau()}
@@ -3320,13 +3336,16 @@ function vParents(){
    puis lance mise-a-jour.ps1, se ferme et se rouvre. La page attend qu'il réponde à nouveau et se recharge. */
 async function chargerMaj(){
   state.maj={charge:true};
-  try{const r=await fetch('/api/mise-a-jour',{headers:{'x-parent':state.jeton||''}});state.maj=r.ok?await r.json():{err:true}}
+  try{const r=await fetch('/api/mise-a-jour',{headers:{'x-parent':state.jeton||''}});
+    if(r.status===403){state.maj=null;finParent('Code parent demandé à nouveau.');render();return}
+    state.maj=r.ok?await r.json():{err:true}}
   catch{state.maj={err:true}}
   if(state.pp==='maj')render();
 }
 async function lancerMaj(){
   if(!confirm("Mettre le cartable à jour ? Il va se fermer quelques instants puis se rouvrir. Les données, les réglages et les clés sont gardés."))return;
   let r;try{r=await fetch('/api/mise-a-jour',{method:'POST',headers:{'x-parent':state.jeton||''}}).then(x=>x.json())}catch{toast("Le serveur du cartable ne répond pas.");return}
+  if(r.code==='parent'){state.maj=null;finParent('Code parent demandé à nouveau.');render();return}
   if(!r.ok){chargerMaj();toast({ajour:"Le cartable est déjà à jour.",sale:"Des fichiers du cartable ont été modifiés sur ce PC : la mise à jour attend.",diverge:"La branche contient des commits absents de main : fusionnez à la main.",reseau:"GitHub ne répond pas.",windows:"La mise à jour automatique ne marche que sous Windows.",script:"Le fichier mise-a-jour.ps1 manque dans le dossier du cartable."}[r.code]||"La mise à jour n'a pas pu démarrer.");return}
   state.maj={enCours:true};render();
   // Le serveur se ferme, puis revient avec la nouvelle version (jusqu'à plusieurs minutes si les modules changent).
@@ -3452,8 +3471,8 @@ function vAccueil(){
       <form class="form-grid" data-form="acc-pin"><label class="f">Code parent<input type="password" name="pin" inputmode="numeric" autocomplete="off" required data-autofocus></label><div><button class="btn primary">Continuer</button></div></form>`
     :`${tete(SK().accueil,'Pour commencer, choisissez un code parent de 4 à 8 chiffres. Il protège l\'espace parents : les récompenses, les demandes à valider et le suivi du programme. Gardez-le pour vous.')}
       <form class="form-grid" data-form="acc-pin"><label class="f">Code parent<input type="password" name="pin" inputmode="numeric" autocomplete="new-password" pattern="\\d{4,8}" required data-autofocus></label><label class="f">Le même code, encore une fois<input type="password" name="pin2" inputmode="numeric" autocomplete="new-password" required></label><div><button class="btn primary">Créer le code</button></div></form>`;
-  else if(e===2){const z=cfg().zone||ZONE_DEFAUT;corps=`${tete(SK().heros,'Le prénom apparaît partout dans le cartable. La zone sert au calendrier des vacances scolaires.')}
-      <form class="form-grid" data-form="acc-prenom"><label class="f">Prénom de l'enfant<input type="text" name="prenom" value="${esc(cfg().prenom||'')}" autocomplete="off" required data-autofocus></label><label class="f">Zone de vacances<select name="zone">${['A','B','C'].map(x=>`<option value="${x}" ${x===z?'selected':''}>Zone ${x}</option>`).join('')}</select></label><div><button class="btn primary">Continuer</button></div></form>`}
+  else if(e===2){const z=cfg().zone||ZONE_DEFAUT;corps=`${tete(SK().heros,'Le prénom apparaît partout dans le cartable, et les mots s\'accordent selon que c\'est une fille ou un garçon (« prêt » ou « prête »). La zone sert au calendrier des vacances scolaires.')}
+      <form class="form-grid" data-form="acc-prenom"><label class="f">Prénom de l'enfant<input type="text" name="prenom" value="${esc(cfg().prenom||'')}" autocomplete="off" required data-autofocus></label><label class="f">C'est…${choixEnfant('name="enfant" required',cfg().enfant)}</label><label class="f">Zone de vacances<select name="zone">${['A','B','C'].map(x=>`<option value="${x}" ${x===z?'selected':''}>Zone ${x}</option>`).join('')}</select></label><div><button class="btn primary">Continuer</button></div></form>`}
   else if(e===3)corps=`${tete("L'IA du cartable",`Elle lit les photos, prépare les quiz et explique les erreurs. Si vous avez une clé Claude ou Mistral, collez-la d'abord ; sinon, elle tourne avec Ollama sur ce PC. Vous pourrez changer plus tard dans l'espace parents.`)}<p class="eyebrow">Clés API (facultatif)</p>${vCles()}<p class="eyebrow">Choix de l'IA</p>${vIA()}`;
   else if(e===4){const deja=all('recompenses').sort((a,b)=>a.cout-b.cout),titres=new Set(deja.map(r=>r.titre));
     corps=`${tete('Les récompenses',`${esc(prenom())} gagne des étoiles en travaillant et les échange contre des récompenses, que vous validez. Cochez celles que vous proposez et ajustez leur prix. Vous pourrez tout changer plus tard dans l'espace parents.`)}
@@ -3582,6 +3601,7 @@ document.addEventListener('click',async e=>{
 document.addEventListener('input',e=>{if(e.target.matches&&e.target.matches('[data-brouillon]')&&state.quiz){(state.quiz.brouillons=state.quiz.brouillons||{})[state.quiz.i]=e.target.value}});
 document.addEventListener('change',e=>{
   const el=e.target;
+  if(el.id==='enfant-parent'){el.blur();put('config','main',{...cfg(),enfant:el.value==='fille'?'fille':'garcon'});toast('Enregistré.');return}
   if(el.id==='zone-parent'){el.blur();put('config','main',{...cfg(),zone:el.value||null});return}
   if(el.id==='photo-in'&&el.files){ajouterFichiers(el.files);el.value='';return}
   if(el.id==='scan-in'&&el.files){ajouterFichiers(el.files,state.scan);el.value='';return}
@@ -3606,7 +3626,7 @@ document.addEventListener('submit',async e=>{
   if(kind==='manuel'){const lignes=(fd.txt||'').split('\n').map(s=>s.trim()).filter(Boolean);const id=nouvelleLecon({cours:{aRetenir:lignes}},{titre:fd.titre,matiere:fd.matiere,date:fd.date});go('lecon',id);return}
   if(kind==='edit-lecon'){const l=S.lecons.get(f.dataset.id);if(l){put('lecons',l.id,{...l,titre:fd.titre||l.titre,matiere:fd.matiere,date:fd.date||l.date});toast('Leçon modifiée.')}return}
   if(kind==='ask'){const l=S.lecons.get(f.dataset.id);if(!l||!sample)return;const q=fd.q;state.ask[l.id]={busy:true,text:''};render();
-    try{const {text}=await sample(`${ROLE()}\n\nVoici la leçon ${deP()} :\n${resumeLecon(l)}\n\n${prenom()} demande : « ${q} »\nRéponds-lui en 100 à 200 mots, pas à pas : explique le pourquoi, donne un exemple concret de sa vie, montre le raisonnement, puis finis par une petite question ou une astuce pour vérifier qu'il a compris. Si la question n'a rien à voir avec l'école, ramène-le gentiment vers sa leçon.`,{modelTier:'default',cache:false,onText:({text})=>{state.ask[l.id].text=text;const el=app.querySelector('.thinking span');if(el)el.innerHTML=rich(text)}});
+    try{const {text}=await sample(`${ROLE()}\n\nVoici la leçon ${deP()} :\n${resumeLecon(l)}\n\n${prenom()} demande : « ${q} »\nRéponds-lui en 100 à 200 mots, pas à pas : explique le pourquoi, donne un exemple concret de sa vie, montre le raisonnement, puis finis par une petite question ou une astuce pour vérifier qu'${G('il','elle')} a compris. Si la question n'a rien à voir avec l'école, ramène-${G('le','la')} gentiment vers sa leçon.`,{modelTier:'default',cache:false,onText:({text})=>{state.ask[l.id].text=text;const el=app.querySelector('.thinking span');if(el)el.innerHTML=rich(text)}});
       const cur=S.lecons.get(l.id)||l;put('lecons',l.id,{...cur,questions:[...(cur.questions||[]),{q,a:text}].slice(-10)});state.ask[l.id]={}}catch(err){state.ask[l.id]={err:errMsg(err)}}
     render();return}
   if(kind==='scan-save'){let n=0,nc=0;
@@ -3634,7 +3654,7 @@ document.addEventListener('submit',async e=>{
     state.jeton=r.jeton||'';if(window.claude)window.claude.parent=state.jeton||null;
     if(creer){S.config.set('pin',{id:'pin',defini:true});await put('config','main',{...cfg(),accueil:'en-cours'})}
     state.parent=true;state.acc={etape:(cfg().prenom||'').trim()&&!creer?3:2};render();return}
-  if(kind==='acc-prenom'){const p=(fd.prenom||'').trim();if(!p)return;put('config','main',{...cfg(),prenom:p,zone:fd.zone||ZONE_DEFAUT,accueil:'en-cours'});state.acc={etape:3};render();return}
+  if(kind==='acc-prenom'){const p=(fd.prenom||'').trim();if(!p)return;put('config','main',{...cfg(),prenom:p,enfant:fd.enfant==='fille'?'fille':'garcon',zone:fd.zone||ZONE_DEFAUT,accueil:'en-cours'});state.acc={etape:3};render();return}
   if(kind==='acc-rec'){
     SUGGESTIONS.forEach(([t,c],i)=>{if(fd['s'+i])put('recompenses',uid(),{titre:t,cout:Math.max(1,Number(fd['c'+i])||c)})});
     const t=(fd.t||'').trim();if(t)put('recompenses',uid(),{titre:t,cout:Math.max(1,Number(fd.c)||1)});
