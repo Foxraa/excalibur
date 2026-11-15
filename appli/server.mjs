@@ -13,6 +13,7 @@ import { DuckDBInstance } from "@duckdb/node-api";
 import { marked } from "marked";
 import { creerSessions, autorise, fileUneParUne, delaiEchec } from "./parent.mjs";
 import { avecSchemas, schema } from "./schemas.mjs";
+import { coutsParJour } from "./couts.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 try { process.loadEnvFile(path.join(here, ".env")); } catch {}
@@ -659,6 +660,11 @@ const server = http.createServer(async (req, res) => {
     if (p === "/api/ia" && req.method === "POST") return await reglerIA(req, res);
     if (p === "/api/ocr" && req.method === "POST") return await reglerOCR(req, res);
     if (p === "/api/cle" && req.method === "POST") return await reglerCle(req, res);
+    // Coût des requêtes IA par jour (espace parents).
+    if (p === "/api/couts" && req.method === "GET") {
+      if (!sessions.valide(req.headers["x-parent"])) return json(res, 403, { code: "parent" });
+      return json(res, 200, { jours: coutsParJour(await fs.readFile(CONSO_FILE, "utf8").catch(() => "")) });
+    }
     if (p === "/api/cours") return json(res, 200, await coursEtProgression());
     const m = p.match(/^\/api\/db\/([a-z]+)\/([^/]+)$/);
     if (m) {

@@ -3241,15 +3241,16 @@ function vParents(){
   const ach=all('achats').filter(a=>a.statut==='demandé');const rec=all('recompenses').sort((a,b)=>a.cout-b.cout);
   // Dans l'ordre de ce qu'on vient faire : valider, suivre, gérer les récompenses, puis les réglages qu'on touche rarement.
   const zone=c.zone||ZONE_DEFAUT;
-  // Trois pages : Suivi (ce qu'on vient voir presque à chaque fois), Réglages (récompenses, enfant, apparence, wifi)
-  // et Réglages IA (l'IA, la lecture des photos et les clés API).
-  const page=['reglages','reglages2'].includes(state.pp)?state.pp:'suivi';
+  // Quatre pages : Suivi (ce qu'on vient voir presque à chaque fois), Réglages (récompenses, enfant, apparence, wifi),
+  // Réglages IA (l'IA, la lecture des photos et les clés API) et Coût (ce qu'ont coûté les requêtes IA, jour par jour).
+  const page=['reglages','reglages2','couts'].includes(state.pp)?state.pp:'suivi';
   const onglet=(v,l)=>`<button class="btn ${page===v?'primary':''}" data-act="parent-page" data-v="${v}" aria-pressed="${page===v}">${l}</button>`;
-  return `<section class="card sec-title" style="padding-block:10px"><div class="row"><h3>Espace parents</h3>${onglet('suivi','📈 Suivi')}${onglet('reglages','⚙️ Réglages')}${onglet('reglages2','🤖 Réglages IA')}</div><button class="btn ghost" data-act="parent-off">Fermer</button></section>
+  return `<section class="card sec-title" style="padding-block:10px"><div class="row"><h3>Espace parents</h3>${onglet('suivi','📈 Suivi')}${onglet('reglages','⚙️ Réglages')}${onglet('reglages2','🤖 Réglages IA')}${onglet('couts','💶 Coût')}</div><button class="btn ghost" data-act="parent-off">Fermer</button></section>
   ${page==='suivi'?`<section class="card stack"><h3>À valider</h3>${ach.length?ach.map(a=>`<div class="reward"><span>${esc(titreDemande(a))} <span class="cost">${a.palier?'offert':a.cout}</span></span><span class="row"><button class="btn primary" data-act="valider" data-id="${a.id}">Accorder</button><button class="btn" data-act="refuser" data-id="${a.id}">Refuser</button></span></div>`).join(''):'<p class="small muted">Aucune demande en attente.</p>'}
     ${etoilesDetail()}</section>
   ${vSemaine(`<div class="row"><button class="btn primary" data-act="tab" data-v="programme">🗺️ Programme CM1 : où en est ${esc(prenom())}</button></div>`)}
-  `:page==='reglages2'?`<section class="card stack"><h3>🔑 Clés API</h3>${vCles()}</section>
+  `:page==='couts'?vCouts()
+  :page==='reglages2'?`<section class="card stack"><h3>🔑 Clés API</h3>${vCles()}</section>
   <section class="card stack"><h3>🤖 Intelligence artificielle</h3>
     ${reglage("IA du cartable",vIA())}
     ${reglage('Lecture des photos',vOCR())}
@@ -3263,6 +3264,35 @@ function vParents(){
     ${reglage('Zone de vacances',`<select id="zone-parent" style="max-width:200px">${['A','B','C'].map(z=>`<option value="${z}" ${z===zone?'selected':''}>Zone ${z}</option>`).join('')}</select>`,'zone-parent')}
   </section>
   ${vReseau()}`}`;
+}
+/* Coût des requêtes IA, calculé par le serveur à partir de data/consommation.log. Ollama est gratuit et n'y figure pas. */
+async function chargerCouts(){
+  state.couts={charge:true};
+  try{const r=await fetch('/api/couts',{headers:{'x-parent':state.jeton||''}});state.couts=r.ok?await r.json():{err:true}}
+  catch{state.couts={err:true}}
+  if(state.pp==='couts')render();
+}
+const NOM_MODELE={'claude-sonnet-5-5':'Claude Sonnet','claude-haiku-5-5':'Claude Haiku','claude-opus-5-5':'Claude Opus','mistral-small-latest':'Mistral Small','mistral-large-latest':'Mistral Large (relecture)','mistral-ocr-latest':'Mistral OCR (photos)'};
+const dollars=x=>x.toLocaleString('fr-FR',{style:'currency',currency:'USD',currencyDisplay:'narrowSymbol',minimumFractionDigits:2,maximumFractionDigits:x<0.1?3:2});
+function vCouts(){
+  const c=state.couts||{};
+  const tete=`<h3>💶 Coût des requêtes IA</h3>`;
+  if(c.charge)return `<section class="card stack">${tete}<p class="small muted">Calcul en cours…</p></section>`;
+  if(c.err||!c.jours)return `<section class="card stack">${tete}<p class="small muted">Impossible de lire le journal. Relancez le cartable s'il vient d'être mis à jour.</p><div><button class="btn" data-act="parent-page" data-v="couts">Réessayer</button></div></section>`;
+  const jours=c.jours;
+  if(!jours.length)return `<section class="card stack">${tete}<p class="small muted">Aucune requête payante pour l'instant. Avec Ollama, rien n'est facturé.</p></section>`;
+  const mois=TODAY().slice(0,7);
+  const somme=l=>l.reduce((s,j)=>s+j.cout,0);
+  const date=d=>new Date(d+'T12:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short',year:d.slice(0,4)===TODAY().slice(0,4)?undefined:'numeric'});
+  const detail=j=>Object.entries(j.modeles).sort((a,b)=>b[1].cout-a[1].cout).map(([m,x])=>`${esc(NOM_MODELE[m]||m)} : ${x.requetes} · ${x.inconnu?'prix inconnu':dollars(x.cout)}`).join('<br>');
+  return `<section class="card stack">${tete}
+    <div class="row"><span>Ce mois-ci : <b>${dollars(somme(jours.filter(j=>j.jour.startsWith(mois))))}</b></span><span class="muted">·</span><span>Depuis le début : <b>${dollars(somme(jours))}</b></span></div>
+    <div style="overflow-x:auto"><table class="small" style="width:100%;border-collapse:collapse">
+      <thead><tr style="text-align:left"><th style="padding:6px 8px">Jour</th><th style="padding:6px 8px;text-align:right">Requêtes</th><th style="padding:6px 8px;text-align:right">Coût</th><th style="padding:6px 8px">Détail</th></tr></thead>
+      <tbody>${jours.map(j=>`<tr style="border-top:1px solid color-mix(in srgb,currentColor 15%,transparent);vertical-align:top"><td style="padding:6px 8px;white-space:nowrap">${date(j.jour)}</td><td style="padding:6px 8px;text-align:right">${j.requetes}</td><td style="padding:6px 8px;text-align:right;white-space:nowrap"><b>${dollars(j.cout)}</b>${j.inconnu?' *':''}</td><td style="padding:6px 8px" class="muted">${detail(j)}</td></tr>`).join('')}</tbody>
+    </table></div>
+    <p class="small muted">Estimation à partir des jetons lus et écrits notés à chaque requête, aux prix publics en dollars (Claude Sonnet 2 $ / 10 $ le million de jetons, Haiku 0,10 $ / 0,50 $, Mistral Small 0,10 $ / 0,30 $, Mistral Large 0,50 $ / 1,50 $, Mistral OCR 2 $ les 1 000 pages). La facture réelle peut différer un peu : forfait Mistral inclus, mise en cache de Claude. ${jours.some(j=>j.inconnu)?'* Un modèle sans prix connu n’est pas compté.':''}</p>
+  </section>`;
 }
 /* Ouvrir le cartable depuis un autre appareil branché sur le même wifi (réglé par HOST dans .env). */
 function vReseau(){
@@ -3409,7 +3439,7 @@ document.addEventListener('click',async e=>{
     case 'cle-oublier':envoyerCle(v,{oublier:true});break;
     case 'suggestions':SUGGESTIONS.forEach(([t,c])=>put('recompenses',uid(),{titre:t,cout:c}));break;
     case 'parent-off':finParent();state.pp=null;render();break;
-    case 'parent-page':state.pp=v;render();window.scrollTo({top:0});break;
+    case 'parent-page':state.pp=v;if(v==='couts')chargerCouts();render();window.scrollTo({top:0});break;
     case 'skin':put('config','main',{...cfg(),skin:el.dataset.v});toast(`Monde ${SKINS[el.dataset.v].nom.split(' ·')[0]} choisi.`);break;
     case 'theme':put('config','main',{...cfg(),theme:v});toast({clair:'Couleurs claires choisies.',sombre:'Couleurs sombres choisies.',auto:"Les couleurs suivent l'ordinateur."}[v]);break;
     case 'prog-mat':go('programme',v);break;
