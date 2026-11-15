@@ -1,7 +1,7 @@
 # Met Excalibur a jour depuis GitHub (branche main) sans toucher aux donnees :
 # appli\data, appli\.env et photos ne sont pas dans l'archive, ils restent tels quels.
-# Lance par "Mettre a jour le cartable.bat", ou par le bouton de l'espace parents (-Relancer : attend
-# que le serveur se ferme, puis relance le cartable a la fin). Messages sans accents : PowerShell 5.1 lit ce fichier en ANSI.
+# Lance par le bouton Mise a jour de l'espace parents (-Relancer : attend que le serveur se ferme, puis relance
+# le cartable a la fin). Sans le cartable, clic droit sur ce fichier > "Executer avec PowerShell". Messages sans accents : PowerShell 5.1 lit ce fichier en ANSI.
 param([switch]$SansPause, [switch]$Relancer, [string]$Racine)
 
 $ErrorActionPreference = 'Stop'
@@ -16,10 +16,10 @@ function Fin([int]$code) {
     # Le lanceur n'ouvre pas de nouvel onglet : la page restee ouverte se recharge toute seule.
     $env:SANS_NAVIGATEUR = '1'
     Write-Host 'Le cartable redemarre...'
-    $bat = Join-Path $appli 'Demarrer le cartable.bat'
+    $arguments = '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$(Join-Path $appli 'lanceur.ps1')`"", '-Serveur'
     # Ouvert par l'icone du bureau (EXCALIBUR_CACHE, herite du serveur) : il se relance cache, comme avant
-    if ($env:EXCALIBUR_CACHE) { Start-Process cmd.exe -ArgumentList '/c', "`"`"$bat`"`"" -WorkingDirectory $appli -WindowStyle Hidden }
-    else { Start-Process $bat -WorkingDirectory $appli }
+    if ($env:EXCALIBUR_CACHE) { Start-Process powershell.exe -ArgumentList $arguments -WorkingDirectory $appli -WindowStyle Hidden }
+    else { Start-Process powershell.exe -ArgumentList $arguments -WorkingDirectory $appli }
     if ($code -eq 0) { Start-Sleep -Seconds 2; exit 0 }
   }
   if (-not $SansPause) { Write-Host ''; Read-Host 'Appuie sur Entree pour fermer' | Out-Null }
@@ -116,6 +116,10 @@ try {
   Write-Host 'Installation de la nouvelle version...'
   robocopy $nouveau $Racine /E /IS /IT /NFL /NDL /NJH /NJS /NP | Out-Null
   if ($LASTEXITCODE -ge 8) { throw "La copie des fichiers a echoue (robocopy $LASTEXITCODE)." }
+  # Anciens fichiers retires du depot (la copie n'efface rien) : l'icone Excalibur et "Installer Excalibur.bat" les remplacent
+  foreach ($vieux in 'appli\Demarrer le cartable.bat', 'appli\Mettre a jour le cartable.bat') {
+    Remove-Item (Join-Path $Racine $vieux) -Force -ErrorAction SilentlyContinue
+  }
   if ($sha) { Set-Content $fichier_version $sha -Encoding ascii }
 } catch {
   Write-Host ''

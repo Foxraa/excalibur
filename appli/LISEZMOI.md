@@ -4,19 +4,19 @@ L'appli tourne sur ce PC. L'IA est au choix : Ollama sur ce PC, ou Claude ou Mis
 
 ## Première installation (une seule fois)
 
-Au premier lancement, **Demarrer le cartable.bat** installe Node.js s'il manque (avec winget ; Windows demande d'accepter l'installation), puis demande quelle IA utiliser : Ollama sur ce PC, Claude ou Mistral. Avec Ollama, s'il n'est pas encore installé, le cartable s'ouvre et une fenêtre par-dessus la page demande s'il faut l'installer (oui / non) : avec « Oui », il installe Ollama et télécharge le modèle (`gemma4:e4b`, plusieurs Go) en montrant l'avancement ; avec « Non », le cartable marche sans IA et la question revient au lancement suivant. Avec Claude ou Mistral, il n'installe rien de plus.
+Au premier lancement, **Installer Excalibur.bat** installe Node.js s'il manque (avec winget ; Windows demande d'accepter l'installation), puis demande quelle IA utiliser : Ollama sur ce PC, Claude ou Mistral. Avec Ollama, s'il n'est pas encore installé, le cartable s'ouvre et une fenêtre par-dessus la page demande s'il faut l'installer (oui / non) : avec « Oui », il installe Ollama et télécharge le modèle (`gemma4:e4b`, plusieurs Go) en montrant l'avancement ; avec « Non », le cartable marche sans IA et la question revient au lancement suivant. Avec Claude ou Mistral, il n'installe rien de plus.
 
 Un cartable vide s'ouvre sur un accueil en cinq étapes : le code parent, puis le prénom et la zone de vacances, l'IA, les récompenses, et enfin un écran qui explique les étoiles à l'enfant. Les onglets n'apparaissent qu'à la fin. Si la page est rechargée en cours de route, l'accueil reprend après le code parent.
 
 ## Lancer le cartable
 
-Double-cliquer sur l'icône **Excalibur** (une épée), sur le bureau ou dans le menu Démarrer. Le navigateur affiche tout de suite « Le cartable s'ouvre… » pendant que le cartable démarre en arrière-plan, sans fenêtre noire (Ollama compris si l'IA tourne sur ce PC), puis bascule sur http://localhost:3000. Si le cartable tourne déjà, l'icône ouvre juste la page.
+Double-cliquer sur l'icône **Excalibur** (une épée), sur le bureau ou dans le menu Démarrer. Le cartable s'ouvre dans sa propre fenêtre, sans barre d'adresse ni onglets, comme une appli : mode « appli » (`--app`) du navigateur par défaut s'il s'agit de Chrome ou d'Edge, sinon d'Edge, présent sur tout Windows 10 et 11. Cette fenêtre affiche tout de suite « Le cartable s'ouvre… » pendant que le cartable démarre en arrière-plan, sans fenêtre noire (Ollama compris si l'IA tourne sur ce PC), puis bascule sur http://localhost:3000. Si le cartable tourne déjà, l'icône ouvre juste une fenêtre. Le .bat ouvre lui aussi le cartable dans ce genre de fenêtre (`lanceur.ps1 -Ouvrir`).
 
-L'icône est créée par **Demarrer le cartable.bat** au premier lancement, et remise à jour à chaque lancement (si le dossier a bougé, relancer le .bat une fois). Tant que l'installation n'est pas finie (Node.js, choix de l'IA, modules), l'icône ouvre le .bat dans sa fenêtre habituelle, pour répondre aux questions. Le .bat reste utilisable : il montre ce qui se passe dans la fenêtre noire, utile si le cartable ne s'ouvre pas. Après 90 secondes d'attente, la page « Le cartable s'ouvre… » le conseille.
+L'icône est créée par **Installer Excalibur.bat**, puis remise à jour à chaque lancement (si le dossier a bougé, relancer `Installer Excalibur.bat` une fois). Tant que l'installation n'est pas finie (Node.js, choix de l'IA, modules), l'icône ouvre l'installation dans une fenêtre, pour répondre aux questions. `Installer Excalibur.bat` sert aussi au dépannage : le cartable tourne alors dans sa fenêtre, qui montre ce qui se passe, et la fermer l'arrête. Après 90 secondes d'attente, la page « Le cartable s'ouvre… » le conseille.
 
-Pour arrêter ou redémarrer : espace parents, page **Réglages**, carte « Le cartable sur ce PC ». **Redémarrer** relit `.env` et redémarre Ollama si besoin ; la page se recharge toute seule. Lancé par le .bat, on peut aussi fermer la fenêtre noire.
+Pour arrêter ou redémarrer : espace parents, page **Réglages**, carte « Le cartable sur ce PC ». **Redémarrer** relit `.env` et redémarre Ollama si besoin ; la page se recharge toute seule. Lancé par `Installer Excalibur.bat`, on peut aussi fermer sa fenêtre.
 
-Fichiers : `lanceur.ps1` (ce que fait l'icône, et `-Raccourci` pour recréer les icônes), `demarrage.html` (la page d'attente, recopiée dans le dossier temporaire avec le bon port), `public/images/excalibur.ico`.
+Fichiers : `lanceur.ps1` (le seul lanceur : l'icône, `-Installer`, `-Serveur` qui fait tourner le serveur et le relance sur le code 43, `-Ouvrir`), `Installer Excalibur.bat` (une ligne, car Windows n'exécute pas un `.ps1` au double-clic), `demarrage.html` (la page d'attente, recopiée dans le dossier temporaire avec le bon port), `public/images/excalibur.ico`.
 
 Sur un petit PC, Ollama est lent : une question de quiz prend 30 à 40 secondes, la lecture d'une photo plusieurs minutes. Sans IA, tout fonctionne sauf la lecture des photos, les quiz et les explications.
 
@@ -102,13 +102,13 @@ Tout est dans `data/cartable.duckdb`. Le serveur y recopie chaque modification a
 
 ## Mettre à jour
 
-Fermer le cartable, puis double-cliquer sur **Mettre a jour le cartable.bat**. Il télécharge la dernière version de la branche `main` sur GitHub et remplace le code, sans toucher à `data`, à `.env` ni aux photos. La base est d'abord recopiée dans `data/cartable.avant-mise-a-jour.duckdb`, et une progression annuelle retouchée à la main est gardée dans `programme_cm1/10_Progression_annuelle.avant-mise-a-jour.md`. Si la liste des modules a changé, `node_modules` est supprimé, et le lanceur les réinstalle au démarrage suivant. La version installée est notée dans `.version`. Un fichier supprimé d'une version à l'autre reste sur le disque, sans gêner.
+Le plus simple : espace parents, onglet Mise à jour. Sinon, arrêter le cartable, puis clic droit sur **mise-a-jour.ps1** et « Exécuter avec PowerShell ». Il télécharge la dernière version de la branche `main` sur GitHub et remplace le code, sans toucher à `data`, à `.env` ni aux photos. La base est d'abord recopiée dans `data/cartable.avant-mise-a-jour.duckdb`, et une progression annuelle retouchée à la main est gardée dans `programme_cm1/10_Progression_annuelle.avant-mise-a-jour.md`. Si la liste des modules a changé, `node_modules` est supprimé, et le lanceur les réinstalle au démarrage suivant. La version installée est notée dans `.version`. Un fichier supprimé d'une version à l'autre reste sur le disque, sans gêner, sauf les anciens `Demarrer le cartable.bat` et `Mettre a jour le cartable.bat`, que la mise à jour retire.
 
 Dans une copie suivie par git (le PC où l'on développe), le fichier refuse et renvoie vers `git pull`. Les nouveautés n'arrivent chez les autres qu'une fois fusionnées dans `main` et poussées sur GitHub.
 
 ## Repartir de zéro
 
-Fermer le cartable, puis double-cliquer sur **Reinitialiser le cartable.bat** et taper `OUI`. Rien n'est effacé : le dossier `data` est renommé en `data-avant-reinitialisation-<date>`, et le cartable démarre vide au lancement suivant, sur l'accueil (code parent, prénom, récompenses, étoiles). Pour revenir en arrière, supprimer le nouveau dossier `data` et redonner son nom `data` à l'ancien.
+Arrêter le cartable, puis double-cliquer sur **Reinitialiser le cartable.bat** et taper `OUI`. Rien n'est effacé : le dossier `data` est renommé en `data-avant-reinitialisation-<date>`, et le cartable démarre vide au lancement suivant, sur l'accueil (code parent, prénom, récompenses, étoiles). Pour revenir en arrière, supprimer le nouveau dossier `data` et redonner son nom `data` à l'ancien.
 
 ## Tester le cartable
 
