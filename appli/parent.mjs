@@ -1,10 +1,5 @@
 // Session parent : jetons à durée limitée et règles d'écriture par collection.
 import crypto from "node:crypto";
-import "./public/mondes.js";
-
-const { mondeOuvert } = globalThis;
-// Aujourd'hui en date locale, au format AAAA-MM-JJ.
-const jourLocal = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 // Jetons en mémoire : chaque usage prolonge l'expiration.
 export function creerSessions({ duree = 15 * 60e3, maintenant = Date.now } = {}) {
@@ -57,13 +52,11 @@ function demandeLegitime({ data, existant, recompenses }) {
   return cout === 0 && Number(data.palier) > 0;
 }
 
-// L'enfant choisit seul son monde (skin) et le clair / sombre (theme) : permis si rien d'autre ne change dans config/main,
-// et seulement vers un monde déjà ouvert dans le calendrier (public/mondes.js).
+// L'enfant choisit seul son monde (skin) et le clair / sombre (theme) : permis si rien d'autre ne change dans config/main.
 const APPARENCE = ["skin", "theme"];
-function seulApparenceChange(data, existant, jour) {
+function seulApparenceChange(data, existant) {
   if (!data || typeof data !== "object" || !existant) return false;
   if (APPARENCE.some(c => data[c] != null && (typeof data[c] !== "string" || !/^[a-z]{1,20}$/.test(data[c])))) return false;
-  if (data.skin != null && data.skin !== existant.skin && !mondeOuvert(data.skin, jour)) return false;
   const cles = new Set([...Object.keys(data), ...Object.keys(existant)]);
   for (const c of [...APPARENCE, "id"]) cles.delete(c);
   return [...cles].every(c => JSON.stringify(data[c]) === JSON.stringify(existant[c]));
@@ -73,13 +66,13 @@ function seulApparenceChange(data, existant, jour) {
 export function delaiEchec(n) { return Math.min(2 ** (n - 1), 60) * 1000; }
 
 // null si l'écriture est permise, sinon "parent" (jeton requis) ou "invalide" (document incohérent).
-export function autorise({ col, id, data, existant, parent, pinDefini, recompenses, suppression = false, jour = jourLocal() }) {
+export function autorise({ col, id, data, existant, parent, pinDefini, recompenses, suppression = false }) {
   if (!suppression && incoherent(col, data, existant)) return "invalide";
   if (!pinDefini) return null;
   if (col === "config" && id === "pin") return "parent";
   if (parent) return null;
   if (col === "recompenses" || col === "programme") return "parent";
-  if (col === "config" && id === "main") return seulApparenceChange(data, existant, jour) ? null : "parent";
+  if (col === "config" && id === "main") return seulApparenceChange(data, existant) ? null : "parent";
   if (col === "achats") {
     if (suppression) return "parent";
     return demandeLegitime({ data, existant, recompenses }) ? null : "parent";

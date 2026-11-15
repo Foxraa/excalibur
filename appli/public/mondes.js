@@ -1,23 +1,25 @@
-/* Le calendrier des mondes : Excalibur est ouvert dès le départ, puis un nouveau monde s'ouvre toutes les 3 à 4 semaines,
-   jusqu'au dernier à la mi-mai 2027 (six mois). Pour changer l'ordre ou les dates, il suffit de modifier cette liste.
-   Un monde déjà choisi reste utilisable, même s'il n'est pas encore ouvert dans ce calendrier. */
+/* Les mondes s'ouvrent avec les étoiles gagnées depuis le début (celles dépensées au trésor comptent aussi :
+   un monde ouvert ne se referme jamais). Excalibur est ouvert d'emblée, puis un nouveau monde tous les 1 500 étoiles.
+   Réglage de novembre 2026 : environ 420 étoiles par semaine, soit le dernier monde en six mois environ.
+   Pour changer l'ordre ou les seuils, il suffit de modifier cette liste.
+   Un monde déjà choisi reste utilisable, même s'il n'est pas encore ouvert. */
 (function(global){
-  const CALENDRIER_MONDES={
-    excalibur:'2026-11-15',
-    manga:'2026-12-06',
-    fee:'2027-01-01',
-    dino:'2027-01-27',
-    galaxie:'2027-02-22',
-    dresseur:'2027-03-20',
-    champignon:'2027-04-15',
-    sorcier:'2027-05-11'
+  const SEUILS_MONDES={
+    excalibur:0,
+    manga:3000,
+    fee:4500,
+    dino:6000,
+    galaxie:7500,
+    dresseur:9000,
+    champignon:10500,
+    sorcier:12000
   };
-  // jour au format AAAA-MM-JJ (date locale) ; un monde absent du calendrier est ouvert.
-  const mondeOuvert=(id,jour)=>!CALENDRIER_MONDES[id]||CALENDRIER_MONDES[id]<=jour;
-  // Le prochain monde à s'ouvrir après ce jour, ou null s'ils sont tous ouverts.
-  const prochainMonde=jour=>{
-    const e=Object.entries(CALENDRIER_MONDES).filter(([,d])=>d>jour).sort((a,b)=>a[1]<b[1]?-1:1)[0];
-    return e?{id:e[0],date:e[1]}:null;
+  // Un monde absent de la liste est ouvert.
+  const mondeOuvert=(id,etoiles)=>!(id in SEUILS_MONDES)||SEUILS_MONDES[id]<=etoiles;
+  // Le prochain monde à s'ouvrir, avec son seuil, ou null s'ils sont tous ouverts.
+  const prochainMonde=etoiles=>{
+    const e=Object.entries(SEUILS_MONDES).filter(([,s])=>s>etoiles).sort((a,b)=>a[1]-b[1])[0];
+    return e?{id:e[0],seuil:e[1]}:null;
   };
-  Object.assign(global,{CALENDRIER_MONDES,mondeOuvert,prochainMonde});
+  Object.assign(global,{SEUILS_MONDES,mondeOuvert,prochainMonde});
 })(typeof window!=='undefined'?window:globalThis);

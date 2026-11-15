@@ -1,4 +1,4 @@
-<title>Excalibur</title>
+<title>Excalibur, L'aventure des devoirs</title>
 <meta charset="utf-8">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><g transform='rotate(-25 50 68)'><path d='M46 28 H54 V72 H46 Z' fill='%23cfd6df' stroke='%23697180' stroke-width='2'/><rect x='34' y='21' width='32' height='8' rx='4' fill='%23d4a017'/><rect x='46' y='10' width='8' height='12' fill='%237a4a1f'/><circle cx='50' cy='9' r='6' fill='%23d4a017'/></g><path d='M10 94 Q12 66 34 61 L66 61 Q88 66 90 94 Z' fill='%238a8f98'/></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -3010,12 +3010,13 @@ function vEpees(){
 }
 /* Le choix du monde (l'habillage) et du clair / sombre appartient à l'enfant : il change le vocabulaire, les niveaux, l'objet du jour et les couleurs. */
 function vMondes(){
+  const et=bilan().total;
   return `<h2>Mon monde</h2>
   <section class="card stack"><p>Choisis le monde dans lequel tu veux apprendre. Tes étoiles et tes progrès restent les mêmes.</p>
-  <div class="row">${Object.entries(SKINS).map(([id,k])=>mondeOuvert(id,TODAY())||skinId()===id
+  <div class="row">${Object.entries(SKINS).map(([id,k])=>mondeOuvert(id,et)||skinId()===id
     ?`<button class="btn ${skinId()===id?'primary':''}" data-act="skin" data-v="${id}" aria-pressed="${skinId()===id}">${k.ico} ${esc(k.nom)}</button>`
-    :`<button class="btn" disabled title="S'ouvre le ${esc(longDate(CALENDRIER_MONDES[id]))}">🔒 ${esc(k.nom)}</button>`).join('')}</div>
-  ${(p=>p?`<p class="small muted">🎁 Prochain monde le ${esc(longDate(p.date))}. Lequel ? Surprise !</p>`:'')(prochainMonde(TODAY()))}</section>
+    :`<button class="btn" disabled title="S'ouvre à ${SEUILS_MONDES[id].toLocaleString('fr-FR')} étoiles gagnées">🔒 ${esc(k.nom)}</button>`).join('')}</div>
+  ${(p=>p?`<p class="small muted">🎁 Prochain monde à ${p.seuil.toLocaleString('fr-FR')} étoiles gagnées : encore ${(p.seuil-et).toLocaleString('fr-FR')} ★. Lequel ? Surprise !</p>`:'')(prochainMonde(et))}</section>
   <section class="card stack"><h3>Clair ou sombre</h3>
   <div class="row">${Object.entries(THEMES).map(([id,l])=>`<button class="btn ${themeId()===id?'primary':''}" data-act="theme" data-v="${id}" aria-pressed="${themeId()===id}">${l}</button>`).join('')}</div></section>`;
 }
@@ -3533,7 +3534,7 @@ document.addEventListener('click',async e=>{
     case 'maj-lancer':lancerMaj();break;
     case 'cartable-redemarrer':arreterCartable(true);break;
     case 'cartable-arreter':arreterCartable(false);break;
-    case 'skin':if(!mondeOuvert(el.dataset.v,TODAY()))break;put('config','main',{...cfg(),skin:el.dataset.v});toast(`Monde ${SKINS[el.dataset.v].nom.split(' ·')[0]} choisi.`);break;
+    case 'skin':if(!mondeOuvert(el.dataset.v,bilan().total))break;put('config','main',{...cfg(),skin:el.dataset.v});toast(`Monde ${SKINS[el.dataset.v].nom.split(' ·')[0]} choisi.`);break;
     case 'theme':put('config','main',{...cfg(),theme:v});toast({clair:'Couleurs claires choisies.',sombre:'Couleurs sombres choisies.',auto:"Les couleurs suivent l'ordinateur."}[v]);break;
     case 'prog-mat':go('programme',v);break;
     case 'comp-etat':{const c=COMP(id);if(!c)break;const cur=etatComp(c).etat;const next={avenir:'vu',vu:'fragile',fragile:'progres',progres:'acquis',acquis:'avenir'}[cur];put('programme',id,{etat:next,date:TODAY(),ts:Date.now()});break}
