@@ -8,6 +8,23 @@
         "appli/server.mjs"
       ],
       "port": 3000
+    },
+    {
+      "name": "cartable-test",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "appli/server.mjs"
+      ],
+      "port": 3101,
+      "env": {
+        "PORT": "3101",
+        "HOST": "127.0.0.1",
+        "DATA_DIR": ".claude/tmp/data-test",
+        "IA": "ollama",
+        "IA_QUICK": "ollama",
+        "OLLAMA_URL": "http://127.0.0.1:9",
+        "DB_KEY": ""
+      }
     }
   ]
 }
