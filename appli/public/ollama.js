@@ -18,7 +18,7 @@
 
   let voile = null, suivi = null;
   const ERREURS = {
-    winget: "Windows n'a pas l'outil d'installation (winget). Installez Ollama depuis ollama.com/download, puis relancez « Démarrer le cartable ».",
+    winget: "Windows n'a pas l'outil d'installation (winget). Installez Ollama depuis ollama.com/download, puis redémarrez le cartable (Espace parents, page Réglages).",
     installation: "L'installation d'Ollama n'a pas abouti. Vérifiez la connexion internet et réessayez, ou installez-le depuis ollama.com/download.",
     demarrage: "Ollama est installé mais ne démarre pas. Ouvrez l'application Ollama depuis le menu Démarrer, puis réessayez.",
     modele: "Le téléchargement du modèle s'est arrêté (connexion coupée ?). Réessayez : il reprend là où il en était.",
@@ -62,7 +62,7 @@
 <p>${p}</p>
 <div class="barre${pc == null ? ' attente' : ''}" role="progressbar" aria-valuemin="0" aria-valuemax="100"${pc == null ? '' : ` aria-valuenow="${pc}"`}><span style="width:${pc || 0}%"></span></div>
 ${pc == null ? '' : `<p class="small muted">${pc} %</p>`}
-<p class="small muted">Ne fermez pas la fenêtre noire du cartable pendant l'installation.</p>
+<p class="small muted">N'arrêtez pas le cartable pendant l'installation.</p>
 <div class="row"><button class="btn" data-o="cacher">Masquer</button></div>`);
   }
 

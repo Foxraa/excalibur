@@ -16,7 +16,10 @@ function Fin([int]$code) {
     # Le lanceur n'ouvre pas de nouvel onglet : la page restee ouverte se recharge toute seule.
     $env:SANS_NAVIGATEUR = '1'
     Write-Host 'Le cartable redemarre...'
-    Start-Process (Join-Path $appli 'Demarrer le cartable.bat') -WorkingDirectory $appli
+    $bat = Join-Path $appli 'Demarrer le cartable.bat'
+    # Ouvert par l'icone du bureau (EXCALIBUR_CACHE, herite du serveur) : il se relance cache, comme avant
+    if ($env:EXCALIBUR_CACHE) { Start-Process cmd.exe -ArgumentList '/c', "`"`"$bat`"`"" -WorkingDirectory $appli -WindowStyle Hidden }
+    else { Start-Process $bat -WorkingDirectory $appli }
     if ($code -eq 0) { Start-Sleep -Seconds 2; exit 0 }
   }
   if (-not $SansPause) { Write-Host ''; Read-Host 'Appuie sur Entree pour fermer' | Out-Null }
@@ -41,7 +44,7 @@ if ($Relancer) {
 }
 if (Ouvert) {
   $Relancer = $false # il tourne encore : ne pas en lancer un second
-  Write-Host 'Le cartable est ouvert : ferme sa fenetre noire, puis relance la mise a jour.'
+  Write-Host 'Le cartable est ouvert : arrete-le (espace parents, Reglages, "Arreter le cartable") ou ferme sa fenetre noire, puis relance la mise a jour.'
   Fin 1
 }
 
@@ -63,7 +66,7 @@ if ($git) {
   if ((Test-Path $modules) -and $avant -ne $apres) { Remove-Item $modules -Recurse -Force }
   Write-Host ''
   Write-Host 'Mise a jour faite.'
-  if (-not $Relancer) { Write-Host 'Double-clique sur "Demarrer le cartable.bat" pour lancer la nouvelle version.' }
+  if (-not $Relancer) { Write-Host 'Ouvre le cartable avec l''icone Excalibur du bureau pour lancer la nouvelle version.' }
   Fin 0
 }
 
@@ -126,5 +129,5 @@ Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
 Write-Host ''
 Write-Host 'Mise a jour faite. Les donnees, les reglages et les cles sont gardes.'
 if ($prog_gardee) { Write-Host 'Ton ancienne progression annuelle est gardee dans programme_cm1\10_Progression_annuelle.avant-mise-a-jour.md.' }
-Write-Host 'Double-clique sur "Demarrer le cartable.bat" pour lancer la nouvelle version.'
+Write-Host 'Ouvre le cartable avec l''icone Excalibur du bureau pour lancer la nouvelle version.'
 Fin 0
