@@ -30,9 +30,24 @@
     return ((n&&n.competences)||[]).map(id=>({id,ok:n.valeur/n.sur}));
   }
 
+  /* Les évaluations notées par critère ne vont pas dans « Mes notes » : elles servent au suivi.
+     Elles sont gardées sur la leçon : lecon.evaluations = [{intitule, date, criteres}].
+     preuvesLecon(l) : [{id, ok, date, intitule, nom, valeur, sur}], un élément par objectif de chaque critère. */
+  function preuvesLecon(l){
+    return ((l&&Array.isArray(l.evaluations))?l.evaluations:[]).flatMap(e=>(e.criteres||[]).flatMap(c=>(c.competences||[]).map(id=>
+      ({id,ok:c.valeur/(c.sur||4),date:e.date||l.date,intitule:e.intitule||l.titre,nom:c.nom,valeur:c.valeur,sur:c.sur||4}))));
+  }
+  // Ajoute une évaluation à la liste d'une leçon, sans doublon (même intitulé, même date).
+  function ajouterEvaluation(liste,e){
+    const autres=(Array.isArray(liste)?liste:[]).filter(x=>!(x.intitule===e.intitule&&x.date===e.date));
+    return [...autres,e].sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  }
+
   const texteCriteres=n=>(n&&n.criteres||[]).map(c=>`${c.nom} ${String(c.valeur).replace('.',',')}`).join(' · ');
 
   global.normNote=normNote;
   global.preuvesNote=preuvesNote;
   global.texteCriteres=texteCriteres;
+  global.preuvesLecon=preuvesLecon;
+  global.ajouterEvaluation=ajouterEvaluation;
 })(globalThis);

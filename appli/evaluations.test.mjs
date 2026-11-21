@@ -3,7 +3,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import "./public/evaluations.js";
 
-const { normNote, preuvesNote, texteCriteres } = globalThis;
+const { normNote, preuvesNote, texteCriteres, preuvesLecon, ajouterEvaluation } = globalThis;
 
 test("une note chiffrée reste telle quelle", () => {
   const n = normNote({ intitule: "Fractions", valeur: "15", sur: 20, date: "2026-11-02" });
@@ -38,4 +38,18 @@ test("chaque critère compte pour ses propres objectifs", () => {
 test("les objectifs passent par le filtre donné", () => {
   const n = normNote({ valeur: 3, sur: 4, competences: ["bon", "faux"] }, c => c.filter(x => x === "bon"));
   assert.deepEqual(n.competences, ["bon"]);
+});
+
+test("les évaluations gardées sur une leçon comptent critère par critère pour le suivi", () => {
+  const l = { titre: "Dictées bilan", date: "2026-09-07", evaluations: [
+    { intitule: "Dictée bilan n°1", date: "2026-09-11", criteres: [{ nom: "Lexique", valeur: 1, sur: 4, competences: ["f-4-6"] }, { nom: "Anglais", valeur: 3, sur: 4, competences: [] }] }] };
+  assert.deepEqual(preuvesLecon(l), [{ id: "f-4-6", ok: 0.25, date: "2026-09-11", intitule: "Dictée bilan n°1", nom: "Lexique", valeur: 1, sur: 4 }]);
+  assert.deepEqual(preuvesLecon({ titre: "Sans évaluation" }), []);
+});
+
+test("une évaluation rangée deux fois n'est gardée qu'une fois, dans l'ordre des dates", () => {
+  const a = { intitule: "Bilan n°2", date: "2026-09-18", criteres: [] }, b = { intitule: "Bilan n°1", date: "2026-09-11", criteres: [] };
+  const l = ajouterEvaluation(ajouterEvaluation([a], b), { ...a, criteres: [{ nom: "GN", valeur: 3 }] });
+  assert.deepEqual(l.map(e => e.intitule), ["Bilan n°1", "Bilan n°2"]);
+  assert.equal(l[1].criteres.length, 1);
 });

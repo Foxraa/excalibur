@@ -2431,8 +2431,9 @@ function preuves(){
       if(!ex.length&&(l.pointsFaibles||[]).length&&!l.importe&&!l.special)add(id,{ts,seance:D(l.date),ok:0,poids:2,src:'faible'});
     })});
   // Une note reliée par devinette compte un peu moins qu'une note reliée par l'IA.
-  // Une note par critères compte critère par critère (evaluations.js).
   all('notes').forEach(n=>preuvesNote(n).forEach(({id,ok})=>add(id,{ts:(n.date&&D(n.date))||n.createdAt,seance:D(n.date),ok,poids:n.lien==='auto'?2:3,src:'note'})));
+  // Les évaluations notées par critère (1 à 4), gardées sur la leçon : elles comptent comme une note, critère par critère, à leur date.
+  all('lecons').forEach(l=>preuvesLecon(l).forEach(e=>add(e.id,{ts:D(e.date),seance:D(e.date),ok:e.ok,poids:3,src:'evaluation',eval:e})));
   return preuvesCache=P;
 }
 /* jusqua (timestamp, facultatif) : l'état tel qu'il était à cette date, pour le bilan de la semaine.
@@ -2445,7 +2446,7 @@ function etatComp(c,jusqua){
   const P=(preuves().get(c.id)||[]).filter(p=>avant(p.seance||p.ts)).slice().sort((a,b)=>b.ts-a.ts);
   let sw=0,so=0;P.forEach((p,i)=>{const w=p.poids*Math.pow(.9,i);sw+=w;so+=w*p.ok});
   const score=sw?so/sw:null;
-  const nb=P.reduce((s,p)=>s+(p.src==='note'?3:p.src==='faible'?0:1),0);
+  const nb=P.reduce((s,p)=>s+(p.src==='note'||p.src==='evaluation'?3:p.src==='faible'?0:1),0);
   const dernier=P.length?P[0].ts:0;
   const auto=score===null?(lecons.length||devoirs.length?'vu':'avenir'):score>=.8&&nb>=4?'acquis':score>=.6?'progres':'fragile';
   // Un choix à la main (ou le bilan de départ) vaut jusqu'à la prochaine preuve.
@@ -2453,13 +2454,15 @@ function etatComp(c,jusqua){
   // Le bilan de départ compte comme connu depuis toujours : ce n'est pas un progrès de la semaine.
   const manuel=man&&ETATS[man.etat]&&manTs>=dernier&&(man.source==='bilan'||avant(manTs));
   const quiz=P.filter(p=>p.src==='quiz');
-  const erreurs=P.filter(p=>p.src!=='faible'&&p.src!=='note'&&!p.ok);
-  return {etat:manuel?man.etat:auto,manuel:manuel?(man.source==='bilan'?'bilan':'main'):null,score,nb,lecons,devoirs,notes,dernier,erreurs,
+  const erreurs=P.filter(p=>p.src!=='faible'&&p.src!=='note'&&p.src!=='evaluation'&&!p.ok);
+  const evals=P.filter(p=>p.src==='evaluation').map(p=>p.eval).reverse();
+  return {etat:manuel?man.etat:auto,manuel:manuel?(man.source==='bilan'?'bilan':'main'):null,score,nb,lecons,devoirs,notes,evals,dernier,erreurs,
     nbQuiz:quiz.length,okQuiz:quiz.filter(p=>p.ok).length,best:score};
 }
 function resumePreuves(e){
   const t=[];if(e.nbQuiz)t.push(`${e.okQuiz}/${e.nbQuiz} bonnes réponses en quiz`);
   if(e.notes.length)t.push(e.notes.map(n=>`${fmtN(n.valeur)}/${n.sur}`).join(', ')+' en évaluation');
+  if((e.evals||[]).length)t.push('évaluations : '+e.evals.map(v=>`${fmtN(v.valeur)}/${v.sur} le ${shortDate(v.date)}`).join(', '));
   if(e.devoirs.length)t.push(`${e.devoirs.length} devoir${e.devoirs.length>1?'s':''}`);
   if(e.manuel==='bilan')t.push('d\'après le bilan du classeur');else if(e.manuel==='main')t.push('choisi à la main');
   return t.join(' · ');
@@ -2776,10 +2779,12 @@ function vApercu(){
       ${l.pointsFaibles.length?`<div class="note-box"><strong>Ce qu'on va retravailler ensemble :</strong><ul>${l.pointsFaibles.map(x=>`<li>${rich(x)}</li>`).join('')}</ul><p class="small muted">Les quiz de cette leçon insisteront sur ces points.</p></div>`:''}
       ${(l.corrections||[]).filter(Boolean).length?`<div class="note-box"><strong>J'ai repéré quelque chose à corriger :</strong><ul>${l.corrections.filter(Boolean).map(x=>`<li>${rich(x)}</li>`).join('')}</ul></div>`:''}
     </section>`}).join('')}
-    ${NN.map((n,k)=>`<section class="card stack"><label class="row" style="font-weight:700"><input type="checkbox" class="chk" name="kn${k}" checked> Ajouter la note dans « Mes notes »</label>
+    ${NN.map((n,k)=>n.criteres.length?`<section class="card stack"><label class="row" style="font-weight:700"><input type="checkbox" class="chk" name="kn${k}" checked> Garder les résultats pour le suivi du programme</label>
+      <div class="form-grid"><label class="f">Évaluation<input type="text" name="nIntitule${k}" value="${esc(n.intitule)}" required></label><label class="f">Date<input type="date" name="nDate${k}" value="${esc(n.date||(LL.length===1&&LL[0].date)||a.date)}"></label></div>
+      <p class="small">${esc(texteCriteres(n))}<br><span class="muted">Niveaux de 1 à 4 donnés par la maîtresse. Ils ne vont pas dans « Mes notes » : ils servent à suivre le programme.</span></p>
+    </section>`:`<section class="card stack"><label class="row" style="font-weight:700"><input type="checkbox" class="chk" name="kn${k}" checked> Ajouter la note dans « Mes notes »</label>
       <div class="form-grid"><label class="f">Intitulé<input type="text" name="nIntitule${k}" value="${esc(n.intitule)}" required></label><label class="f">Matière<select name="nMat${k}">${matOptions(n.matiere)}</select></label>
       <label class="f">Note<input type="number" name="nVal${k}" value="${esc(n.valeur)}" min="0" step="0.25" required></label><label class="f">Sur<input type="number" name="nSur${k}" value="${esc(n.sur)}" min="1" required></label><label class="f">Date<input type="date" name="nDate${k}" value="${esc(n.date||(LL.length===1&&LL[0].date)||a.date)}"></label></div>
-      ${n.criteres.length?`<p class="small">${esc(texteCriteres(n))}<br><span class="muted">Niveaux de 1 à 4 donnés par la maîtresse : la note est leur moyenne, sur 4.</span></p>`:''}
       ${n.commentaire?`<p class="small muted">${rich(n.commentaire)}</p>`:''}
     </section>`).join('')}
     ${L.length?`<section class="card stack"><h3>${L.length} devoir${L.length>1?'s':''} à noter</h3><p class="small muted">Vérifie chaque ligne (surtout la date) et décoche ce qui ne va pas.</p>
@@ -2842,17 +2847,21 @@ function enregistrerRes(fd){
     const d=avecLien({titre:fd['titre'+i]||x.titre,detail:x.detail||'',matiere:m,type:fd['type'+i]||x.type,pour:fd['pour'+i]||x.pour,fait:false,faitLe:null,createdAt:Date.now(),source:'photo'},(x.competences||[]).length?x.competences:lec&&lec.competences);
     if(dejaNote(d))return;put('devoirs',uid(),d);nd++;
     if(d.type==='Contrôle'&&fd.plan){nc++;planifierRevisions(d)}});
-  const NN=r.notes.map((n,k)=>({n,k})).filter(({k})=>fd['kn'+k]);
+  const NN=r.notes.map((n,k)=>({n,k})).filter(({n,k})=>fd['kn'+k]&&!n.criteres.length);
+  // Les évaluations par critère vont sur leur leçon (rangée maintenant, ou déjà dans le cartable), pour le suivi seulement.
+  let nEv=0;r.notes.forEach((n,k)=>{if(!fd['kn'+k]||!n.criteres.length)return;
+    const cand=[...lecs,...r.lecons.map(l=>l.deja&&S.lecons.get(l.deja.id)).filter(Boolean)];
+    const lec=cand.find(l=>l.matiere===n.matiere)||cand[0];if(!lec)return;
+    const cur=S.lecons.get(lec.id);put('lecons',lec.id,{...cur,evaluations:ajouterEvaluation(cur.evaluations,{intitule:fd['nIntitule'+k]||n.intitule,date:fd['nDate'+k]||a.date,criteres:n.criteres})});nEv++});
   for(const {k} of NN){const val=Number(fd['nVal'+k]),sur=Number(fd['nSur'+k])||20;
     if(isNaN(val)||val<0||val>sur){toast(`La note doit être entre 0 et ${sur}.`);return}}
   NN.forEach(({n,k})=>{const val=Number(fd['nVal'+k]),sur=Number(fd['nSur'+k])||20,m=fd['nMat'+k]||n.matiere,date=fd['nDate'+k]||a.date;
     const lec=lecs.find(l=>l.matiere===m&&l.date===date)||lecs.find(l=>l.matiere===m)||(lecs.length===1?lecs[0]:null);
     // Les critères ne valent que pour la note telle que l'IA l'a lue : si la note est corrigée à la main, on ne les garde pas.
-    const criteres=n.criteres.length&&val===n.valeur&&sur===n.sur?n.criteres:undefined;
-    put('notes',uid(),avecLien({intitule:fd['nIntitule'+k]||n.intitule,matiere:m,valeur:val,sur,date,commentaire:n.commentaire||'',...(criteres?{criteres}:{}),createdAt:Date.now(),leconId:lec?lec.id:null},n.competences.length?n.competences:lec&&lec.competences));note++;
+    put('notes',uid(),avecLien({intitule:fd['nIntitule'+k]||n.intitule,matiere:m,valeur:val,sur,date,commentaire:n.commentaire||'',createdAt:Date.now(),leconId:lec?lec.id:null},n.competences.length?n.competences:lec&&lec.competences));note++;
     const p=val/sur;gagne(ptsNote({valeur:val,sur,createdAt:Date.now()}),p>=.8?'Superbe note, bravo !':p>=.6?'Belle note !':"Merci de l'avoir rentrée. On va travailler ça ensemble.")});
   state.add={images:[],indice:'',date:TODAY(),busy:false,res:null,err:'',sujet:''};
-  const fait=[ids.length&&(ids.length>1?`${ids.length} leçons`:'la leçon'),nd&&`${nd} devoir${nd>1?'s':''}${nc?' (révisions planifiées)':''}`,note&&(note>1?`${note} notes`:'la note')].filter(Boolean);
+  const fait=[ids.length&&(ids.length>1?`${ids.length} leçons`:'la leçon'),nd&&`${nd} devoir${nd>1?'s':''}${nc?' (révisions planifiées)':''}`,note&&(note>1?`${note} notes`:'la note'),nEv&&(nEv>1?`${nEv} évaluations pour le suivi`:"l'évaluation pour le suivi")].filter(Boolean);
   if(nMaj&&fait.length<=1&&ids.length<=1)toast('Fiche mise à jour dans ton cartable.');
   else if(fait.length>1||ids.length>1||(!ids.length&&!note))toast(fait.length?`Rangé : ${fait.join(', ')}.`:'Rien de coché, rien de rangé.');
   if(ids.length)go('lecon',ids[0]);else if(nd)go('devoirs');else if(note)go('notes');else render();
