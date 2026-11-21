@@ -27,10 +27,15 @@
     const exN=enonces(lecon.exercices),titre=norm(lecon.titre),motsT=mots(lecon.titre);
     let mieux=null,score=0;
     for(const x of L){
-      if(x.matiere!==lecon.matiere)continue;
       const exA=enonces(x.exercices);let s=0;
+      // Quand les deux ont un texte recopié assez long, c'est lui qui tranche : la même feuille relue un autre jour
+      // garde presque le même texte, même avec un autre titre ou une autre matière (une dictée sur la préhistoire) ;
+      // deux « Dictée bilan » de semaines différentes, non.
+      const tN=mots(lecon.transcription),tA=mots(x.transcription);
+      if(tN.size>=25&&tA.size>=25)s=recouvre(tN,tA)>=.7?recouvre(tN,tA):0;
+      else if(x.matiere!==lecon.matiere)continue;
       // Deux fiches d'exercices : seuls les énoncés comptent (deux fiches sur les fractions ne sont pas la même fiche).
-      if(exN.size>=2&&exA.size>=2)s=recouvre(exN,exA)>=.6?recouvre(exN,exA):0;
+      else if(exN.size>=2&&exA.size>=2)s=recouvre(exN,exA)>=.6?recouvre(exN,exA):0;
       else if(!exN.size&&!exA.size&&titre)s=norm(x.titre)===titre?1:recouvre(motsT,mots(x.titre))>=.8&&motsT.size>=2?.8:0;
       if(s>score){score=s;mieux=x}
     }
