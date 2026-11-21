@@ -1,11 +1,12 @@
 /* Les mondes s'ouvrent avec les étoiles gagnées depuis le début (celles dépensées au trésor comptent aussi :
-   un monde ouvert ne se referme jamais). Excalibur est ouvert d'emblée, puis un nouveau monde tous les 1 500 étoiles.
+   un monde ouvert ne se referme jamais). Excalibur est ouvert d'emblée, puis un nouveau monde tous les 1 500 étoiles (Pêche à la ligne s'ouvre plus tôt, à 250).
    Réglage de novembre 2026 : environ 420 étoiles par semaine, soit le dernier monde en six mois environ.
    Pour changer l'ordre ou les seuils, il suffit de modifier cette liste.
    Un monde déjà choisi reste utilisable, même s'il n'est pas encore ouvert. */
 (function(global){
   const SEUILS_MONDES={
     excalibur:0,
+    peche:250,
     gotham:2000,
     dresseur:3000,
     fee:4500,
